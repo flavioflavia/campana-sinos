@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campana - Orquestra de Sinos | Estudo Interativo de Partituras</title>
+  <meta name="description" content="Aplicativo interativo para estudo em orquestra de sinos (handbells). Marque seus sinos, acompanhe a partitura e veja as notas mudarem de cor quando tocadas.">
+  <link rel="stylesheet" href="style.css?v=3.0">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔔</text></svg>">
+</head>
+<body>
+
+  <!-- Cabeçalho Principal -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon" title="Campana - Orquestra de Sinos">🔔</div>
+      <div>
+        <h1 class="brand-title">
+          Campana
+          <span class="brand-badge">Sinos</span>
+        </h1>
+        <p class="brand-subtitle">Estúdio Interativo para Orquestra de Sinos (Handbells)</p>
+      </div>
+    </div>
+
+    <!-- Navegação de Partituras & Upload -->
+    <div class="score-nav">
+      <div class="score-select-wrapper" title="Escolha uma partitura de exemplo ou carregue a sua">
+        <select id="score-select">
+          <option value="scores/hino-da-alegria.musicxml">🎵 Hino à Alegria (Beethoven - Arranjo Sinos)</option>
+          <option value="scores/a-mighty-fortess-is-our-god.musicxml">🏰 A Mighty Fortress Is Our God (Transcrição IA)</option>
+          <option value="scores/noite-feliz.musicxml">🌟 Noite Feliz (Silent Night - 3/4)</option>
+          <option value="scores/canon-em-re.musicxml">🎼 Canon em Ré (Pachelbel - Sinos)</option>
+          <option value="scores/brilha-brilha-estrelinha.musicxml">✨ Brilha Brilha Estrelinha (Iniciantes)</option>
+        </select>
+      </div>
+
+      <input type="file" id="file-input" accept=".xml,.musicxml,.mxl" style="display: none;">
+      <button class="btn-upload" id="btn-upload" title="Carregar arquivo MusicXML (.musicxml, .mxl, .xml)">
+        <span>📂</span> Carregar XML
+      </button>
+
+      <button class="btn-scan" id="btn-open-ocr" title="Tirar foto ou enviar fotos da partitura para converter via IA Gemini Vision">
+        <span>📸</span> Escanear Fotos (IA)
+      </button>
+
+      <button class="btn-delete-score" id="btn-delete-score" title="Apagar a partitura selecionada">
+        <span>🗑️</span> Apagar
+      </button>
+
+      <button class="btn-icon" id="btn-help" title="Instruções de como usar">
+        <span>❓</span> Ajuda
+      </button>
+    </div>
+  </header>
+
+  <!-- Barra de Controle de Playback e Prática -->
+  <div class="playback-bar">
+    <div class="playback-controls-group">
+      <button class="btn-play" id="btn-play" title="Tocar / Pausar (Espaço)">▶</button>
+      <button class="btn-stop" id="btn-stop" title="Parar e Voltar ao Início (Esc)">⏹</button>
+
+      <div class="measure-badge" title="Compasso Atual">
+        <span class="measure-badge-label">Compasso</span>
+        <span class="measure-badge-val" id="measure-badge-val">C. 1</span>
+      </div>
+    </div>
+
+    <!-- Controle de Velocidade / BPM -->
+    <div class="speed-group" title="Ajuste o andamento da música para treinar passagens rápidas devagar">
+      <span class="speed-label">⏱ Andamento:</span>
+      <div class="speed-slider-wrap">
+        <input type="range" id="speed-slider" class="speed-slider" min="0.3" max="1.8" step="0.05" value="1.0">
+        <span class="speed-val" id="speed-val">104 BPM (100%)</span>
+      </div>
+      <div class="speed-presets">
+        <button class="btn-speed-pill" data-speed="0.5" title="Treino lento 50%">0.5x</button>
+        <button class="btn-speed-pill" data-speed="0.75" title="Treino 75%">0.75x</button>
+        <button class="btn-speed-pill active" data-speed="1.0" title="Andamento Original 100%">1.0x</button>
+        <button class="btn-speed-pill" data-speed="1.25" title="Mais rápido 125%">1.25x</button>
+      </div>
+    </div>
+
+    <!-- Modos de Treino & Acessórios -->
+    <div class="practice-toggles">
+      <!-- Metrônomo -->
+      <button class="toggle-pill active" id="btn-metronome" title="Ligar / Desligar clique do metrônomo (Tecla M)">
+        <span>⏱</span> Metrônomo
+      </button>
+
+      <!-- Contagem Regressiva Preparatória -->
+      <button class="toggle-pill active" id="btn-count-in" title="Contagem de 1 compasso antes de iniciar">
+        <span>🔢</span> Contagem (1, 2, 3, 4)
+      </button>
+
+      <!-- Modo de Prática -->
+      <div class="score-select-wrapper" style="margin-left: 4px;" title="Modo de estudo dos sinos">
+        <select id="practice-mode-select">
+          <option value="all">🔔 Modo Normal (Todos os Sinos)</option>
+          <option value="mute-mine">🔇 Treino Solo (Mudo nas minhas notas para tocar ao vivo)</option>
+          <option value="solo-mine">🎯 Isolar (Ouvir apenas minhas notas)</option>
+        </select>
+      </div>
+
+      <!-- Timbre dos Sinos -->
+      <div class="score-select-wrapper" title="Timbre acústico">
+        <select id="sound-type-select">
+          <option value="handbell">🔔 Handbell (Sino de Bronze)</option>
+          <option value="tonechime">🎵 Tonechime (Sino Tubular)</option>
+          <option value="glockenspiel">🌟 Glockenspiel</option>
+        </select>
+      </div>
+
+      <!-- Recolher / Expandir Mesa de Sinos -->
+      <button class="toggle-pill active" id="btn-toggle-rack" title="Mostrar ou ocultar a mesa de sinos lateral">
+        <span>🎹</span> Mesa de Sinos
+      </button>
+
+      <!-- Tela Cheia -->
+      <button class="btn-icon" id="btn-fullscreen" title="Modo Tela Cheia para Estante de Partitura (F)">
+        <span>⛶</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Live Cue HUD (Alerta em Tempo Real para o Sineiro) -->
+  <div class="live-cue-hud">
+    <div class="hud-left">
+      <div class="hud-indicator-dot" id="hud-indicator"></div>
+      <div class="hud-message" id="hud-message">Partitura pronta. Escolha seus sinos na mesa lateral e clique em Play!</div>
+    </div>
+    <div class="hud-active-bells" id="hud-active-bells">
+      <!-- Chips dinâmicos com os sinos ativos tocando agora -->
+    </div>
+  </div>
+
+  <!-- Conteúdo Principal -->
+  <main class="main-content">
+    
+    <!-- Painel Lateral: Mesa de Sinos (Bell Rack) -->
+    <aside class="bell-rack-panel" id="bell-rack-panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>🔔</span> Mesa de Sinos (Meus Sinos)
+        </div>
+        <button class="btn-icon" id="btn-clear-bells" style="padding: 4px 8px; font-size: 0.75rem;" title="Desmarcar todos os sinos">
+          Limpar
+        </button>
+      </div>
+
+      <div class="panel-body">
+        
+        <!-- Sinos Atribuídos Atualmente -->
+        <div class="assigned-section">
+          <div class="assigned-header">
+            <span class="assigned-title">Notas que Você Toca</span>
+            <span style="font-size: 0.7rem; color: var(--text-dim);">Clique na mão para alternar MD/ME</span>
+          </div>
+          <div class="assigned-list" id="assigned-bells-list">
+            <!-- Gerado via JavaScript -->
+          </div>
+        </div>
+
+        <!-- Presets Rápidos por Sineiro (Ringer 1 a 8) -->
+        <div class="ringers-section">
+          <span class="ringers-section-title">Atalhos por Tocador (Ringers)</span>
+          <div class="ringers-grid" id="ringers-grid">
+            <!-- Botões dos sineiros gerados via JS -->
+          </div>
+        </div>
+
+        <!-- Mesa Interativa de Sinos (Rack de Teclas) -->
+        <div class="bell-rack-container">
+          <div class="bell-rack-title">
+            <span>Conjunto de Sinos</span>
+            <span class="bell-rack-tip">Clique no sino para ouvir e marcar</span>
+          </div>
+          <div class="bell-rack-board" id="bell-rack-board">
+            <!-- Oitavas e teclas de sinos geradas via JS -->
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- Área de Exibição da Partitura -->
+    <section class="score-viewport">
+      <div class="score-tools">
+        <button class="btn-score-tool" id="btn-zoom-out" title="Reduzir Zoom">−</button>
+        <button class="btn-score-tool" id="btn-zoom-reset" title="Zoom Normal 100%">100%</button>
+        <button class="btn-score-tool" id="btn-zoom-in" title="Aumentar Zoom">+</button>
+      </div>
+
+      <!-- Container do OpenSheetMusicDisplay -->
+      <div id="osmd-container"></div>
+
+      <!-- Overlay de Carregamento -->
+      <div class="score-loading-overlay" id="score-loading" style="display: none;">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loading-text">Carregando partitura...</div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Overlay para Arrastar e Soltar Arquivos MusicXML -->
+  <div class="drag-drop-overlay" id="drag-drop-overlay">
+    <div class="drag-drop-icon">🎼</div>
+    <h2 style="font-size: 1.8rem; font-weight: 700;">Solte sua partitura aqui!</h2>
+    <p style="color: var(--text-muted);">Formatos suportados: .musicxml, .mxl, .xml</p>
+  </div>
+
+  <!-- Modal de OCR / Leitura de Fotos via Gemini Vision -->
+  <div class="modal-overlay" id="ocr-modal">
+    <div class="modal-card ocr-modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>📸</span> Escanear Fotos da Partitura (Gemini Vision)
+        </div>
+        <button class="modal-close" id="btn-close-ocr" title="Fechar">&times;</button>
+      </div>
+
+      <p class="modal-intro">
+        Tirou fotos da sua partitura física com o celular? Envie as fotos das folhas (Folha 1, 2, 3...) e a inteligência artificial <strong>Google Gemini Vision</strong> converterá as pautas e notas diretamente para o formato interativo do aplicativo!
+      </p>
+
+      <div class="ocr-dropzone" id="ocr-dropzone">
+        <div class="ocr-dropzone-icon">📷</div>
+        <div class="ocr-dropzone-text">
+          <strong>Clique para selecionar fotos</strong> ou arraste as imagens aqui
+        </div>
+        <div class="ocr-dropzone-sub">Suporta JPG, JPEG, PNG, WEBP (várias folhas permitidas)</div>
+        <input type="file" id="ocr-file-input" multiple accept="image/jpeg,image/png,image/webp,image/jpg" style="display: none;">
+      </div>
+
+      <div class="ocr-files-preview" id="ocr-files-preview" style="display: none;">
+        <h4 class="ocr-preview-heading">Folhas selecionadas para transcrição:</h4>
+        <div class="ocr-chips-list" id="ocr-chips-list"></div>
+      </div>
+
+      <div class="form-group ocr-title-group">
+        <label for="ocr-title-input" class="ocr-label">Nome da Música (opcional):</label>
+        <input type="text" id="ocr-title-input" class="ocr-input" placeholder="Ex: A Mighty Fortress, Hino dos Sinos, etc.">
+      </div>
+
+      <div class="ocr-status" id="ocr-status" style="display: none;">
+        <div class="ocr-spinner"></div>
+        <div class="ocr-status-text" id="ocr-status-text">Processando imagens com IA...</div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" id="btn-cancel-ocr">Cancelar</button>
+        <button class="btn-primary" id="btn-submit-ocr" disabled>✨ Iniciar Transcrição com IA</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Ajuda -->
+  <div class="modal-overlay" id="help-modal">
+    <div class="modal-card">
+      <div class="modal-title">
+        <span>🔔</span> Como Estudar com o Campana
+      </div>
+      <p class="modal-text">
+        Este aplicativo foi desenvolvido especialmente para integrantes de <strong>orquestras de sinos (handbell choirs)</strong> treinarem suas passagens musicais em casa ou no ensaio com máxima precisão.
+      </p>
+
+      <div class="modal-steps">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-desc">
+            <strong>Carregue sua Partitura:</strong> Use as partituras de exemplo prontas ou clique em <em>"Carregar Partitura"</em> para subir seu arquivo <code>.musicxml</code> ou <code>.mxl</code> exportado do MuseScore, Finale ou Sibelius.
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-desc">
+            <strong>Marque seus Sinos:</strong> Na barra lateral (Mesa de Sinos), clique nos sinos que você toca (ex: <code>C5</code> e <code>D5</code>) ou escolha um botão de <em>Tocador (Ringer)</em>. Você também pode clicar para alternar Mão Direita (M.D.) ou Mão Esquerda (M.E.).
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-desc">
+            <strong>Destaque Automático na Partitura:</strong> Todas as suas notas ganham um marca-texto suave na partitura.
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-desc">
+            <strong>Aperte Play (Espaço):</strong> A música começará com contagem preparatória. Quando chegar a hora de você tocar, <strong>a sua nota na partitura acenderá em uma cor vibrante</strong> no exato momento, e o sino correspondente ecoará!
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">5</div>
+          <div class="step-desc">
+            <strong>Modo Treino Solo:</strong> No seletor de modo, ative <em>"Treino Solo (Mudo nas minhas notas)"</em>. O aplicativo tocará os sinos de todos os seus colegas, deixando os seus mudos para você tocar o seu sino real ao vivo!
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-primary" id="btn-close-help">Entendi, vamos começar!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts: Dependências Locais e Aplicação -->
+  <script src="libs/jszip.min.js"></script>
+  <script src="libs/opensheetmusicdisplay.min.js"></script>
+  <script src="bell-audio.js?v=3.0"></script>
+  <script src="score-player.js?v=3.0"></script>
+  <script src="app.js?v=3.0"></script>
+
+</body>
+</html>
