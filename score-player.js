@@ -130,9 +130,9 @@ class ScorePlayer {
   }
 
   /**
-   * Analisa a partitura carregada no OSMD e constrói a timeline precisa
+   * Analisa a partitura carregada no OSMD e constrói a timeline precisa de forma assíncrona
    */
-  buildTimeline() {
+  async buildTimeline(onProgress = null) {
     if (!this.osmd || !this.osmd.Sheet) {
       this.timeline = [];
       return;
@@ -152,9 +152,14 @@ class ScorePlayer {
     } catch (e) {}
     this.updateEffectiveBpm();
 
-    // Lê fórmula de compasso
+    // Lê fórmula de compasso e quantidade total de compassos
+    const totalMeasures = (this.osmd.Sheet.SourceMeasures && this.osmd.Sheet.SourceMeasures.length > 0)
+      ? this.osmd.Sheet.SourceMeasures.length
+      : 0;
+    this.totalMeasures = totalMeasures;
+
     try {
-      if (this.osmd.Sheet.SourceMeasures && this.osmd.Sheet.SourceMeasures.length > 0) {
+      if (totalMeasures > 0) {
         const m1 = this.osmd.Sheet.SourceMeasures[0];
         if (m1.ActiveTimeSignature) {
           this.timeSignature = {
@@ -167,6 +172,15 @@ class ScorePlayer {
 
     let stepIdx = 0;
     while (!ScorePlayer.getEndReached(cursor.Iterator)) {
+      // Cede a CPU para a UI a cada 40 passos para evitar 'Página sem resposta'
+      if (stepIdx % 40 === 0) {
+        if (typeof onProgress === 'function') {
+          const currentMeasure = ScorePlayer.getMeasureIndex(cursor.Iterator) + 1;
+          onProgress(currentMeasure, totalMeasures);
+        }
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+
       const timeStamp = ScorePlayer.getTimestamp(cursor.Iterator);
       const measureIndex = ScorePlayer.getMeasureIndex(cursor.Iterator);
       const measureNumber = measureIndex + 1;
@@ -295,29 +309,44 @@ class ScorePlayer {
   refreshStaticHighlights() {
     if (!this.timeline || this.timeline.length === 0) return;
 
+    if (!this.previouslyMarkedNotes) {
+      this.previouslyMarkedNotes = new Set();
+    }
+
+    // 1. Reseta apenas as notas que haviam sido marcadas anteriormente
+    if (this.previouslyMarkedNotes.size > 0) {
+      for (const item of this.previouslyMarkedNotes) {
+        if (item.gNote && typeof item.gNote.setColor === 'function') {
+          try {
+            item.gNote.setColor('#000000', {
+              applyToNoteheads: true,
+              applyToStem: true
+            });
+            this.applySVGNoteStyle(item.gNote, 'default');
+          } catch (e) {}
+        }
+      }
+      this.previouslyMarkedNotes.clear();
+    }
+
+    // Se o usuário não tem nenhum sino selecionado, encerra aqui com zero custo de CPU
+    if (!this.userBells || this.userBells.size === 0) return;
+
+    // 2. Marca apenas as notas que pertencem aos sinos do usuário
     for (const step of this.timeline) {
       for (const item of step.notes) {
         item.isUserBell = this.isUserBell(item.pitchStr);
-        if (item.gNote && typeof item.gNote.setColor === 'function') {
-          if (item.isUserBell) {
-            const bellConf = this.getUserBellConfig(item.pitchStr);
-            const markColor = bellConf?.color || '#FFB703';
-            try {
-              item.gNote.setColor(markColor, {
-                applyToNoteheads: true,
-                applyToStem: false
-              });
-              this.applySVGNoteStyle(item.gNote, 'marked', markColor);
-            } catch (e) {}
-          } else {
-            try {
-              item.gNote.setColor('#000000', {
-                applyToNoteheads: true,
-                applyToStem: true
-              });
-              this.applySVGNoteStyle(item.gNote, 'default');
-            } catch (e) {}
-          }
+        if (item.isUserBell && item.gNote && typeof item.gNote.setColor === 'function') {
+          const bellConf = this.getUserBellConfig(item.pitchStr);
+          const markColor = bellConf?.color || '#FFB703';
+          try {
+            item.gNote.setColor(markColor, {
+              applyToNoteheads: true,
+              applyToStem: false
+            });
+            this.applySVGNoteStyle(item.gNote, 'marked', markColor);
+            this.previouslyMarkedNotes.add(item);
+          } catch (e) {}
         }
       }
     }

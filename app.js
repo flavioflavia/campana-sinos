@@ -173,15 +173,49 @@
   };
 
   // Inicialização
-  window.addEventListener('DOMContentLoaded', () => {
+  window.addEventListener('DOMContentLoaded', async () => {
     initAudioAndPlayer();
     buildBellRackUI();
     buildRingerPresetsUI();
     loadStoredPreferences();
+    await loadServerScoresList();
     setupEventListeners();
     initOSMD();
     loadScore(state.currentScoreUrl);
   });
+
+  async function loadServerScoresList() {
+    try {
+      const res = await fetch('api/list_scores.php?v=' + Date.now());
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data || !data.success || !Array.isArray(data.scores)) return;
+
+      const currentVal = dom.scoreSelect.value || state.currentScoreUrl;
+      dom.scoreSelect.innerHTML = '';
+
+      let foundCurrent = false;
+      for (const item of data.scores) {
+        const opt = document.createElement('option');
+        opt.value = item.url;
+        opt.textContent = item.title;
+        if (item.url === currentVal) {
+          opt.selected = true;
+          foundCurrent = true;
+        }
+        dom.scoreSelect.appendChild(opt);
+      }
+
+      if (!foundCurrent && dom.scoreSelect.options.length > 0) {
+        dom.scoreSelect.selectedIndex = 0;
+        state.currentScoreUrl = dom.scoreSelect.value;
+      } else if (foundCurrent) {
+        state.currentScoreUrl = currentVal;
+      }
+    } catch (err) {
+      console.warn('Erro ao carregar lista de partituras do servidor:', err);
+    }
+  }
 
   function initAudioAndPlayer() {
     audioEngine = new BellAudioEngine();
@@ -295,6 +329,8 @@
     showLoading('Carregando partitura...');
     scorePlayer.stop();
 
+    await new Promise(r => setTimeout(r, 20));
+
     try {
       let xmlContent = '';
 
@@ -319,6 +355,9 @@
 
       xmlContent = sanitizeXmlForOsmd(xmlContent);
 
+      showLoading('Renderizando partitura no estúdio...');
+      await new Promise(r => setTimeout(r, 20));
+
       await osmd.load(xmlContent);
       osmd.zoom = state.zoom;
       osmd.render();
@@ -329,14 +368,21 @@
         osmd.cursor.reset();
       }
 
-      // Constrói a timeline para playback sincronizado
+      showLoading('Construindo timeline de reprodução...');
+      await new Promise(r => setTimeout(r, 10));
+
+      // Constrói a timeline para playback sincronizado de forma assíncrona
       try {
-        scorePlayer.buildTimeline();
+        await scorePlayer.buildTimeline((currentMeasure, totalMeasures) => {
+          if (totalMeasures > 0) {
+            dom.loadingText.textContent = `Analisando partitura (compasso ${currentMeasure} de ${totalMeasures})...`;
+          }
+        });
       } catch (timelineErr) {
         console.error('Aviso na timeline:', timelineErr);
       }
 
-      // Permite clicar diretamente em qualquer nota da partitura para marcar o sino
+      // Permite clicar diretamente em qualquer nota da partitura para marcar o sino (em lotes não-bloqueantes)
       attachNoteClickListeners();
 
       // Atualiza controles de BPM com o tempo da partitura
@@ -359,29 +405,47 @@
   }
 
   function attachNoteClickListeners() {
-    if (!scorePlayer || !scorePlayer.timeline) return;
+    if (!scorePlayer || !scorePlayer.timeline || scorePlayer.timeline.length === 0) return;
 
-    scorePlayer.timeline.forEach(step => {
-      step.notes.forEach(item => {
-        try {
-          if (item.gNote && typeof item.gNote.getSVGGElement === 'function') {
-            const el = item.gNote.getSVGGElement();
-            if (el && !el.dataset.hasBellClick) {
-              el.dataset.hasBellClick = 'true';
-              el.style.cursor = 'pointer';
-              el.title = `Sino: ${item.pitchStr} (Clique para marcar/desmarcar)`;
+    const timeline = scorePlayer.timeline;
+    let idx = 0;
+    const batchSize = 100;
 
-              el.addEventListener('click', (e) => {
-                e.stopPropagation();
-                audioEngine.init();
-                audioEngine.playBell(item.pitchStr, null, 2.0, 0.9);
-                toggleBellSelection(item.pitchStr);
-              });
+    function processBatch() {
+      const end = Math.min(idx + batchSize, timeline.length);
+      for (let i = idx; i < end; i++) {
+        const step = timeline[i];
+        for (const item of step.notes) {
+          try {
+            if (item.gNote && typeof item.gNote.getSVGGElement === 'function') {
+              const el = item.gNote.getSVGGElement();
+              if (el && !el.dataset.hasBellClick) {
+                el.dataset.hasBellClick = 'true';
+                el.style.cursor = 'pointer';
+                el.title = `Sino: ${item.pitchStr} (Clique para marcar/desmarcar)`;
+
+                el.addEventListener('click', (e) => {
+                  e.stopPropagation();
+                  audioEngine.init();
+                  audioEngine.playBell(item.pitchStr, null, 2.0, 0.9);
+                  toggleBellSelection(item.pitchStr);
+                });
+              }
             }
-          }
-        } catch (e) {}
-      });
-    });
+          } catch (e) {}
+        }
+      }
+      idx = end;
+      if (idx < timeline.length) {
+        if (window.requestIdleCallback) {
+          window.requestIdleCallback(processBatch);
+        } else {
+          setTimeout(processBatch, 10);
+        }
+      }
+    }
+
+    processBatch();
   }
 
   // Constrói a Mesa de Sinos Interativa (Bell Rack)
@@ -878,21 +942,45 @@
       return;
     }
 
-    showLoading(`Lendo ${file.name}...`);
+    showLoading(`Lendo e decodificando "${file.name}"...`);
+    await new Promise(r => setTimeout(r, 20));
 
     try {
       const buffer = await file.arrayBuffer();
       const rawXml = await parseMusicXmlBuffer(buffer);
       const sanitizedXml = sanitizeXmlForOsmd(rawXml);
 
-      // Armazena no mapa local em memória
-      const scoreKey = 'custom_' + Date.now();
+      let scoreKey = 'custom_' + Date.now();
+      let scoreTitle = file.name;
+
+      // Salva a partitura no servidor de forma permanente para resistir a CTRL+F5 e recarregamento
+      showLoading(`Salvando "${file.name}" na biblioteca do servidor...`);
+      try {
+        const uploadRes = await fetch('api/upload_score.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filename: file.name,
+            content: sanitizedXml,
+            title: file.name.replace(/\.[^/.]+$/, '')
+          })
+        });
+        const uploadData = await uploadRes.json();
+        if (uploadData && uploadData.success && uploadData.filename) {
+          scoreKey = uploadData.filename;
+          scoreTitle = uploadData.title || file.name;
+        }
+      } catch (uploadErr) {
+        console.warn('Não foi possível salvar no servidor, mantendo na memória da sessão:', uploadErr);
+      }
+
+      // Armazena no mapa local em memória para carregamento imediato
       localScoresMap.set(scoreKey, {
-        name: file.name,
+        name: scoreTitle,
         xml: sanitizedXml
       });
 
-      addNewOptionToSelect(file.name, scoreKey);
+      addNewOptionToSelect(scoreTitle, scoreKey);
       state.currentScoreUrl = scoreKey;
       savePreferences();
 
@@ -917,7 +1005,8 @@
     }
     const opt = document.createElement('option');
     opt.value = value;
-    opt.textContent = `📁 ${name}`;
+    const hasIcon = name.startsWith('📁') || name.startsWith('🎵') || name.startsWith('🎼') || name.startsWith('✨') || name.startsWith('🏰') || name.startsWith('🌟') || name.startsWith('⛪');
+    opt.textContent = hasIcon ? name : `📁 ${name}`;
     opt.selected = true;
     dom.scoreSelect.appendChild(opt);
   }
@@ -1098,6 +1187,8 @@
           const scoreTitle = job.title || job.filename;
 
           addNewOptionToSelect(scoreTitle, scoreUrl);
+          state.currentScoreUrl = scoreUrl;
+          savePreferences();
           await loadScore(scoreUrl);
 
           setTimeout(() => {
