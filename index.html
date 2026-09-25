@@ -57,7 +57,9 @@
   <!-- Barra de Controle de Playback e Prática -->
   <div class="playback-bar">
     <div class="playback-controls-group">
+      <button class="btn-step-measure" id="btn-prev-measure" title="Compasso Anterior (Seta Esquerda / Pedal Bluetooth)">⏮</button>
       <button class="btn-play" id="btn-play" title="Tocar / Pausar (Espaço)">▶</button>
+      <button class="btn-step-measure" id="btn-next-measure" title="Próximo Compasso (Seta Direita / Pedal Bluetooth)">⏭</button>
       <button class="btn-stop" id="btn-stop" title="Parar e Voltar ao Início (Esc)">⏹</button>
 
       <div class="measure-badge" title="Compasso Atual">
@@ -114,6 +116,11 @@
       <!-- Recolher / Expandir Mesa de Sinos -->
       <button class="toggle-pill active" id="btn-toggle-rack" title="Mostrar ou ocultar a mesa de sinos lateral">
         <span>🎹</span> Mesa de Sinos
+      </button>
+
+      <!-- Modo Estante / Tela Ativa para Tablets e Celulares -->
+      <button class="toggle-pill" id="btn-wake-lock" title="Modo Estante: Manter a tela do tablet ligada sem apagar durante o ensaio">
+        <span>💡</span> Tela Ativa
       </button>
 
       <!-- Tela Cheia -->
@@ -306,6 +313,13 @@
           <div class="step-num">5</div>
           <div class="step-desc">
             <strong>Modo Treino Solo:</strong> No seletor de modo, ative <em>"Treino Solo (Mudo nas minhas notas)"</em>. O aplicativo tocará os sinos de todos os seus colegas, deixando os seus mudos para você tocar o seu sino real ao vivo!
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">6</div>
+          <div class="step-desc">
+            <strong>Otimizado para Tablets & Estantes:</strong> Ative <em>"💡 Tela Ativa"</em> para a tela nunca apagar durante o ensaio. Use as teclas de seta ou pedais Bluetooth (PageFlip / AirTurn) para avançar/retroceder compassos e tocar com as mãos livres!
           </div>
         </div>
       </div>

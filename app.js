@@ -127,6 +127,9 @@
   const dom = {
     btnPlay: document.getElementById('btn-play'),
     btnStop: document.getElementById('btn-stop'),
+    btnPrevMeasure: document.getElementById('btn-prev-measure'),
+    btnNextMeasure: document.getElementById('btn-next-measure'),
+    btnWakeLock: document.getElementById('btn-wake-lock'),
     scoreSelect: document.getElementById('score-select'),
     fileInput: document.getElementById('file-input'),
     btnUpload: document.getElementById('btn-upload'),
@@ -181,8 +184,8 @@
     buildRingerPresetsUI();
     loadStoredPreferences();
 
-    // No celular/tablet, a mesa de sinos começa recolhida para dar destaque total à partitura
-    if (window.innerWidth <= 860) {
+    // No celular e tablet retrato, a mesa de sinos começa recolhida para dar destaque total à partitura
+    if (window.innerWidth <= 991) {
       state.isRackCollapsed = true;
       dom.bellRackPanel.classList.add('collapsed');
       dom.btnToggleRack.classList.remove('active');
@@ -249,6 +252,9 @@
     scorePlayer.onStep = handlePlayerStep;
     scorePlayer.onUserBellHit = handleUserBellHit;
     scorePlayer.onUserBellPrepare = handleUserBellPrepare;
+    scorePlayer.onMeasureChange = (measureNum) => {
+      dom.measureBadgeVal.textContent = `C. ${measureNum}`;
+    };
   }
 
   function initOSMD() {
@@ -654,6 +660,9 @@
       dom.btnPlay.innerHTML = '▶';
       dom.btnPlay.title = 'Tocar (Espaço)';
       dom.btnPlay.classList.remove('playing');
+      if (!isWakeLockRequestedByUser) {
+        releaseWakeLock();
+      }
     }
   }
 
@@ -720,6 +729,79 @@
     dom.speedSlider.value = scorePlayer.tempoMultiplier;
   }
 
+  // Modo Estante / Wake Lock API (para Tablets e Celulares não apagarem a tela)
+  let wakeLockSentinel = null;
+  let isWakeLockRequestedByUser = false;
+
+  async function requestWakeLock() {
+    if ('wakeLock' in navigator) {
+      try {
+        wakeLockSentinel = await navigator.wakeLock.request('screen');
+        wakeLockSentinel.addEventListener('release', () => {
+          wakeLockSentinel = null;
+          updateWakeLockUI();
+        });
+        updateWakeLockUI();
+        return true;
+      } catch (err) {
+        console.warn('Wake Lock request error:', err);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  async function releaseWakeLock() {
+    if (wakeLockSentinel) {
+      try {
+        await wakeLockSentinel.release();
+      } catch (e) {}
+      wakeLockSentinel = null;
+    }
+    updateWakeLockUI();
+  }
+
+  function updateWakeLockUI() {
+    const isActive = !!wakeLockSentinel || isWakeLockRequestedByUser;
+    if (dom.btnWakeLock) {
+      dom.btnWakeLock.classList.toggle('active', isActive);
+      dom.btnWakeLock.classList.toggle('active-wake', isActive);
+    }
+  }
+
+  async function toggleWakeLock() {
+    if (isWakeLockRequestedByUser) {
+      isWakeLockRequestedByUser = false;
+      await releaseWakeLock();
+      setHudMessage('Modo Estante desativado. A tela seguirá o tempo normal de bloqueio do tablet.', 'normal');
+    } else {
+      isWakeLockRequestedByUser = true;
+      const success = await requestWakeLock();
+      if (success) {
+        setHudMessage('💡 Modo Estante ativado: a tela do tablet ficará sempre ligada durante o ensaio!', 'ready');
+      } else {
+        updateWakeLockUI();
+        setHudMessage('💡 Modo Estante selecionado. Caso seu tablet não suporte controle automático, ajuste o tempo de bloqueio nas configurações.', 'ready');
+      }
+    }
+  }
+
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible' && (isWakeLockRequestedByUser || (scorePlayer && scorePlayer.isPlaying))) {
+      await requestWakeLock();
+    }
+  });
+
+  // Salto de Compassos (Touch / Pedal Bluetooth / Atalhos)
+  function jumpMeasure(delta) {
+    if (!scorePlayer || !scorePlayer.timeline || scorePlayer.timeline.length === 0) return;
+    const curStep = scorePlayer.timeline[scorePlayer.currentStepIndex];
+    const curM = curStep ? curStep.measureNumber : 1;
+    const targetM = Math.max(1, curM + delta);
+    scorePlayer.seekToMeasure(targetM);
+    dom.measureBadgeVal.textContent = `C. ${targetM}`;
+  }
+
   function setupEventListeners() {
     function toggleRack(forceState) {
       if (typeof forceState === 'boolean') {
@@ -739,10 +821,11 @@
       if (scorePlayer.isPlaying) {
         scorePlayer.pause();
       } else {
-        // No celular, fecha a mesa de sinos ao dar play para ver a partitura
-        if (window.innerWidth <= 860 && !state.isRackCollapsed) {
+        // No celular e tablet retrato, fecha a mesa de sinos ao dar play para ver a partitura
+        if (window.innerWidth <= 991 && !state.isRackCollapsed) {
           toggleRack(true);
         }
+        requestWakeLock();
         scorePlayer.play();
       }
     });
@@ -750,6 +833,9 @@
     // Stop
     dom.btnStop.addEventListener('click', () => {
       scorePlayer.stop();
+      if (!isWakeLockRequestedByUser) {
+        releaseWakeLock();
+      }
       dom.measureBadgeVal.textContent = 'C. 1';
       setHudMessage('Execução parada. Pronto para recomeçar.', 'ready');
       dom.hudActiveBells.innerHTML = '';
@@ -926,6 +1012,19 @@
       });
     }
 
+    // Navegação de Compassos (⏮ Anterior e ⏭ Próximo)
+    if (dom.btnPrevMeasure) {
+      dom.btnPrevMeasure.addEventListener('click', () => jumpMeasure(-1));
+    }
+    if (dom.btnNextMeasure) {
+      dom.btnNextMeasure.addEventListener('click', () => jumpMeasure(1));
+    }
+
+    // Modo Estante / Tela Ativa
+    if (dom.btnWakeLock) {
+      dom.btnWakeLock.addEventListener('click', () => toggleWakeLock());
+    }
+
     // Limpar Sinos
     dom.btnClearBells.addEventListener('click', () => {
       state.userBells.clear();
@@ -946,7 +1045,7 @@
     // Modal de OCR (Gemini Vision)
     setupOcrModal();
 
-    // Atalhos de Teclado
+    // Atalhos de Teclado & Pedais Bluetooth (PageFlip / AirTurn / Coda)
     window.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
 
@@ -955,10 +1054,17 @@
         dom.btnPlay.click();
       } else if (e.code === 'Escape') {
         scorePlayer.stop();
+        if (!isWakeLockRequestedByUser) releaseWakeLock();
       } else if (e.key === 'f' || e.key === 'F') {
         toggleFullscreen();
       } else if (e.key === 'm' || e.key === 'M') {
         dom.btnMetronome.click();
+      } else if (e.code === 'ArrowRight' || e.code === 'PageDown' || e.code === 'ArrowDown') {
+        e.preventDefault();
+        jumpMeasure(1);
+      } else if (e.code === 'ArrowLeft' || e.code === 'PageUp' || e.code === 'ArrowUp') {
+        e.preventDefault();
+        jumpMeasure(-1);
       }
     });
   }

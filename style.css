@@ -303,6 +303,28 @@ body {
   border-color: var(--text-muted);
 }
 
+.btn-step-measure {
+  background-color: var(--bg-tertiary);
+  color: var(--text-main);
+  border: 1px solid var(--border-subtle);
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.btn-step-measure:hover {
+  background-color: var(--bg-card);
+  border-color: var(--bell-gold);
+  color: var(--bell-gold);
+}
+
 /* Tempo / Compasso Info */
 .measure-badge {
   background-color: var(--bg-tertiary);
@@ -451,6 +473,14 @@ body {
   background: rgba(0, 245, 212, 0.15);
   border-color: #00f5d4;
   color: #00f5d4;
+}
+
+.toggle-pill.active-wake,
+#btn-wake-lock.active {
+  background: rgba(255, 215, 0, 0.2) !important;
+  border-color: #ffd700 !important;
+  color: #ffd700 !important;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.35) !important;
 }
 
 /* Live Cue HUD (Aviso visual para o tocador de sinos) */
@@ -1275,8 +1305,10 @@ body {
    Responsividade & Otimização Completa para Celulares e Tablets
    ========================================================================== */
 
-/* Telas Médias e Pequenas (Tablets e Celulares: <= 860px) */
-@media (max-width: 860px) {
+/* --------------------------------------------------------------------------
+   1. SMARTPHONES & CELULARES (<= 767px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 767px) {
   /* Header compacto */
   .app-header {
     padding: 8px 12px;
@@ -1342,7 +1374,7 @@ body {
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    gap: 8px;
+    gap: 6px;
   }
 
   .btn-play {
@@ -1359,14 +1391,21 @@ body {
     flex-shrink: 0;
   }
 
+  .btn-step-measure {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
   .measure-badge {
-    min-width: 75px;
-    padding: 4px 10px;
+    min-width: 70px;
+    padding: 4px 8px;
     flex-shrink: 0;
   }
 
   .measure-badge-val {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
 
   /* Faixa de Ferramentas / Prática com rolagem suave ao toque */
@@ -1397,11 +1436,11 @@ body {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 3px;
-    scrollbar-width: none; /* Firefox */
+    scrollbar-width: none;
   }
 
   .practice-toggles::-webkit-scrollbar {
-    display: none; /* Chrome/Safari */
+    display: none;
   }
 
   .practice-toggles .toggle-pill,
@@ -1410,7 +1449,7 @@ body {
     flex-shrink: 0;
     font-size: 0.78rem;
     padding: 5px 10px;
-    height: 32px;
+    height: 34px;
   }
 
   /* HUD Compacto */
@@ -1519,7 +1558,346 @@ body {
   }
 }
 
-/* Telas Muito Pequenas (Celulares estreitos: <= 480px) */
+/* --------------------------------------------------------------------------
+   2. TABLETS EM MODO RETRATO (iPad / Android Tablet: 768px a 991px)
+   Otimizado para estante de partitura: botões amplos ao toque e folha cheia
+   -------------------------------------------------------------------------- */
+@media (min-width: 768px) and (max-width: 991px) {
+  .app-header {
+    padding: 10px 18px;
+    gap: 12px;
+    flex-wrap: nowrap;
+  }
+
+  .brand {
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .brand-icon {
+    width: 38px;
+    height: 38px;
+    font-size: 20px;
+  }
+
+  .brand-title {
+    font-size: 1.2rem;
+  }
+
+  .brand-subtitle {
+    display: none;
+  }
+
+  .score-nav {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .score-select-wrapper {
+    max-width: 280px;
+    flex: 1;
+  }
+
+  .score-select-wrapper select {
+    font-size: 0.88rem;
+    padding: 8px 30px 8px 12px;
+    height: 42px;
+  }
+
+  .btn-upload, .btn-scan, .btn-delete-score, .btn-icon {
+    height: 42px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+  }
+
+  /* Playback Bar Ergonômica para Estante de Partitura */
+  .playback-bar {
+    padding: 10px 18px;
+    gap: 12px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .playback-controls-group {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .btn-play {
+    width: 50px;
+    height: 50px;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+  }
+
+  .btn-stop {
+    width: 42px;
+    height: 42px;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+  }
+
+  .btn-step-measure {
+    width: 42px;
+    height: 42px;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .measure-badge {
+    min-width: 90px;
+    padding: 6px 14px;
+    height: 42px;
+    justify-content: center;
+  }
+
+  .measure-badge-val {
+    font-size: 1.15rem;
+  }
+
+  .speed-group {
+    padding: 6px 12px;
+    height: 42px;
+    gap: 10px;
+    flex: 1;
+  }
+
+  .btn-speed-pill {
+    padding: 4px 8px;
+    font-size: 0.78rem;
+  }
+
+  /* Segunda linha: Prática & Acessórios */
+  .practice-toggles {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+
+  .practice-toggles .toggle-pill,
+  .practice-toggles .score-select-wrapper select,
+  .practice-toggles .btn-icon {
+    min-height: 42px;
+    padding: 8px 14px;
+    font-size: 0.86rem;
+    flex-shrink: 0;
+  }
+
+  /* Live HUD no Tablet Retrato */
+  .live-cue-hud {
+    padding: 8px 18px;
+    min-height: 44px;
+  }
+
+  .hud-message {
+    font-size: 0.95rem;
+  }
+
+  .hud-bell-chip {
+    padding: 4px 12px;
+    font-size: 0.85rem;
+  }
+
+  /* Mesa de Sinos no Tablet Retrato (Drawer lateral amplo com Backdrop) */
+  .bell-rack-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    z-index: 998;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+
+  .bell-rack-backdrop.active {
+    display: block;
+    opacity: 1;
+  }
+
+  .bell-rack-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 360px;
+    max-width: 85vw;
+    height: 100vh;
+    height: 100dvh;
+    z-index: 999;
+    box-shadow: 6px 0 30px rgba(0, 0, 0, 0.75);
+    transform: translateX(0);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .bell-rack-panel.collapsed {
+    transform: translateX(-105%);
+    width: 360px;
+    border-right: none;
+    visibility: hidden;
+  }
+
+  .btn-close-rack {
+    display: inline-flex !important;
+    background: rgba(239, 71, 111, 0.2);
+    border-color: rgba(239, 71, 111, 0.4);
+    color: #ff85a1;
+    font-size: 0.82rem;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Partitura ampla e nítida em modo retrato */
+  .score-viewport {
+    width: 100%;
+    min-height: 0;
+  }
+
+  #osmd-container {
+    padding: 16px 14px 60px 14px;
+    gap: 16px;
+  }
+
+  #osmd-container > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  #osmd-container svg {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  .score-tools {
+    top: 14px;
+    right: 14px;
+    gap: 6px;
+  }
+
+  .btn-score-tool {
+    width: 38px;
+    height: 38px;
+    font-size: 0.95rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3. TABLETS EM MODO PAISAGEM & TELAS MÉDIAS (992px a 1200px)
+   Modo horizontal na estante: mesa de sinos lateral encaixada e partitura fluida
+   -------------------------------------------------------------------------- */
+@media (min-width: 992px) and (max-width: 1200px) {
+  .app-header {
+    padding: 10px 20px;
+  }
+
+  .playback-bar {
+    padding: 10px 20px;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .btn-play {
+    width: 48px;
+    height: 48px;
+    font-size: 1.25rem;
+  }
+
+  .btn-stop {
+    width: 40px;
+    height: 40px;
+  }
+
+  .btn-step-measure {
+    width: 38px;
+    height: 38px;
+  }
+
+  .measure-badge {
+    height: 40px;
+    min-width: 90px;
+  }
+
+  .speed-group {
+    height: 40px;
+  }
+
+  .practice-toggles .toggle-pill,
+  .practice-toggles .score-select-wrapper select {
+    min-height: 40px;
+    padding: 6px 12px;
+    font-size: 0.84rem;
+  }
+
+  /* Mesa de Sinos lateral otimizada para Paisagem */
+  .bell-rack-panel {
+    width: 290px;
+    position: relative;
+    transform: none;
+    box-shadow: none;
+    z-index: 20;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .bell-rack-panel.collapsed {
+    width: 0;
+    overflow: hidden;
+    border-right: none;
+    visibility: visible;
+  }
+
+  .btn-close-rack {
+    display: none !important;
+  }
+
+  .bell-rack-backdrop {
+    display: none !important;
+  }
+
+  .panel-body {
+    padding: 12px;
+    gap: 14px;
+  }
+
+  .octave-white-keys {
+    gap: 3px;
+  }
+
+  .octave-black-keys {
+    gap: 3px;
+  }
+
+  .bell-item {
+    min-width: 34px;
+    height: 52px;
+  }
+
+  .bell-item.accidental {
+    min-width: 28px;
+    height: 42px;
+  }
+
+  /* Partitura espaçosa */
+  #osmd-container {
+    padding: 18px 16px 60px 16px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. TELAS MUITO PEQUENAS (Celulares estreitos: <= 480px)
+   -------------------------------------------------------------------------- */
 @media (max-width: 480px) {
   .app-header {
     padding: 6px 10px;
