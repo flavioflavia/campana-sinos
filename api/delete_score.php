@@ -57,7 +57,7 @@ if ($base === 'hino-da-alegria.musicxml') {
 
 // Valida extensão permitida
 $ext = strtolower(pathinfo($target, PATHINFO_EXTENSION));
-if (!in_array($ext, ['musicxml', 'mxl', 'xml'])) {
+if (!in_array($ext, ['musicxml', 'mxl', 'xml', 'mxml'])) {
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => 'Extensão de arquivo inválida para exclusão.']);
     exit;

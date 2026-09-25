@@ -20,6 +20,9 @@
     ocrSelectedFiles: []
   };
 
+  // Mapa em memória de partituras carregadas localmente pelo usuário
+  const localScoresMap = new Map();
+
   // Definição das oitavas de sinos na mesa (Handbell Rack)
   const bellDefinitions = [
     {
@@ -211,33 +214,110 @@
     }
   }
 
-  async function loadScore(urlOrXmlString, isString = false) {
+  function isDirectXmlString(str) {
+    if (typeof str !== 'string') return false;
+    const trimmed = str.trim();
+    return trimmed.startsWith('<?xml') ||
+           trimmed.startsWith('<score-partwise') ||
+           trimmed.startsWith('<score-timewise') ||
+           trimmed.startsWith('<!DOCTYPE') ||
+           trimmed.includes('<score-partwise') ||
+           trimmed.includes('<score-timewise') ||
+           trimmed.includes('<part-list>');
+  }
+
+  function sanitizeXmlForOsmd(rawXml) {
+    if (typeof rawXml !== 'string') return rawXml;
+    let xml = rawXml.trim();
+
+    // Remove BOM se presente
+    if (xml.charCodeAt(0) === 0xFEFF) {
+      xml = xml.substring(1).trim();
+    }
+
+    // Se houver declaração XML <?xml ... ?> no meio ou após comentários/espaços, move para o início
+    const xmlDeclMatch = xml.match(/<\?xml[^>]*\?>/i);
+    if (xmlDeclMatch) {
+      const decl = xmlDeclMatch[0];
+      const rest = xml.replace(decl, '').trim();
+      xml = decl + '\n' + rest;
+    } else {
+      // Se não tem <?xml ... ?>, adiciona a declaração <?xml obrigatória para o OSMD
+      xml = '<?xml version="1.0" encoding="UTF-8"?>\n' + xml;
+    }
+
+    // Normaliza tags de pitch do MusicXML contra formatações fora do padrão (ex: <step>F#</step>)
+    xml = xml
+      .replace(/<step>\s*([A-Ga-g])#\s*<\/step>/g, '<step>$1</step><alter>1</alter>')
+      .replace(/<step>\s*([A-Ga-g])b\s*<\/step>/g, '<step>$1</step><alter>-1</alter>')
+      .replace(/<step>\s*([a-g])\s*<\/step>/g, (m, g) => '<step>' + g.toUpperCase() + '</step>')
+      .replace(/<alter>\s*#\s*<\/alter>/g, '<alter>1</alter>')
+      .replace(/<alter>\s*b\s*<\/alter>/g, '<alter>-1</alter>')
+      .replace(/<alter>\s*\+1\s*<\/alter>/g, '<alter>1</alter>');
+
+    return xml;
+  }
+
+  async function parseMusicXmlBuffer(buffer) {
+    if (!buffer || buffer.byteLength === 0) {
+      throw new Error('Arquivo de partitura vazio.');
+    }
+
+    const uint8 = new Uint8Array(buffer);
+    // Detecta se é arquivo compactado ZIP (.mxl ou .mxml compactado)
+    const isZip = uint8.length >= 4 &&
+      uint8[0] === 0x50 && uint8[1] === 0x4B &&
+      (uint8[2] === 0x03 || uint8[2] === 0x05 || uint8[2] === 0x07) &&
+      (uint8[3] === 0x04 || uint8[3] === 0x06 || uint8[3] === 0x08);
+
+    if (isZip) {
+      if (window.opensheetmusicdisplay && window.opensheetmusicdisplay.MXLHelper) {
+        return await window.opensheetmusicdisplay.MXLHelper.MXLtoXMLstring(buffer);
+      }
+      throw new Error('Suporte a arquivos compactados (.mxl) não disponível no OSMD.');
+    }
+
+    // Arquivo texto MusicXML (.musicxml, .mxml, .xml)
+    let text = new TextDecoder('utf-8').decode(uint8);
+    const encodingMatch = text.match(/<\?xml[^>]+encoding=["']([^"']+)["']/i);
+    if (encodingMatch && encodingMatch[1] && !/utf-?8/i.test(encodingMatch[1])) {
+      try {
+        text = new TextDecoder(encodingMatch[1]).decode(uint8);
+      } catch (e) {
+        console.warn('Encoding especificado não suportado diretamente:', encodingMatch[1]);
+      }
+    }
+    return text;
+  }
+
+  async function loadScore(source, isDirectData = false) {
+    if (!source) return;
     showLoading('Carregando partitura...');
     scorePlayer.stop();
 
     try {
-      let xmlContent = urlOrXmlString;
+      let xmlContent = '';
 
-      // Se for uma URL (e não o conteúdo XML em si), busca com fetch diretamente
-      if (!isString && typeof urlOrXmlString === 'string') {
-        const trimmed = urlOrXmlString.trim();
-        if (!trimmed.startsWith('<?xml') && !trimmed.startsWith('<score-partwise')) {
-          const fetchUrl = urlOrXmlString + (urlOrXmlString.includes('?') ? '&' : '?') + 'v=' + Date.now();
-          const res = await fetch(fetchUrl);
-          if (!res.ok) {
-            throw new Error(`Falha HTTP ${res.status} ao obter ${urlOrXmlString}`);
-          }
-          xmlContent = await res.text();
+      if (localScoresMap.has(source)) {
+        xmlContent = localScoresMap.get(source).xml;
+      } else if (source instanceof Blob || source instanceof File) {
+        const buffer = await source.arrayBuffer();
+        xmlContent = await parseMusicXmlBuffer(buffer);
+      } else if (isDirectData || isDirectXmlString(source)) {
+        xmlContent = source;
+      } else if (typeof source === 'string') {
+        const fetchUrl = source + (source.includes('?') ? '&' : '?') + 'v=' + Date.now();
+        const res = await fetch(fetchUrl);
+        if (!res.ok) {
+          throw new Error(`Falha HTTP ${res.status} ao obter partitura (${source})`);
         }
+        const buffer = await res.arrayBuffer();
+        xmlContent = await parseMusicXmlBuffer(buffer);
+      } else {
+        throw new Error('Origem de partitura inválida ou formato desconhecido.');
       }
 
-      // Normaliza tags de pitch do MusicXML contra formatações fora do padrão (ex: <step>F#</step>)
-      if (typeof xmlContent === 'string') {
-        xmlContent = xmlContent
-          .replace(/<step>\s*([A-Ga-g])#\s*<\/step>/g, '<step>$1</step><alter>1</alter>')
-          .replace(/<step>\s*([A-Ga-g])b\s*<\/step>/g, '<step>$1</step><alter>-1</alter>')
-          .replace(/<step>\s*([a-g])\s*<\/step>/g, (m, g) => '<step>' + g.toUpperCase() + '</step>');
-      }
+      xmlContent = sanitizeXmlForOsmd(xmlContent);
 
       await osmd.load(xmlContent);
       osmd.zoom = state.zoom;
@@ -574,7 +654,11 @@
     // Seletor de Partituras Demonstrativas
     dom.scoreSelect.addEventListener('change', (e) => {
       state.currentScoreUrl = e.target.value;
-      loadScore(state.currentScoreUrl);
+      if (localScoresMap.has(state.currentScoreUrl)) {
+        loadScore(localScoresMap.get(state.currentScoreUrl).xml, true);
+      } else {
+        loadScore(state.currentScoreUrl);
+      }
       savePreferences();
     });
 
@@ -595,7 +679,9 @@
           return;
         }
 
-        if (scoreVal.startsWith('scores/')) {
+        if (localScoresMap.has(scoreVal)) {
+          localScoresMap.delete(scoreVal);
+        } else if (scoreVal.startsWith('scores/')) {
           try {
             const res = await fetch('api/delete_score.php', {
               method: 'POST',
@@ -780,47 +866,55 @@
   }
 
   async function handleFileUpload(file) {
-    const fileName = file.name.toLowerCase();
+    if (!file) return;
+
+    // Se o usuário arrastou/enviou imagem de partitura, abre o modal de IA Gemini
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
+      if (dom.ocrModal) {
+        dom.ocrModal.classList.add('open');
+        addOcrFiles([file]);
+      }
+      return;
+    }
+
     showLoading(`Lendo ${file.name}...`);
 
-    if (fileName.endsWith('.mxl')) {
-      // Arquivo compactado MXL
-      try {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          try {
-            await loadScore(e.target.result, false);
-            addNewOptionToSelect(file.name);
-          } catch (err) {
-            console.error('Erro ao ler MXL:', err);
-            hideLoading();
-            alert('Erro ao descompactar ou renderizar arquivo .mxl.');
-          }
-        };
-        reader.readAsBinaryString(file);
-      } catch (err) {
-        hideLoading();
-        alert('Erro ao carregar arquivo MXL.');
+    try {
+      const buffer = await file.arrayBuffer();
+      const rawXml = await parseMusicXmlBuffer(buffer);
+      const sanitizedXml = sanitizeXmlForOsmd(rawXml);
+
+      // Armazena no mapa local em memória
+      const scoreKey = 'custom_' + Date.now();
+      localScoresMap.set(scoreKey, {
+        name: file.name,
+        xml: sanitizedXml
+      });
+
+      addNewOptionToSelect(file.name, scoreKey);
+      state.currentScoreUrl = scoreKey;
+      savePreferences();
+
+      await loadScore(sanitizedXml, true);
+    } catch (err) {
+      console.error('Erro ao ler arquivo de partitura:', err);
+      hideLoading();
+      alert(`Não foi possível carregar a partitura "${file.name}":\n${err.message || err}`);
+    } finally {
+      if (dom.fileInput) {
+        dom.fileInput.value = '';
       }
-    } else {
-      // Arquivo texto MusicXML / XML
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const content = e.target.result;
-          await loadScore(content, true);
-          addNewOptionToSelect(file.name);
-        } catch (err) {
-          console.error('Erro ao processar XML:', err);
-          hideLoading();
-          alert('Erro ao processar partitura XML.');
-        }
-      };
-      reader.readAsText(file);
     }
   }
 
   function addNewOptionToSelect(name, value = 'custom') {
+    for (let i = 0; i < dom.scoreSelect.options.length; i++) {
+      if (dom.scoreSelect.options[i].value === value) {
+        dom.scoreSelect.options[i].selected = true;
+        return;
+      }
+    }
     const opt = document.createElement('option');
     opt.value = value;
     opt.textContent = `📁 ${name}`;
@@ -1108,6 +1202,13 @@
       if (prefs.soundType) {
         audioEngine.setSoundType(prefs.soundType);
         dom.soundTypeSelect.value = prefs.soundType;
+      }
+
+      if (prefs.scoreUrl && (prefs.scoreUrl.startsWith('scores/') || localScoresMap.has(prefs.scoreUrl))) {
+        state.currentScoreUrl = prefs.scoreUrl;
+        if (dom.scoreSelect) {
+          dom.scoreSelect.value = prefs.scoreUrl;
+        }
       }
     } catch (e) {}
   }

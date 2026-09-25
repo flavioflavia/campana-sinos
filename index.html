@@ -35,8 +35,8 @@
         </select>
       </div>
 
-      <input type="file" id="file-input" accept=".xml,.musicxml,.mxl" style="display: none;">
-      <button class="btn-upload" id="btn-upload" title="Carregar arquivo MusicXML (.musicxml, .mxl, .xml)">
+      <input type="file" id="file-input" accept=".musicxml,.mxl,.mxml,.xml,application/vnd.recordare.musicxml+xml,application/vnd.recordare.musicxml,application/xml,text/xml" style="display: none;">
+      <button class="btn-upload" id="btn-upload" title="Carregar arquivo MusicXML (.musicxml, .mxl, .mxml, .xml)">
         <span>📂</span> Carregar XML
       </button>
 
@@ -207,7 +207,7 @@
   <div class="drag-drop-overlay" id="drag-drop-overlay">
     <div class="drag-drop-icon">🎼</div>
     <h2 style="font-size: 1.8rem; font-weight: 700;">Solte sua partitura aqui!</h2>
-    <p style="color: var(--text-muted);">Formatos suportados: .musicxml, .mxl, .xml</p>
+    <p style="color: var(--text-muted);">Formatos suportados: .musicxml, .mxl, .mxml, .xml</p>
   </div>
 
   <!-- Modal de OCR / Leitura de Fotos via Gemini Vision -->
@@ -269,7 +269,7 @@
         <div class="step-item">
           <div class="step-num">1</div>
           <div class="step-desc">
-            <strong>Carregue sua Partitura:</strong> Use as partituras de exemplo prontas ou clique em <em>"Carregar Partitura"</em> para subir seu arquivo <code>.musicxml</code> ou <code>.mxl</code> exportado do MuseScore, Finale ou Sibelius.
+            <strong>Carregue sua Partitura:</strong> Use as partituras de exemplo prontas ou clique em <em>"Carregar Partitura"</em> para subir seu arquivo <code>.musicxml</code>, <code>.mxl</code>, <code>.mxml</code> ou <code>.xml</code> exportado do MuseScore, Finale ou Sibelius.
           </div>
         </div>
 
