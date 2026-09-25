@@ -1262,17 +1262,314 @@ body {
   color: #e2e8f0;
 }
 
-/* Responsividade */
-@media (max-width: 900px) {
-  .bell-rack-panel {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 320px;
-    box-shadow: var(--shadow-lg);
+/* Botão de Fechar Mesa e Backdrop (Ocultos no Desktop) */
+.btn-close-rack {
+  display: none;
+}
+
+.bell-rack-backdrop {
+  display: none;
+}
+
+/* ==========================================================================
+   Responsividade & Otimização Completa para Celulares e Tablets
+   ========================================================================== */
+
+/* Telas Médias e Pequenas (Tablets e Celulares: <= 860px) */
+@media (max-width: 860px) {
+  /* Header compacto */
+  .app-header {
+    padding: 8px 12px;
+    gap: 8px;
+    flex-wrap: wrap;
   }
+
+  .brand {
+    gap: 8px;
+  }
+
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .brand-title {
+    font-size: 1.1rem;
+  }
+
+  .brand-subtitle {
+    display: none; /* Oculta subtítulo para poupar espaço vertical no celular */
+  }
+
+  .score-nav {
+    width: 100%;
+    display: flex;
+    gap: 6px;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .score-select-wrapper {
+    flex: 1;
+    min-width: 0;
+  }
+
   .score-select-wrapper select {
-    min-width: 180px;
+    min-width: 0;
+    width: 100%;
+    font-size: 0.82rem;
+    padding: 7px 28px 7px 10px;
+    text-overflow: ellipsis;
+  }
+
+  .btn-upload, .btn-scan, .btn-delete-score, .btn-icon {
+    padding: 7px 10px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  /* Playback Bar ergonômica em duas faixas funcionais */
+  .playback-bar {
+    padding: 8px 12px;
+    gap: 8px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .playback-controls-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .btn-play {
+    width: 44px;
+    height: 44px;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .btn-stop {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .measure-badge {
+    min-width: 75px;
+    padding: 4px 10px;
+    flex-shrink: 0;
+  }
+
+  .measure-badge-val {
+    font-size: 1rem;
+  }
+
+  /* Faixa de Ferramentas / Prática com rolagem suave ao toque */
+  .speed-group {
+    padding: 4px 8px;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .speed-slider-wrap {
+    min-width: 80px;
+  }
+
+  .speed-presets {
+    gap: 2px;
+  }
+
+  .btn-speed-pill {
+    padding: 3px 6px;
+    font-size: 0.72rem;
+  }
+
+  .practice-toggles {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 3px;
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .practice-toggles::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+
+  .practice-toggles .toggle-pill,
+  .practice-toggles .score-select-wrapper select,
+  .practice-toggles .btn-icon {
+    flex-shrink: 0;
+    font-size: 0.78rem;
+    padding: 5px 10px;
+    height: 32px;
+  }
+
+  /* HUD Compacto */
+  .live-cue-hud {
+    padding: 6px 12px;
+    min-height: 38px;
+    gap: 8px;
+  }
+
+  .hud-message {
+    font-size: 0.8rem;
+    line-height: 1.25;
+  }
+
+  .hud-bell-chip {
+    padding: 2px 8px;
+    font-size: 0.75rem;
+  }
+
+  /* Mesa de Sinos como Drawer / Painel deslizante com Backdrop */
+  .bell-rack-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(2px);
+    z-index: 998;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+
+  .bell-rack-backdrop.active {
+    display: block;
+    opacity: 1;
+  }
+
+  .bell-rack-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 88vw;
+    max-width: 380px;
+    height: 100vh;
+    height: 100dvh;
+    z-index: 999;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.7);
+    transform: translateX(0);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .bell-rack-panel.collapsed {
+    transform: translateX(-105%);
+    width: 88vw;
+    border-right: none;
+    visibility: hidden;
+  }
+
+  .btn-close-rack {
+    display: inline-flex !important;
+    background: rgba(239, 71, 111, 0.2);
+    border-color: rgba(239, 71, 111, 0.4);
+    color: #ff85a1;
+    font-size: 0.75rem;
+    padding: 4px 8px;
+  }
+
+  /* Área da Partitura no Celular */
+  .score-viewport {
+    width: 100%;
+    min-height: 0;
+  }
+
+  #osmd-container {
+    padding: 10px 4px 50px 4px;
+    min-height: 350px;
+    gap: 12px;
+  }
+
+  #osmd-container > div {
+    box-shadow: none;
+    border-radius: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  #osmd-container svg {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  .score-tools {
+    top: 8px;
+    right: 8px;
+    padding: 3px;
+    gap: 4px;
+  }
+
+  .btn-score-tool {
+    width: 30px;
+    height: 30px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Telas Muito Pequenas (Celulares estreitos: <= 480px) */
+@media (max-width: 480px) {
+  .app-header {
+    padding: 6px 10px;
+  }
+
+  .score-nav {
+    gap: 4px;
+  }
+
+  .btn-upload, .btn-scan, .btn-delete-score, .btn-icon {
+    padding: 6px 8px;
+    font-size: 0.75rem;
+  }
+
+  .speed-group {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .speed-presets {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .ringers-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bell-item {
+    min-width: 32px;
+    height: 46px;
+    padding: 3px 2px;
+  }
+
+  .bell-item.accidental {
+    min-width: 28px;
+    height: 38px;
+  }
+
+  .bell-note-name {
+    font-size: 0.75rem;
+  }
+
+  .bell-note-solfege {
+    font-size: 0.55rem;
+  }
+
+  .modal-card {
+    padding: 14px 10px;
+    width: 96vw;
   }
 }

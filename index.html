@@ -137,15 +137,23 @@
   <!-- Conteúdo Principal -->
   <main class="main-content">
     
+    <!-- Backdrop para Fechar Mesa de Sinos no Celular -->
+    <div class="bell-rack-backdrop" id="bell-rack-backdrop"></div>
+
     <!-- Painel Lateral: Mesa de Sinos (Bell Rack) -->
     <aside class="bell-rack-panel" id="bell-rack-panel">
       <div class="panel-header">
         <div class="panel-title">
-          <span>🔔</span> Mesa de Sinos (Meus Sinos)
+          <span>🔔</span> Mesa de Sinos
         </div>
-        <button class="btn-icon" id="btn-clear-bells" style="padding: 4px 8px; font-size: 0.75rem;" title="Desmarcar todos os sinos">
-          Limpar
-        </button>
+        <div class="panel-header-actions" style="display: flex; gap: 6px; align-items: center;">
+          <button class="btn-icon" id="btn-clear-bells" style="padding: 4px 8px; font-size: 0.75rem;" title="Desmarcar todos os sinos">
+            Limpar
+          </button>
+          <button class="btn-icon btn-close-rack" id="btn-close-rack" title="Fechar Mesa de Sinos">
+            ✕ Fechar
+          </button>
+        </div>
       </div>
 
       <div class="panel-body">

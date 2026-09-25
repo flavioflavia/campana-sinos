@@ -142,6 +142,8 @@
     btnZoomReset: document.getElementById('btn-zoom-reset'),
     btnFullscreen: document.getElementById('btn-fullscreen'),
     btnToggleRack: document.getElementById('btn-toggle-rack'),
+    btnCloseRack: document.getElementById('btn-close-rack'),
+    bellRackBackdrop: document.getElementById('bell-rack-backdrop'),
     bellRackPanel: document.getElementById('bell-rack-panel'),
     bellRackBoard: document.getElementById('bell-rack-board'),
     assignedBellsList: document.getElementById('assigned-bells-list'),
@@ -178,10 +180,31 @@
     buildBellRackUI();
     buildRingerPresetsUI();
     loadStoredPreferences();
+
+    // No celular/tablet, a mesa de sinos começa recolhida para dar destaque total à partitura
+    if (window.innerWidth <= 860) {
+      state.isRackCollapsed = true;
+      dom.bellRackPanel.classList.add('collapsed');
+      dom.btnToggleRack.classList.remove('active');
+    }
+
     await loadServerScoresList();
     setupEventListeners();
     initOSMD();
     loadScore(state.currentScoreUrl);
+
+    // Ajusta o layout da partitura dinamicamente ao girar o celular (retrato/paisagem)
+    window.addEventListener('resize', () => {
+      clearTimeout(window._resizeScoreTimer);
+      window._resizeScoreTimer = setTimeout(() => {
+        if (osmd) {
+          try {
+            osmd.render();
+            scorePlayer.refreshStaticHighlights();
+          } catch (e) {}
+        }
+      }, 250);
+    });
   });
 
   async function loadServerScoresList() {
@@ -698,11 +721,28 @@
   }
 
   function setupEventListeners() {
+    function toggleRack(forceState) {
+      if (typeof forceState === 'boolean') {
+        state.isRackCollapsed = forceState;
+      } else {
+        state.isRackCollapsed = !state.isRackCollapsed;
+      }
+      dom.bellRackPanel.classList.toggle('collapsed', state.isRackCollapsed);
+      dom.btnToggleRack.classList.toggle('active', !state.isRackCollapsed);
+      if (dom.bellRackBackdrop) {
+        dom.bellRackBackdrop.classList.toggle('active', !state.isRackCollapsed);
+      }
+    }
+
     // Play / Pause
     dom.btnPlay.addEventListener('click', () => {
       if (scorePlayer.isPlaying) {
         scorePlayer.pause();
       } else {
+        // No celular, fecha a mesa de sinos ao dar play para ver a partitura
+        if (window.innerWidth <= 860 && !state.isRackCollapsed) {
+          toggleRack(true);
+        }
         scorePlayer.play();
       }
     });
@@ -871,10 +911,20 @@
 
     // Toggle da Mesa de Sinos
     dom.btnToggleRack.addEventListener('click', () => {
-      state.isRackCollapsed = !state.isRackCollapsed;
-      dom.bellRackPanel.classList.toggle('collapsed', state.isRackCollapsed);
-      dom.btnToggleRack.classList.toggle('active', !state.isRackCollapsed);
+      toggleRack();
     });
+
+    if (dom.btnCloseRack) {
+      dom.btnCloseRack.addEventListener('click', () => {
+        toggleRack(true);
+      });
+    }
+
+    if (dom.bellRackBackdrop) {
+      dom.bellRackBackdrop.addEventListener('click', () => {
+        toggleRack(true);
+      });
+    }
 
     // Limpar Sinos
     dom.btnClearBells.addEventListener('click', () => {
