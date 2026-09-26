@@ -315,7 +315,7 @@ def convert_msf(msf_path, output_xml_path, song_title=None, job_file=None, user_
                 with open(temp_pdf_to_clean, "wb") as f_tmp:
                     f_tmp.write(pdf_bytes)
                 print(f"[*] Fazendo upload do PDF grande ({pdf_size_kb // 1024} MB) para Gemini Files API...")
-                uploaded_gemini_file = client.files.upload(file=temp_pdf_to_clean, mime_type="application/pdf")
+                uploaded_gemini_file = client.files.upload(file=temp_pdf_to_clean, config=dict(mime_type="application/pdf"))
                 pdf_input = uploaded_gemini_file
             else:
                 pdf_input = types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf")
