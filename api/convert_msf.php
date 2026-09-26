@@ -1,7 +1,7 @@
 <?php
 /**
  * API Endpoint: /api/convert_msf.php
- * Recebe arquivo .msf (MobileSheets Song File) e inicia a conversão para MusicXML
+ * Recebe arquivo .pdf ou .msf/.msb e inicia a conversão para MusicXML
  * via convert_msf.py e Google Gemini.
  */
 
@@ -40,26 +40,27 @@ if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
 
 if (!$fileField || empty($fileField['name'])) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Nenhum arquivo .msf foi recebido no upload.']);
+    echo json_encode(['success' => false, 'error' => 'Nenhum arquivo (.pdf, .msf ou .msb) foi recebido no upload.']);
     exit;
 }
 
 $origName = $fileField['name'];
 $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
 
-if ($ext !== 'msf' && $ext !== 'msb') {
+if (!in_array($ext, ['msf', 'msb', 'pdf'])) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Extensão de arquivo inválida. Apenas arquivos .msf ou .msb são aceitos neste conversor.']);
+    echo json_encode(['success' => false, 'error' => 'Extensão de arquivo inválida. Apenas arquivos .pdf, .msf ou .msb são aceitos neste conversor.']);
     exit;
 }
 
 $title = trim($_POST['title'] ?? pathinfo($origName, PATHINFO_FILENAME));
-$jobId = 'msf_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4));
+$prefix = ($ext === 'pdf') ? 'pdf_' : 'msf_';
+$jobId = $prefix . date('Ymd_His') . '_' . bin2hex(random_bytes(4));
 
-$savedMsf = $uploadDir . $jobId . '.msf';
-if (!move_uploaded_file($fileField['tmp_name'], $savedMsf)) {
+$savedInput = $uploadDir . $jobId . '.' . $ext;
+if (!move_uploaded_file($fileField['tmp_name'], $savedInput)) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Falha ao salvar o arquivo .msf no servidor.']);
+    echo json_encode(['success' => false, 'error' => 'Falha ao salvar o arquivo no servidor.']);
     exit;
 }
 
@@ -67,7 +68,7 @@ if (!move_uploaded_file($fileField['tmp_name'], $savedMsf)) {
 $cleanTitle = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $title);
 $cleanTitle = preg_replace('/_+/', '_', trim($cleanTitle, '_'));
 if (empty($cleanTitle)) {
-    $cleanTitle = 'musica_msf_' . date('Ymd_His');
+    $cleanTitle = 'musica_' . $ext . '_' . date('Ymd_His');
 }
 
 $outputXmlFilename = strtolower($cleanTitle) . '.musicxml';
@@ -81,7 +82,7 @@ $jobFile = $uploadDir . 'job_' . $jobId . '.json';
 $initialStatus = [
     'jobId' => $jobId,
     'status' => 'pending',
-    'message' => 'Arquivo .msf recebido. Iniciando descompactação e conversão...',
+    'message' => ($ext === 'pdf' ? 'Partitura PDF recebida. Iniciando processamento com Gemini...' : 'Arquivo .msf recebido. Iniciando descompactação e conversão...'),
     'percent' => 5,
     'title' => $title,
     'outputFilename' => $outputXmlFilename,
@@ -97,7 +98,7 @@ $cmd = sprintf(
     '%s %s %s -o %s -t %s -j %s --user-name %s --user-email %s > /dev/null 2>&1 &',
     escapeshellarg($pythonBin),
     escapeshellarg($scriptPath),
-    escapeshellarg($savedMsf),
+    escapeshellarg($savedInput),
     escapeshellarg($outputPath),
     escapeshellarg($title),
     escapeshellarg($jobFile),

@@ -153,6 +153,12 @@ def extract_from_msf(msf_path):
 
     results["raw_bytes"] = data
 
+    # 0. Se for um arquivo PDF diretamente
+    if msf_path.lower().endswith('.pdf') or data.startswith(b'%PDF-'):
+        print(f"[✓] Arquivo PDF direto detectado ({len(data)} bytes).")
+        results["pdfs"].append((os.path.basename(msf_path), data))
+        return results
+
     # 1. Tenta como ZIP
     if data.startswith(b'PK\x03\x04') or zipfile.is_zipfile(msf_path):
         try:
@@ -292,12 +298,12 @@ def convert_msf(msf_path, output_xml_path, song_title=None, job_file=None, user_
 
     # Caso 2: Contém PDF embutido
     if extracted["pdfs"]:
-        update_job_status(job_file, "processing", f"Partitura PDF extraída do .msf ({len(extracted['pdfs'])} documento(s)). Transcrevendo com IA...", 30)
+        update_job_status(job_file, "processing", f"Processando partitura em PDF ({len(extracted['pdfs'][0][1]) // 1024} KB). Enviando para Gemini...", 30)
         pdf_name, pdf_bytes = extracted["pdfs"][0]
-        print(f"[*] Enviando PDF ({len(pdf_bytes)} bytes) para transcrição via Gemini Vision...")
+        print(f"[*] Enviando PDF ({len(pdf_bytes)} bytes) para transcrição via Gemini...")
         
         pdf_part = types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf")
-        prompt = f"Transcreva a partitura musical deste PDF em anexo com o título '{title}'. Retorne o arquivo MusicXML 3.1 completo para Orquestra de Sinos (Handbells com 2 pautas Clave de Sol e Fá)."
+        prompt = f"Transcreva a partitura musical deste PDF em anexo com o título '{title}'. Se houver múltiplas páginas, transcreva todas as páginas sequencialmente compasso por compasso. Retorne o arquivo MusicXML 3.1 completo e bem-formatado para Orquestra de Sinos (Handbells com 2 pautas Clave de Sol e Fá)."
         
         update_job_status(job_file, "transcribing", "Gemini gerando notação MusicXML 3.1 com claves e tempos...", 60)
         response_text = call_gemini([prompt, pdf_part])
@@ -306,7 +312,7 @@ def convert_msf(msf_path, output_xml_path, song_title=None, job_file=None, user_
         with open(output_xml_path, "w", encoding="utf-8") as out:
             out.write(final_xml)
         save_score_meta(output_xml_path, title, user_name, user_email)
-        update_job_status(job_file, "completed", "Conversão de .msf para MusicXML concluída!", 100, {"output": os.path.basename(output_xml_path)})
+        update_job_status(job_file, "completed", "Conversão de partitura PDF/MSF para MusicXML concluída com sucesso!", 100, {"output": os.path.basename(output_xml_path)})
         print(f"[✓] Partitura convertida e salva em: {output_xml_path}")
         return True
 

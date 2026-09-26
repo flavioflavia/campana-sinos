@@ -1169,8 +1169,8 @@
 
     const ext = file.name.split('.').pop().toLowerCase();
 
-    // Se o usuário arrastou/enviou arquivo do MobileSheets (.msf ou .msb), abre o conversor MSF
-    if (['msf', 'msb'].includes(ext)) {
+    // Se o usuário arrastou/enviou arquivo do MobileSheets (.msf ou .msb) ou partitura em PDF, abre o conversor
+    if (['msf', 'msb', 'pdf'].includes(ext)) {
       openMsfModalWithFile(file);
       return;
     }
@@ -2068,8 +2068,8 @@
   function openMsfModalWithFile(file) {
     if (!file) return;
     const ext = file.name.split('.').pop().toLowerCase();
-    if (ext !== 'msf' && ext !== 'msb') {
-      alert('Por favor, selecione um arquivo de partitura do MobileSheets (.msf ou .msb).');
+    if (ext !== 'msf' && ext !== 'msb' && ext !== 'pdf') {
+      alert('Por favor, selecione um arquivo de partitura (.pdf, .msf ou .msb).');
       return;
     }
 
@@ -2093,19 +2093,21 @@
 
   async function submitMsfConversion() {
     if (!state.msfSelectedFile) {
-      alert('Nenhum arquivo .msf selecionado.');
+      alert('Nenhum arquivo selecionado.');
       return;
     }
 
     const file = state.msfSelectedFile;
+    const isPdf = file.name.toLowerCase().endsWith('.pdf');
     const title = (dom.msfTitleInput ? dom.msfTitleInput.value.trim() : '') || file.name.replace(/\.[^/.]+$/, '');
 
     dom.msfStatus.style.display = 'flex';
-    dom.msfStatusText.textContent = `Enviando "${file.name}" para o conversor de MobileSheets...`;
+    dom.msfStatusText.textContent = `Enviando "${file.name}" para o conversor de partituras...`;
     dom.btnSubmitMsf.disabled = true;
     if (dom.btnCancelMsf) dom.btnCancelMsf.disabled = true;
 
     const formData = new FormData();
+    formData.append('file', file);
     formData.append('msf_file', file);
     formData.append('title', title);
     formData.append('user_name', state.currentUser ? state.currentUser.name : 'Sineiro');
@@ -2129,11 +2131,13 @@
       }
 
       if (!data.success || !data.jobId) {
-        throw new Error(data.error || 'Falha ao iniciar conversão do arquivo .msf.');
+        throw new Error(data.error || 'Falha ao iniciar conversão da partitura.');
       }
 
       const jobId = data.jobId;
-      dom.msfStatusText.textContent = 'Descompactando .msf e transcrevendo partitura com Google Gemini...';
+      dom.msfStatusText.textContent = isPdf
+        ? 'Processando partitura em PDF e transcrevendo com Google Gemini...'
+        : 'Descompactando .msf e transcrevendo partitura com Google Gemini...';
 
       // Polling a cada 2.5s
       let completed = false;
@@ -2142,7 +2146,7 @@
 
       while (!completed) {
         if (Date.now() - startTime > maxTimeoutMs) {
-          throw new Error('Tempo limite excedido na conversão do arquivo .msf.');
+          throw new Error('Tempo limite excedido na conversão da partitura.');
         }
 
         await new Promise(r => setTimeout(r, 2500));
@@ -2189,16 +2193,16 @@
             state.msfSelectedFile = null;
             if (dom.msfSelectedFileInfo) dom.msfSelectedFileInfo.style.display = 'none';
             if (dom.msfTitleInput) dom.msfTitleInput.value = '';
-            setHudMessage(`Música "${scoreTitle}" convertida de .msf e salva no acervo!`, 'ready');
+            setHudMessage(`Música "${scoreTitle}" convertida com sucesso e salva no acervo!`, 'ready');
           }, 1200);
           return;
         } else if (job.status === 'error') {
           completed = true;
-          throw new Error(job.message || job.error || 'Erro na conversão do arquivo .msf.');
+          throw new Error(job.message || job.error || 'Erro na conversão da partitura.');
         }
       }
     } catch (err) {
-      console.error('Erro na conversão .msf:', err);
+      console.error('Erro na conversão:', err);
       dom.msfStatusText.textContent = `Erro: ${err.message}`;
       dom.btnSubmitMsf.disabled = false;
       if (dom.btnCancelMsf) dom.btnCancelMsf.disabled = false;
