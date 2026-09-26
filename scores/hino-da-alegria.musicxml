@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 3.1 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
+<?xml version='1.0' encoding='utf-8'?>
 <score-partwise version="3.1">
   <work>
     <work-title>Hino à Alegria (Ode to Joy)</work-title>
@@ -49,7 +48,7 @@
             <per-minute>104</per-minute>
           </metronome>
         </direction-type>
-        <sound tempo="104"/>
+        <sound tempo="104" />
       </direction>
       <note>
         <pitch>
@@ -254,7 +253,7 @@
         <duration>6</duration>
         <voice>1</voice>
         <type>quarter</type>
-        <dot/>
+        <dot />
         <staff>1</staff>
       </note>
       <note>
@@ -505,7 +504,7 @@
         <duration>6</duration>
         <voice>1</voice>
         <type>quarter</type>
-        <dot/>
+        <dot />
         <staff>1</staff>
       </note>
       <note>
@@ -1036,7 +1035,7 @@
         <duration>6</duration>
         <voice>1</voice>
         <type>quarter</type>
-        <dot/>
+        <dot />
         <staff>1</staff>
       </note>
       <note>

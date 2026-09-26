@@ -149,7 +149,170 @@ def repair_xml(xml_str):
     if '</score-partwise>' not in xml_str and '<score-partwise' in xml_str:
         xml_str += '\n</score-partwise>\n'
 
+    # Normalização e cura estrutural completa (ElementTree)
+    try:
+        xml_str = structural_xml_repair(xml_str)
+    except Exception as e:
+        print(f"[!] Aviso: structural_xml_repair falhou: {e}")
+
     return xml_str
+
+def get_duration_type(duration, divisions=2):
+    ratio = duration / max(1, divisions)
+    if ratio >= 4.0: return "whole"
+    elif ratio >= 3.0: return "half"
+    elif ratio >= 2.0: return "half"
+    elif ratio >= 1.5: return "quarter"
+    elif ratio >= 1.0: return "quarter"
+    elif ratio >= 0.5: return "eighth"
+    else: return "16th"
+
+def get_type_duration(note_type, divisions=2):
+    mapping = {
+        "whole": int(divisions * 4),
+        "half": int(divisions * 2),
+        "quarter": int(divisions * 1),
+        "eighth": max(1, int(divisions * 0.5)),
+        "16th": max(1, int(divisions * 0.25))
+    }
+    return mapping.get(note_type, divisions)
+
+def structural_xml_repair(xml_str):
+    try:
+        root = ET.fromstring(xml_str)
+    except Exception:
+        return xml_str
+
+    divisions = 2
+    m1 = root.find(".//measure[1]")
+    if m1 is not None:
+        attr = m1.find("attributes")
+        if attr is not None and attr.findtext("divisions"):
+            try:
+                divisions = int(attr.findtext("divisions"))
+            except:
+                pass
+
+    for m in root.findall(".//measure"):
+        m_attr = m.find("attributes")
+        if m_attr is not None and m_attr.findtext("divisions"):
+            try:
+                divisions = int(m_attr.findtext("divisions"))
+            except:
+                pass
+
+        current_staff = 1
+        current_voice = 1
+        last_non_chord_note = None
+
+        for child in list(m):
+            if child.tag == "backup":
+                if current_staff == 1:
+                    current_staff = 2
+                    current_voice = 2
+                else:
+                    current_voice += 1
+                last_non_chord_note = None
+                continue
+
+            if child.tag != "note":
+                continue
+
+            n = child
+            is_chord = n.find("chord") is not None
+            pitch = n.find("pitch")
+            rest = n.find("rest")
+
+            if is_chord and last_non_chord_note is not None:
+                if n.find("duration") is None and last_non_chord_note.find("duration") is not None:
+                    dur_elem = ET.Element("duration")
+                    dur_elem.text = last_non_chord_note.findtext("duration")
+                    n.append(dur_elem)
+                if n.find("type") is None and last_non_chord_note.find("type") is not None:
+                    type_elem = ET.Element("type")
+                    type_elem.text = last_non_chord_note.findtext("type")
+                    n.append(type_elem)
+                if n.find("staff") is None:
+                    staff_val = last_non_chord_note.findtext("staff") or str(current_staff)
+                    staff_elem = ET.Element("staff")
+                    staff_elem.text = staff_val
+                    n.append(staff_elem)
+                if n.find("voice") is None:
+                    voice_val = last_non_chord_note.findtext("voice") or str(current_voice)
+                    voice_elem = ET.Element("voice")
+                    voice_elem.text = voice_val
+                    n.append(voice_elem)
+                continue
+
+            last_non_chord_note = n
+
+            staff_elem = n.find("staff")
+            if staff_elem is None:
+                staff_elem = ET.Element("staff")
+                staff_elem.text = str(current_staff)
+                n.append(staff_elem)
+            else:
+                try:
+                    current_staff = int(staff_elem.text)
+                except:
+                    current_staff = 1
+
+            voice_elem = n.find("voice")
+            if voice_elem is None:
+                voice_elem = ET.Element("voice")
+                voice_elem.text = "1" if current_staff == 1 else "2"
+                n.append(voice_elem)
+
+            dur_elem = n.find("duration")
+            typ_elem = n.find("type")
+
+            if dur_elem is None and typ_elem is not None:
+                dur_val = get_type_duration(typ_elem.text, divisions)
+                dur_elem = ET.Element("duration")
+                dur_elem.text = str(dur_val)
+                n.append(dur_elem)
+
+            if typ_elem is None and dur_elem is not None:
+                try:
+                    d_int = int(dur_elem.text)
+                    t_val = get_duration_type(d_int, divisions)
+                    typ_elem = ET.Element("type")
+                    typ_elem.text = t_val
+                    n.append(typ_elem)
+                except:
+                    pass
+
+            if rest is not None:
+                if typ_elem is None:
+                    typ_elem = ET.Element("type")
+                    typ_elem.text = "whole"
+                    n.append(typ_elem)
+                if dur_elem is None:
+                    dur_elem = ET.Element("duration")
+                    dur_elem.text = str(divisions * 4)
+                    n.append(dur_elem)
+
+    DTD_ORDER = [
+        "grace", "cue", "chord", "pitch", "unpitched", "rest", "duration",
+        "tie", "voice", "type", "dot", "accidental", "time-modification",
+        "stem", "notehead", "staff", "beam", "notations", "lyric"
+    ]
+
+    for m in root.findall(".//measure"):
+        for n in m.findall("note"):
+            children = list(n)
+            def key_func(elem):
+                if elem.tag in DTD_ORDER:
+                    return DTD_ORDER.index(elem.tag)
+                return 999
+            children_sorted = sorted(children, key=key_func)
+            for c in children:
+                n.remove(c)
+            for c in children_sorted:
+                n.append(c)
+
+    return ET.tostring(root, encoding="unicode", xml_declaration=True)
+
 
 def extract_from_msf(msf_path):
     """

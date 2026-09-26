@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 3.1 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
+<?xml version='1.0' encoding='utf-8'?>
 <score-partwise version="3.1">
   <work>
     <work-title>Lord Jesus Christ with Us Abide</work-title>
@@ -42,7 +41,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
@@ -65,7 +64,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
@@ -88,7 +87,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>E</step>
           <octave>5</octave>
@@ -111,7 +110,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
@@ -226,7 +225,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>E</step>
           <octave>5</octave>
@@ -238,7 +237,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <rest/>
+        <rest />
         <duration>4</duration>
         <voice>1</voice>
         <type>quarter</type>
@@ -256,7 +255,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>E</step>
           <octave>5</octave>
@@ -268,7 +267,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <rest/>
+        <rest />
         <duration>4</duration>
         <voice>1</voice>
         <type>quarter</type>
@@ -335,7 +334,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
@@ -358,7 +357,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
@@ -381,7 +380,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>E</step>
           <octave>5</octave>
@@ -404,7 +403,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>5</octave>
@@ -478,10 +477,10 @@
     </measure>
 <measure number="42">
       <note>
-        <rest/>
+        <rest />
         <duration>16</duration>
         <voice>1</voice>
-        <staff>1</staff>
+        <type>whole</type><staff>1</staff>
       </note>
       <backup>
         <duration>16</duration>
@@ -497,7 +496,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -508,7 +507,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>4</octave>
@@ -579,7 +578,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -590,7 +589,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>4</octave>
@@ -673,7 +672,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -684,7 +683,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>4</octave>
@@ -767,7 +766,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -778,7 +777,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>4</octave>
@@ -849,7 +848,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -860,7 +859,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>E</step>
           <octave>4</octave>
@@ -944,7 +943,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -955,7 +954,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>4</octave>
@@ -1039,7 +1038,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -1050,7 +1049,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>E</step>
           <octave>4</octave>
@@ -1134,7 +1133,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -1145,7 +1144,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>4</octave>
@@ -1179,7 +1178,7 @@
         <stem>up</stem>
         <staff>1</staff>
         <notations>
-          <fermata type="upright"/>
+          <fermata type="upright" />
         </notations>
       </note>
       <backup>
@@ -1196,7 +1195,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -1207,7 +1206,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>4</octave>
@@ -1219,7 +1218,7 @@
       </note>
     </measure>
 <measure number="26">
-      <print new-page="yes"/>
+      <print new-page="yes" />
       <attributes>
         <divisions>4</divisions>
         <key>
@@ -1245,7 +1244,7 @@
         </direction-type>
         <staff>1</staff>
       </direction>
-      <!-- Staff 1, Voice 1 -->
+      
       <note>
         <pitch>
           <step>D</step>
@@ -1280,7 +1279,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
@@ -1303,7 +1302,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>5</octave>
@@ -1326,7 +1325,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>5</octave>
@@ -1340,7 +1339,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2, Voice 5 -->
+      
       <note>
         <pitch>
           <step>C</step>
@@ -1353,7 +1352,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>3</octave>
@@ -1376,7 +1375,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
@@ -1389,7 +1388,7 @@
       </note>
     </measure>
 <measure number="27">
-      <!-- Staff 1, Voice 1 -->
+      
       <note>
         <pitch>
           <step>G</step>
@@ -1424,7 +1423,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -1448,7 +1447,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>5</octave>
@@ -1471,7 +1470,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>5</octave>
@@ -1485,7 +1484,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2, Voice 5 -->
+      
       <note>
         <pitch>
           <step>C</step>
@@ -1498,7 +1497,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>3</octave>
@@ -1521,7 +1520,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>E</step>
           <octave>3</octave>
@@ -1534,7 +1533,7 @@
       </note>
     </measure>
 <measure number="28">
-      <!-- Staff 1, Voice 1 -->
+      
       <note>
         <pitch>
           <step>F</step>
@@ -1569,7 +1568,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>5</octave>
@@ -1592,7 +1591,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>5</octave>
@@ -1615,7 +1614,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>5</octave>
@@ -1629,7 +1628,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2, Voice 5 -->
+      
       <note>
         <pitch>
           <step>B</step>
@@ -1643,7 +1642,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>3</octave>
@@ -1666,7 +1665,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>3</octave>
@@ -1679,7 +1678,7 @@
       </note>
     </measure>
 <measure number="29">
-      <!-- Staff 1, Voice 1 -->
+      
       <note>
         <pitch>
           <step>E</step>
@@ -1692,7 +1691,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>5</octave>
@@ -1715,7 +1714,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>5</octave>
@@ -1738,7 +1737,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>5</octave>
@@ -1752,7 +1751,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 1, Voice 2 -->
+      
       <note>
         <pitch>
           <step>C</step>
@@ -1766,7 +1765,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2, Voice 5 -->
+      
       <note>
         <pitch>
           <step>C</step>
@@ -1779,7 +1778,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
@@ -1801,7 +1800,7 @@
       <direction placement="below">
         <direction-type>
           <dynamics>
-            <f/>
+            <f />
           </dynamics>
         </direction-type>
         <staff>1</staff>
@@ -1812,7 +1811,7 @@
         </direction-type>
         <staff>2</staff>
       </direction>
-      <!-- Staff 1, Voice 1 -->
+      
       <note>
         <rest>
           <display-step>B</display-step>
@@ -1835,7 +1834,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>5</octave>
@@ -1858,7 +1857,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -1882,7 +1881,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>6</octave>
@@ -1902,7 +1901,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 1, Voice 2 -->
+      
       <note>
         <rest>
           <display-step>G</display-step>
@@ -1961,7 +1960,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2, Voice 5 (stems up eighths) -->
+      
       <note>
         <pitch>
           <step>F</step>
@@ -1992,13 +1991,13 @@
         <duration>12</duration>
         <voice>5</voice>
         <type>half</type>
-        <dot/>
+        <dot />
         <staff>2</staff>
       </note>
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2, Voice 6 (stems down dotted half + quarter) -->
+      
       <note>
         <pitch>
           <step>F</step>
@@ -2007,7 +2006,7 @@
         <duration>12</duration>
         <voice>6</voice>
         <type>half</type>
-        <dot/>
+        <dot />
         <stem>down</stem>
         <staff>2</staff>
       </note>
@@ -2023,7 +2022,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>3</octave>
@@ -2042,7 +2041,7 @@
         </direction-type>
         <staff>2</staff>
       </direction>
-      <!-- Staff 1, Voice 1 -->
+      
       <note>
         <pitch>
           <step>B</step>
@@ -2056,7 +2055,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>6</octave>
@@ -2079,7 +2078,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -2103,7 +2102,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>6</octave>
@@ -2123,7 +2122,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 1, Voice 2 -->
+      
       <note>
         <rest>
           <display-step>G</display-step>
@@ -2182,7 +2181,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2, Voice 5 -->
+      
       <note>
         <pitch>
           <step>F</step>
@@ -2213,13 +2212,13 @@
         <duration>12</duration>
         <voice>5</voice>
         <type>half</type>
-        <dot/>
+        <dot />
         <staff>2</staff>
       </note>
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2, Voice 6 -->
+      
       <note>
         <pitch>
           <step>F</step>
@@ -2228,7 +2227,7 @@
         <duration>12</duration>
         <voice>6</voice>
         <type>half</type>
-        <dot/>
+        <dot />
         <stem>down</stem>
         <staff>2</staff>
       </note>
@@ -2244,7 +2243,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>3</octave>
@@ -2257,7 +2256,7 @@
       </note>
     </measure>
 <measure number="32">
-      <!-- Staff 1, Voice 1 -->
+      
       <note>
         <pitch>
           <step>B</step>
@@ -2271,7 +2270,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>6</octave>
@@ -2294,7 +2293,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>6</octave>
@@ -2317,7 +2316,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -2341,7 +2340,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>5</octave>
@@ -2355,7 +2354,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 1, Voice 2 -->
+      
       <note>
         <rest>
           <display-step>G</display-step>
@@ -2443,7 +2442,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2, Voice 5 -->
+      
       <note>
         <pitch>
           <step>B</step>
@@ -2457,7 +2456,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
@@ -2480,7 +2479,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>3</octave>
@@ -2503,7 +2502,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>E</step>
           <octave>3</octave>
@@ -2526,7 +2525,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>3</octave>
@@ -2545,7 +2544,7 @@
         </direction-type>
         <staff>2</staff>
       </direction>
-      <!-- Staff 1, Voice 1 -->
+      
       <note>
         <rest>
           <display-step>B</display-step>
@@ -2568,7 +2567,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>5</octave>
@@ -2591,7 +2590,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -2615,7 +2614,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>6</octave>
@@ -2635,7 +2634,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2, Voice 5 -->
+      
       <note>
         <pitch>
           <step>F</step>
@@ -2693,7 +2692,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2, Voice 6 -->
+      
       <note>
         <pitch>
           <step>F</step>
@@ -2702,7 +2701,7 @@
         <duration>12</duration>
         <voice>6</voice>
         <type>half</type>
-        <dot/>
+        <dot />
         <stem>down</stem>
         <staff>2</staff>
       </note>
@@ -2718,7 +2717,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
@@ -2731,7 +2730,7 @@
       </note>
     </measure>
 <measure number="34">
-      <!-- Staff 1, Voice 1 -->
+      
       <note>
         <pitch>
           <step>B</step>
@@ -2745,7 +2744,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>6</octave>
@@ -2768,7 +2767,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>6</octave>
@@ -2791,7 +2790,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -2809,29 +2808,29 @@
           <octave>5</octave>
         </pitch>
         <duration>4</duration>
-        <voice>1</voice>
+        <tie type="start" />
+      <voice>1</voice>
         <type>quarter</type>
         <stem>up</stem>
         <staff>1</staff>
-        <tie type="start"/>
-      </note>
+        </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>5</octave>
         </pitch>
         <duration>4</duration>
-        <voice>1</voice>
+        <tie type="start" />
+      <voice>1</voice>
         <type>quarter</type>
         <stem>up</stem>
         <staff>1</staff>
-        <tie type="start"/>
-      </note>
+        </note>
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 1, Voice 2 -->
+      
       <note>
         <rest>
           <display-step>G</display-step>
@@ -2919,7 +2918,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2, Voice 5 -->
+      
       <note>
         <pitch>
           <step>C</step>
@@ -2932,7 +2931,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>E</step>
           <octave>3</octave>
@@ -2955,7 +2954,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>3</octave>
@@ -2978,7 +2977,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
@@ -3001,7 +3000,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>3</octave>
@@ -3020,32 +3019,32 @@
         </direction-type>
         <staff>1</staff>
       </direction>
-      <!-- Staff 1, Voice 1 -->
+      
       <note id="chord-35-1">
         <pitch>
           <step>F</step>
           <octave>5</octave>
         </pitch>
         <duration>4</duration>
-        <voice>1</voice>
+        <tie type="stop" />
+      <voice>1</voice>
         <type>quarter</type>
         <stem>up</stem>
         <staff>1</staff>
-        <tie type="stop"/>
-      </note>
+        </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>5</octave>
         </pitch>
         <duration>4</duration>
-        <voice>1</voice>
+        <tie type="stop" />
+      <voice>1</voice>
         <type>quarter</type>
         <stem>up</stem>
         <staff>1</staff>
-        <tie type="stop"/>
-      </note>
+        </note>
       <note>
         <pitch>
           <step>G</step>
@@ -3058,7 +3057,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -3082,7 +3081,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>6</octave>
@@ -3105,7 +3104,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -3126,7 +3125,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 1, Voice 2 -->
+      
       <note>
         <rest>
           <display-step>G</display-step>
@@ -3184,7 +3183,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2, Voice 5 -->
+      
       <note>
         <rest>
           <display-step>C</display-step>
@@ -3230,7 +3229,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2, Voice 6 -->
+      
       <note>
         <pitch>
           <step>C</step>
@@ -3271,7 +3270,7 @@
         </direction-type>
         <staff>2</staff>
       </direction>
-      <!-- Staff 1, Voice 1 -->
+      
       <note>
         <rest>
           <display-step>B</display-step>
@@ -3294,7 +3293,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>5</octave>
@@ -3317,7 +3316,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -3341,7 +3340,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>6</octave>
@@ -3361,7 +3360,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 1, Voice 2 -->
+      
       <note>
         <rest>
           <display-step>G</display-step>
@@ -3420,7 +3419,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2, Voice 5 -->
+      
       <note>
         <pitch>
           <step>F</step>
@@ -3451,13 +3450,13 @@
         <duration>12</duration>
         <voice>5</voice>
         <type>half</type>
-        <dot/>
+        <dot />
         <staff>2</staff>
       </note>
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2, Voice 6 -->
+      
       <note>
         <pitch>
           <step>F</step>
@@ -3466,7 +3465,7 @@
         <duration>12</duration>
         <voice>6</voice>
         <type>half</type>
-        <dot/>
+        <dot />
         <stem>down</stem>
         <staff>2</staff>
       </note>
@@ -3482,7 +3481,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>3</octave>
@@ -3501,7 +3500,7 @@
         </direction-type>
         <staff>2</staff>
       </direction>
-      <!-- Staff 1, Voice 1 -->
+      
       <note>
         <pitch>
           <step>B</step>
@@ -3515,7 +3514,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>6</octave>
@@ -3538,7 +3537,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -3562,7 +3561,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>6</octave>
@@ -3582,7 +3581,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 1, Voice 2 -->
+      
       <note>
         <rest>
           <display-step>G</display-step>
@@ -3641,7 +3640,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2, Voice 5 -->
+      
       <note>
         <pitch>
           <step>F</step>
@@ -3672,13 +3671,13 @@
         <duration>12</duration>
         <voice>5</voice>
         <type>half</type>
-        <dot/>
+        <dot />
         <staff>2</staff>
       </note>
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2, Voice 6 -->
+      
       <note>
         <pitch>
           <step>F</step>
@@ -3687,7 +3686,7 @@
         <duration>12</duration>
         <voice>6</voice>
         <type>half</type>
-        <dot/>
+        <dot />
         <stem>down</stem>
         <staff>2</staff>
       </note>
@@ -3703,7 +3702,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>3</octave>
@@ -3716,7 +3715,7 @@
       </note>
     </measure>
 <measure number="38">
-      <!-- Staff 1, Voice 1 -->
+      
       <note>
         <pitch>
           <step>B</step>
@@ -3730,7 +3729,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>6</octave>
@@ -3753,7 +3752,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>6</octave>
@@ -3776,7 +3775,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -3797,7 +3796,7 @@
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2, Voice 5 -->
+      
       <note>
         <pitch>
           <step>F</step>
@@ -3810,7 +3809,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>3</octave>
@@ -3878,7 +3877,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>3</octave>
@@ -3891,7 +3890,7 @@
       </note>
     </measure>
 <measure number="10">
-      <print new-page="yes"/>
+      <print new-page="yes" />
       <attributes>
         <divisions>4</divisions>
         <key>
@@ -3915,19 +3914,19 @@
       <direction placement="above">
         <direction-type>
           <dynamics default-y="10">
-            <mf/>
+            <mf />
           </dynamics>
         </direction-type>
-        <sound dynamics="71"/>
+        <sound dynamics="71" />
       </direction>
       <direction placement="above">
         <direction-type>
           <words font-style="italic">R</words>
         </direction-type>
       </direction>
-      <!-- Staff 1 -->
+      
       <note>
-        <rest/>
+        <rest />
         <duration>4</duration>
         <voice>1</voice>
         <type>quarter</type>
@@ -3963,7 +3962,7 @@
         <type>quarter</type>
         <staff>1</staff>
       </note>
-      <!-- Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -3978,7 +3977,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>3</octave>
@@ -3989,7 +3988,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>3</octave>
@@ -4000,7 +3999,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -4012,7 +4011,7 @@
       </note>
     </measure>
 <measure number="11">
-      <!-- Staff 1 -->
+      
       <note>
         <pitch>
           <step>B</step>
@@ -4034,7 +4033,7 @@
         <type>half</type>
         <staff>1</staff>
       </note>
-      <!-- Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -4049,7 +4048,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -4061,7 +4060,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>4</octave>
@@ -4082,7 +4081,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>3</octave>
@@ -4093,7 +4092,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -4105,7 +4104,7 @@
       </note>
     </measure>
 <measure number="12">
-      <!-- Staff 1 -->
+      
       <note>
         <pitch>
           <step>G</step>
@@ -4137,7 +4136,7 @@
         <type>half</type>
         <staff>1</staff>
       </note>
-      <!-- Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -4152,7 +4151,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
@@ -4163,7 +4162,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -4184,7 +4183,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -4196,7 +4195,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>4</octave>
@@ -4208,9 +4207,9 @@
       </note>
     </measure>
 <measure number="13">
-      <!-- Staff 1 -->
+      
       <note>
-        <rest/>
+        <rest />
         <duration>4</duration>
         <voice>1</voice>
         <type>quarter</type>
@@ -4247,7 +4246,7 @@
         <type>quarter</type>
         <staff>1</staff>
       </note>
-      <!-- Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -4262,7 +4261,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>3</octave>
@@ -4273,7 +4272,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -4294,7 +4293,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -4306,7 +4305,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>4</octave>
@@ -4318,7 +4317,7 @@
       </note>
     </measure>
 <measure number="14">
-      <!-- Staff 1 -->
+      
       <note>
         <pitch>
           <step>D</step>
@@ -4339,7 +4338,7 @@
         <type>half</type>
         <staff>1</staff>
       </note>
-      <!-- Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -4354,7 +4353,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -4366,7 +4365,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>4</octave>
@@ -4387,7 +4386,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>3</octave>
@@ -4398,7 +4397,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -4410,7 +4409,7 @@
       </note>
     </measure>
 <measure number="15">
-      <!-- Staff 1 -->
+      
       <note>
         <pitch>
           <step>B</step>
@@ -4422,7 +4421,7 @@
         <type>quarter</type>
         <staff>1</staff>
         <notations>
-          <slur type="start" number="1"/>
+          <slur type="start" number="1" />
         </notations>
       </note>
       <note>
@@ -4435,7 +4434,7 @@
         <type>quarter</type>
         <staff>1</staff>
         <notations>
-          <slur type="stop" number="1"/>
+          <slur type="stop" number="1" />
         </notations>
       </note>
       <note>
@@ -4448,7 +4447,7 @@
         <type>half</type>
         <staff>1</staff>
       </note>
-      <!-- Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -4463,7 +4462,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -4475,7 +4474,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>4</octave>
@@ -4496,7 +4495,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -4508,7 +4507,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>4</octave>
@@ -4520,7 +4519,7 @@
       </note>
     </measure>
 <measure number="16">
-      <!-- Staff 1, Voice 1 (stems up, stopped notes) -->
+      
       <note>
         <pitch>
           <step>F</step>
@@ -4533,7 +4532,7 @@
         <staff>1</staff>
         <notations>
           <articulations>
-            <stopped/>
+            <stopped />
           </articulations>
         </notations>
       </note>
@@ -4549,16 +4548,16 @@
         <staff>1</staff>
         <notations>
           <articulations>
-            <stopped/>
+            <stopped />
           </articulations>
         </notations>
       </note>
-      <!-- Staff 1, Voice 2 (stems down) -->
+      
       <backup>
         <duration>16</duration>
       </backup>
       <note>
-        <rest/>
+        <rest />
         <duration>4</duration>
         <voice>2</voice>
         <type>quarter</type>
@@ -4598,7 +4597,7 @@
         <stem>down</stem>
         <staff>1</staff>
       </note>
-      <!-- Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -4613,7 +4612,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>3</octave>
@@ -4624,7 +4623,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -4645,7 +4644,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
@@ -4656,7 +4655,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -4677,7 +4676,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
@@ -4688,7 +4687,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -4700,7 +4699,7 @@
       </note>
     </measure>
 <measure number="17">
-      <!-- Staff 1, Voice 1 -->
+      
       <note>
         <pitch>
           <step>A</step>
@@ -4713,7 +4712,7 @@
         <staff>1</staff>
         <notations>
           <articulations>
-            <stopped/>
+            <stopped />
           </articulations>
         </notations>
       </note>
@@ -4730,11 +4729,11 @@
         <staff>1</staff>
         <notations>
           <articulations>
-            <stopped/>
+            <stopped />
           </articulations>
         </notations>
       </note>
-      <!-- Staff 1, Voice 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -4749,7 +4748,7 @@
         <stem>down</stem>
         <staff>1</staff>
         <notations>
-          <tie type="start"/>
+          <tie type="start" />
         </notations>
       </note>
       <note>
@@ -4763,7 +4762,7 @@
         <stem>down</stem>
         <staff>1</staff>
         <notations>
-          <tie type="stop"/>
+          <tie type="stop" />
         </notations>
       </note>
       <note>
@@ -4777,7 +4776,7 @@
         <stem>down</stem>
         <staff>1</staff>
       </note>
-      <!-- Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -4792,7 +4791,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>3</octave>
@@ -4803,7 +4802,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -4824,7 +4823,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -4836,7 +4835,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>4</octave>
@@ -4848,7 +4847,7 @@
       </note>
     </measure>
 <measure number="18">
-      <!-- Staff 1, Voice 1 -->
+      
       <note>
         <pitch>
           <step>C</step>
@@ -4861,7 +4860,7 @@
         <staff>1</staff>
         <notations>
           <articulations>
-            <stopped/>
+            <stopped />
           </articulations>
         </notations>
       </note>
@@ -4877,11 +4876,11 @@
         <staff>1</staff>
         <notations>
           <articulations>
-            <stopped/>
+            <stopped />
           </articulations>
         </notations>
       </note>
-      <!-- Staff 1, Voice 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -4919,7 +4918,7 @@
         <stem>down</stem>
         <staff>1</staff>
       </note>
-      <!-- Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -4934,7 +4933,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>3</octave>
@@ -4945,7 +4944,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -4966,7 +4965,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>3</octave>
@@ -4977,7 +4976,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -4998,7 +4997,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -5010,7 +5009,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>4</octave>
@@ -5022,7 +5021,7 @@
       </note>
     </measure>
 <measure number="19">
-      <!-- Staff 1, Voice 1 -->
+      
       <note>
         <pitch>
           <step>B</step>
@@ -5036,7 +5035,7 @@
         <staff>1</staff>
         <notations>
           <articulations>
-            <stopped/>
+            <stopped />
           </articulations>
         </notations>
       </note>
@@ -5052,16 +5051,16 @@
         <staff>1</staff>
         <notations>
           <articulations>
-            <stopped/>
+            <stopped />
           </articulations>
         </notations>
       </note>
-      <!-- Staff 1, Voice 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
       <note>
-        <rest/>
+        <rest />
         <duration>4</duration>
         <voice>2</voice>
         <type>quarter</type>
@@ -5101,7 +5100,7 @@
         <stem>down</stem>
         <staff>1</staff>
       </note>
-      <!-- Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -5116,7 +5115,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
@@ -5127,7 +5126,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -5148,7 +5147,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -5160,7 +5159,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>4</octave>
@@ -5181,7 +5180,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -5193,7 +5192,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>4</octave>
@@ -5205,7 +5204,7 @@
       </note>
     </measure>
 <measure number="20">
-      <!-- Staff 1, Voice 1 -->
+      
       <note>
         <pitch>
           <step>A</step>
@@ -5218,7 +5217,7 @@
         <staff>1</staff>
         <notations>
           <articulations>
-            <stopped/>
+            <stopped />
           </articulations>
         </notations>
       </note>
@@ -5234,11 +5233,11 @@
         <staff>1</staff>
         <notations>
           <articulations>
-            <stopped/>
+            <stopped />
           </articulations>
         </notations>
       </note>
-      <!-- Staff 1, Voice 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -5287,10 +5286,10 @@
         <stem>down</stem>
         <staff>1</staff>
         <notations>
-          <tie type="start"/>
+          <tie type="start" />
         </notations>
       </note>
-      <!-- Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -5305,7 +5304,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>3</octave>
@@ -5316,7 +5315,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -5337,7 +5336,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>3</octave>
@@ -5348,7 +5347,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -5369,7 +5368,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
@@ -5380,7 +5379,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -5401,7 +5400,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
@@ -5412,7 +5411,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -5424,7 +5423,7 @@
       </note>
     </measure>
 <measure number="21">
-      <!-- Staff 1, Voice 1 -->
+      
       <note>
         <pitch>
           <step>G</step>
@@ -5437,7 +5436,7 @@
         <staff>1</staff>
         <notations>
           <articulations>
-            <stopped/>
+            <stopped />
           </articulations>
         </notations>
       </note>
@@ -5453,11 +5452,11 @@
         <staff>1</staff>
         <notations>
           <articulations>
-            <stopped/>
+            <stopped />
           </articulations>
         </notations>
       </note>
-      <!-- Staff 1, Voice 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -5473,7 +5472,7 @@
         <stem>down</stem>
         <staff>1</staff>
         <notations>
-          <tie type="stop"/>
+          <tie type="stop" />
         </notations>
       </note>
       <note>
@@ -5498,7 +5497,7 @@
         <stem>down</stem>
         <staff>1</staff>
       </note>
-      <!-- Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -5513,7 +5512,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>3</octave>
@@ -5524,7 +5523,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -5545,7 +5544,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
@@ -5556,7 +5555,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -5568,7 +5567,7 @@
       </note>
     </measure>
 <measure number="22">
-      <!-- Staff 1, Voice 1 -->
+      
       <note>
         <pitch>
           <step>F</step>
@@ -5581,18 +5580,18 @@
         <staff>1</staff>
         <notations>
           <articulations>
-            <stopped/>
+            <stopped />
           </articulations>
         </notations>
       </note>
       <note>
-        <rest/>
+        <rest />
         <duration>8</duration>
         <voice>1</voice>
         <type>half</type>
         <staff>1</staff>
       </note>
-      <!-- Staff 1, Voice 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -5654,7 +5653,7 @@
         <stem>down</stem>
         <staff>1</staff>
       </note>
-      <!-- Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -5669,7 +5668,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>3</octave>
@@ -5680,7 +5679,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -5701,7 +5700,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -5713,7 +5712,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>4</octave>
@@ -5725,7 +5724,7 @@
       </note>
     </measure>
 <measure number="23">
-      <!-- Staff 1 -->
+      
       <note>
         <pitch>
           <step>D</step>
@@ -5737,7 +5736,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>4</octave>
@@ -5748,7 +5747,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -5770,7 +5769,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>4</octave>
@@ -5781,7 +5780,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -5804,7 +5803,7 @@
         <beam number="1">begin</beam>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>4</octave>
@@ -5815,7 +5814,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -5838,7 +5837,7 @@
         <beam number="1">end</beam>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>F</step>
           <octave>4</octave>
@@ -5849,7 +5848,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -5861,25 +5860,25 @@
         <staff>1</staff>
       </note>
       <note>
-        <rest/>
+        <rest />
         <duration>4</duration>
         <voice>1</voice>
         <type>quarter</type>
         <staff>1</staff>
       </note>
-      <!-- Staff 2, Voice 1 (Hand-off melody note) -->
+      
       <backup>
         <duration>16</duration>
       </backup>
       <note>
-        <rest/>
+        <rest />
         <duration>8</duration>
         <voice>3</voice>
         <type>half</type>
         <staff>2</staff>
       </note>
       <note>
-        <rest/>
+        <rest />
         <duration>2</duration>
         <voice>3</voice>
         <type>eighth</type>
@@ -5897,13 +5896,13 @@
         <staff>2</staff>
       </note>
       <note>
-        <rest/>
+        <rest />
         <duration>4</duration>
         <voice>3</voice>
         <type>quarter</type>
         <staff>2</staff>
       </note>
-      <!-- Staff 2, Voice 2 (Accompaniment chords) -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -5919,7 +5918,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>3</octave>
@@ -5931,7 +5930,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -5954,7 +5953,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -5967,7 +5966,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>4</octave>
@@ -5980,7 +5979,7 @@
       </note>
     </measure>
 <measure number="24">
-      <!-- Staff 1 -->
+      
       <note>
         <pitch>
           <step>C</step>
@@ -5992,7 +5991,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>E</step>
           <octave>4</octave>
@@ -6003,7 +6002,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>4</octave>
@@ -6024,7 +6023,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>E</step>
           <octave>4</octave>
@@ -6035,7 +6034,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>4</octave>
@@ -6057,7 +6056,7 @@
         <beam number="1">begin</beam>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>E</step>
           <octave>4</octave>
@@ -6068,7 +6067,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>4</octave>
@@ -6090,7 +6089,7 @@
         <beam number="1">end</beam>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>E</step>
           <octave>4</octave>
@@ -6101,7 +6100,7 @@
         <staff>1</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>4</octave>
@@ -6112,18 +6111,18 @@
         <staff>1</staff>
       </note>
       <note>
-        <rest/>
+        <rest />
         <duration>4</duration>
         <voice>1</voice>
         <type>quarter</type>
         <staff>1</staff>
       </note>
-      <!-- Staff 2, Voice 1 (Hand-off melody note) -->
+      
       <backup>
         <duration>16</duration>
       </backup>
       <note>
-        <rest/>
+        <rest />
         <duration>12</duration>
         <voice>3</voice>
         <type>dotted-half</type>
@@ -6140,7 +6139,7 @@
         <stem>up</stem>
         <staff>2</staff>
       </note>
-      <!-- Staff 2, Voice 2 (Accompaniment chords) -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -6156,7 +6155,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>A</step>
           <octave>3</octave>
@@ -6168,7 +6167,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -6191,7 +6190,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -6204,7 +6203,7 @@
         <staff>2</staff>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>4</octave>
@@ -6217,7 +6216,7 @@
       </note>
     </measure>
 <measure number="25">
-      <!-- Staff 1 -->
+      
       <note>
         <pitch>
           <step>A</step>
@@ -6238,7 +6237,7 @@
         <type>half</type>
         <staff>1</staff>
       </note>
-      <!-- Staff 2, Voice 1 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -6264,7 +6263,7 @@
         <stem>up</stem>
         <staff>2</staff>
       </note>
-      <!-- Staff 2, Voice 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
@@ -6281,7 +6280,7 @@
       </note>
     </measure>
 <measure number="1">
-      <print new-page="yes"/>
+      <print new-page="yes" />
       <attributes>
         <divisions>4</divisions>
         <key>
@@ -6317,22 +6316,22 @@
         </direction-type>
         <staff>1</staff>
       </direction>
-      <!-- Staff 1 -->
+      
       <note>
-        <rest/>
+        <rest />
         <duration>16</duration>
         <voice>1</voice>
         <type>whole</type>
         <staff>1</staff>
         <notations>
-          <fermata type="upright"/>
+          <fermata type="upright" />
         </notations>
       </note>
-      <!-- Backup to Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2 -->
+      
       <direction placement="below">
         <direction-type>
           <words font-weight="bold">SB</words>
@@ -6345,68 +6344,68 @@
           <octave>2</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="start"/>
         <notations>
-          <tied type="start"/>
-          <fermata type="upright"/>
+          <tied type="start" />
+          <fermata type="upright" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="start"/>
         <notations>
-          <tied type="start"/>
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="start"/>
         <notations>
-          <tied type="start"/>
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="start"/>
         <notations>
-          <tied type="start"/>
+          <tied type="start" />
         </notations>
       </note>
     </measure>
 <measure number="2">
-      <!-- Staff 1 -->
+      
       <direction placement="above">
         <direction-type>
           <dynamics>
-            <mp/>
+            <mp />
           </dynamics>
         </direction-type>
         <staff>1</staff>
@@ -6489,82 +6488,82 @@
         <stem>up</stem>
         <staff>1</staff>
       </note>
-      <!-- Backup to Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2 -->
+      
       <note>
         <pitch>
           <step>G</step>
           <octave>2</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
     </measure>
 <measure number="3">
-      <!-- Staff 1 -->
+      
       <note>
         <pitch>
           <step>B</step>
@@ -6625,82 +6624,82 @@
         <stem>up</stem>
         <staff>1</staff>
       </note>
-      <!-- Backup to Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2 -->
+      
       <note>
         <pitch>
           <step>G</step>
           <octave>2</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
     </measure>
 <measure number="4">
-      <!-- Staff 1 -->
+      
       <note>
         <pitch>
           <step>G</step>
@@ -6772,82 +6771,82 @@
         <stem>up</stem>
         <staff>1</staff>
       </note>
-      <!-- Backup to Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2 -->
+      
       <note>
         <pitch>
           <step>G</step>
           <octave>2</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
     </measure>
 <measure number="5">
-      <!-- Staff 1 -->
+      
       <note>
         <pitch>
           <step>G</step>
@@ -6870,82 +6869,82 @@
         <stem>up</stem>
         <staff>1</staff>
       </note>
-      <!-- Backup to Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2 -->
+      
       <note>
         <pitch>
           <step>G</step>
           <octave>2</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
     </measure>
 <measure number="6">
-      <!-- Staff 1 -->
+      
       <note>
         <pitch>
           <step>G</step>
@@ -7018,82 +7017,82 @@
         <stem>up</stem>
         <staff>1</staff>
       </note>
-      <!-- Backup to Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2 -->
+      
       <note>
         <pitch>
           <step>G</step>
           <octave>2</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
     </measure>
 <measure number="7">
-      <!-- Staff 1 -->
+      
       <note>
         <pitch>
           <step>B</step>
@@ -7154,82 +7153,82 @@
         <stem>up</stem>
         <staff>1</staff>
       </note>
-      <!-- Backup to Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2 -->
+      
       <note>
         <pitch>
           <step>G</step>
           <octave>2</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
     </measure>
 <measure number="8">
-      <!-- Staff 1 -->
+      
       <note>
         <pitch>
           <step>G</step>
@@ -7302,82 +7301,82 @@
         <stem>up</stem>
         <staff>1</staff>
       </note>
-      <!-- Backup to Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2 -->
+      
       <note>
         <pitch>
           <step>G</step>
           <octave>2</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
+        <tie type="start" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
-        <tie type="start"/>
         <notations>
-          <tied type="stop"/>
-          <tied type="start"/>
+          <tied type="stop" />
+          <tied type="start" />
         </notations>
       </note>
     </measure>
 <measure number="9">
-      <!-- Staff 1 -->
+      
       <note>
         <pitch>
           <step>G</step>
@@ -7438,7 +7437,7 @@
         <stem>up</stem>
         <staff>1</staff>
       </note>
-      <!-- Visually a half note, but given 4 divisions to fit the 4/4 measure duration -->
+      
       <note>
         <pitch>
           <step>G</step>
@@ -7450,69 +7449,69 @@
         <stem>up</stem>
         <staff>1</staff>
       </note>
-      <!-- Backup to Staff 2 -->
+      
       <backup>
         <duration>16</duration>
       </backup>
-      <!-- Staff 2 -->
+      
       <note>
         <pitch>
           <step>G</step>
           <octave>2</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
         <notations>
-          <tied type="stop"/>
+          <tied type="stop" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>D</step>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
         <notations>
-          <tied type="stop"/>
+          <tied type="stop" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>G</step>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
         <notations>
-          <tied type="stop"/>
+          <tied type="stop" />
         </notations>
       </note>
       <note>
-        <chord/>
+        <chord />
         <pitch>
           <step>B</step>
           <alter>-1</alter>
           <octave>3</octave>
         </pitch>
         <duration>16</duration>
+        <tie type="stop" />
         <voice>2</voice>
         <type>whole</type>
         <staff>2</staff>
-        <tie type="stop"/>
         <notations>
-          <tied type="stop"/>
+          <tied type="stop" />
         </notations>
       </note>
     </measure>
