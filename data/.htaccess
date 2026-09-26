@@ -1,0 +1,2 @@
+# Protege os arquivos de dados locais contra acesso HTTP direto
+Require all denied

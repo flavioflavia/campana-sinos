@@ -48,6 +48,10 @@ $knownCatalog = [
     ]
 ];
 
+$metaFile = '/var/www/html/sinos/data/scores_meta.json';
+$scoresMeta = file_exists($metaFile) ? json_decode(@file_get_contents($metaFile), true) : [];
+if (!is_array($scoresMeta)) $scoresMeta = [];
+
 $files = scandir($scoresDir);
 $scores = [];
 
@@ -60,6 +64,9 @@ foreach ($files as $file) {
     $filePath = $scoresDir . DIRECTORY_SEPARATOR . $file;
     $fileMtime = filemtime($filePath);
 
+    $metaItem = $scoresMeta[$file] ?? null;
+    $uploadedBy = $metaItem['uploaded_by'] ?? null;
+
     if (isset($knownCatalog[$file])) {
         $scores[] = [
             'url' => $url,
@@ -67,12 +74,17 @@ foreach ($files as $file) {
             'title' => $knownCatalog[$file]['title'],
             'order' => $knownCatalog[$file]['order'],
             'isDefault' => ($file === 'hino-da-alegria.musicxml'),
-            'mtime' => $fileMtime
+            'mtime' => $fileMtime,
+            'uploaded_by' => $uploadedBy
         ];
     } else {
         // Tenta extrair o título real da partitura
         $displayTitle = '';
-        if (in_array($ext, ['musicxml', 'xml', 'mxml'])) {
+        if ($metaItem && !empty($metaItem['title'])) {
+            $displayTitle = $metaItem['title'];
+        }
+
+        if (empty($displayTitle) && in_array($ext, ['musicxml', 'xml', 'mxml'])) {
             $handle = @fopen($filePath, 'r');
             if ($handle) {
                 $head = fread($handle, 4096);
@@ -96,7 +108,8 @@ foreach ($files as $file) {
             'title' => '📁 ' . $displayTitle,
             'order' => 100,
             'isDefault' => false,
-            'mtime' => $fileMtime
+            'mtime' => $fileMtime,
+            'uploaded_by' => $uploadedBy
         ];
     }
 }

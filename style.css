@@ -219,6 +219,75 @@ body {
   transform: translateY(-1px);
 }
 
+.btn-msf {
+  background: linear-gradient(135deg, #3a0ca3 0%, #4361ee 100%);
+  color: #fff;
+  border: 1px solid #4cc9f0;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(67, 97, 238, 0.25);
+}
+
+.btn-msf:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(76, 201, 240, 0.4);
+  filter: brightness(1.1);
+}
+
+.btn-user-profile {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  padding: 4px 12px 4px 5px;
+  color: var(--text-main);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-user-profile:hover {
+  background: var(--bg-card);
+  border-color: var(--bell-gold);
+}
+
+.user-avatar-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bell-gold);
+  color: #121212;
+  font-size: 0.82rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-name-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.user-role-tag {
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .btn-icon {
   background: var(--bg-tertiary);
   color: var(--text-main);
@@ -610,6 +679,135 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* Abas de Navegação da Mesa de Sinos */
+.panel-tabs {
+  display: flex;
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.panel-tab {
+  flex: 1;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.panel-tab:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.panel-tab.active {
+  color: var(--bell-gold);
+  border-bottom-color: var(--bell-gold);
+  background: rgba(255, 215, 0, 0.06);
+}
+
+/* Escala do Grupo (Roster da Música) */
+.roster-header {
+  margin-bottom: 14px;
+}
+
+.roster-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.roster-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.roster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.roster-ringer-card {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.2s;
+}
+
+.roster-ringer-card.is-current-user {
+  border-color: var(--bell-gold);
+  background: rgba(212, 175, 55, 0.04);
+}
+
+.roster-ringer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.roster-ringer-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.roster-badge-you {
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--bell-gold);
+  color: #121212;
+  font-weight: 800;
+}
+
+.roster-bells-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.roster-bell-chip {
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+  font-weight: 800;
+  background: rgba(0, 245, 212, 0.12);
+  border: 1px solid #00f5d4;
+  color: #00f5d4;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.roster-empty-state {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border-subtle);
 }
 
 .panel-body {
@@ -1290,6 +1488,83 @@ body {
 .ocr-status-text {
   font-size: 0.85rem;
   color: #e2e8f0;
+}
+
+/* Modal de Perfis de Sineiros */
+.user-modal-card {
+  max-width: 580px;
+}
+
+.ringers-chips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.ringer-profile-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.ringer-profile-card:hover {
+  border-color: var(--bell-gold);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.ringer-profile-card.active {
+  border-color: var(--bell-gold);
+  background: rgba(255, 215, 0, 0.12);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.25);
+}
+
+.ringer-card-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #121212;
+  flex-shrink: 0;
+}
+
+.ringer-card-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ringer-card-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ringer-card-role {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+.admin-access-box {
+  background: rgba(255, 215, 0, 0.04);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  border: 1px solid rgba(255, 215, 0, 0.2);
 }
 
 /* Botão de Fechar Mesa e Backdrop (Ocultos no Desktop) */

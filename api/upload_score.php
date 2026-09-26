@@ -112,9 +112,31 @@ if (empty($title)) {
     $title = str_replace(['_', '-'], ' ', $cleanName);
 }
 
+// Grava metadados do upload (quem adicionou a música)
+$userEmail = $_SESSION['sinos_user_email'] ?? ($_SERVER['HTTP_X_USER_EMAIL'] ?? ($data['user_email'] ?? ($_POST['user_email'] ?? '')));
+$userName = $data['user_name'] ?? ($_POST['user_name'] ?? '');
+
+$dataDir = '/var/www/html/sinos/data';
+if (!is_dir($dataDir)) @mkdir($dataDir, 0775, true);
+
+$metaFile = $dataDir . '/scores_meta.json';
+$meta = file_exists($metaFile) ? json_decode(@file_get_contents($metaFile), true) : [];
+if (!is_array($meta)) $meta = [];
+
+$meta[$finalFilename] = [
+    'title' => $title,
+    'uploaded_by' => [
+        'name' => !empty($userName) ? $userName : 'Sineiro',
+        'email' => strtolower(trim($userEmail))
+    ],
+    'created_at' => time()
+];
+@file_put_contents($metaFile, json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
 echo json_encode([
     'success' => true,
-    'message' => 'Partitura salva com sucesso no servidor.',
+    'message' => 'Partitura salva com sucesso no acervo compartilhado.',
     'filename' => $scoreUrl,
-    'title' => $title
+    'title' => $title,
+    'uploaded_by' => $meta[$finalFilename]['uploaded_by']
 ]);

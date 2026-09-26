@@ -25,6 +25,13 @@
 
     <!-- Navegação de Partituras & Upload -->
     <div class="score-nav">
+      <!-- Perfil do Sineiro (Multi-usuário) -->
+      <button class="btn-user-profile" id="btn-user-profile" title="Perfil do Sineiro ativo e troca de usuário">
+        <span class="user-avatar-badge" id="user-avatar-badge">👤</span>
+        <span class="user-name-label" id="user-name-label">Sineiro</span>
+        <span class="user-role-tag" id="user-role-tag" style="display: none;">Admin</span>
+      </button>
+
       <div class="score-select-wrapper" title="Escolha uma partitura de exemplo ou carregue a sua">
         <select id="score-select">
           <option value="scores/hino-da-alegria.musicxml">🎵 Hino à Alegria (Beethoven - Arranjo Sinos)</option>
@@ -35,16 +42,22 @@
         </select>
       </div>
 
-      <input type="file" id="file-input" accept=".musicxml,.mxl,.mxml,.xml,application/vnd.recordare.musicxml+xml,application/vnd.recordare.musicxml,application/xml,text/xml" style="display: none;">
+      <input type="file" id="file-input" accept=".musicxml,.mxl,.mxml,.xml,.msf,.msb,application/vnd.recordare.musicxml+xml,application/vnd.recordare.musicxml,application/xml,text/xml" style="display: none;">
       <button class="btn-upload" id="btn-upload" title="Carregar arquivo MusicXML (.musicxml, .mxl, .mxml, .xml)">
         <span>📂</span> Carregar XML
+      </button>
+
+      <!-- Conversor de arquivos .MSF do Regente (MobileSheets) -->
+      <button class="btn-msf" id="btn-open-msf" title="Importar arquivo .msf do regente (MobileSheets) e converter com IA">
+        <span>📑</span> Importar .MSF
       </button>
 
       <button class="btn-scan" id="btn-open-ocr" title="Tirar foto ou enviar fotos da partitura para converter via IA Gemini Vision">
         <span>📸</span> Escanear Fotos (IA)
       </button>
 
-      <button class="btn-delete-score" id="btn-delete-score" title="Apagar a partitura selecionada">
+      <!-- Botão Excluir: visível exclusivamente para o Admin (flavioflavia@gmail.com) -->
+      <button class="btn-delete-score" id="btn-delete-score" style="display: none;" title="Apagar a partitura selecionada (Permissão exclusiva do Administrador)">
         <span>🗑️</span> Apagar
       </button>
 
@@ -161,37 +174,62 @@
             ✕ Fechar
           </button>
         </div>
+      <!-- Abas de Navegação da Mesa -->
+      <div class="panel-tabs">
+        <button class="panel-tab active" id="tab-my-bells" title="Suas notas nesta música">
+          <span>🔔</span> Meus Sinos
+        </button>
+        <button class="panel-tab" id="tab-group-roster" title="Escala completa de todos os sineiros para esta música">
+          <span>👥</span> Escala da Música
+        </button>
       </div>
 
       <div class="panel-body">
         
-        <!-- Sinos Atribuídos Atualmente -->
-        <div class="assigned-section">
-          <div class="assigned-header">
-            <span class="assigned-title">Notas que Você Toca</span>
-            <span style="font-size: 0.7rem; color: var(--text-dim);">Clique na mão para alternar MD/ME</span>
+        <!-- Visão 1: Meus Sinos Atribuídos -->
+        <div id="view-my-bells">
+          <!-- Sinos Atribuídos Atualmente -->
+          <div class="assigned-section">
+            <div class="assigned-header">
+              <span class="assigned-title" id="assigned-section-heading">Notas de Você nesta Música</span>
+              <span style="font-size: 0.7rem; color: var(--text-dim);">Clique na mão para alternar MD/ME</span>
+            </div>
+            <div class="assigned-list" id="assigned-bells-list">
+              <!-- Gerado via JavaScript -->
+            </div>
+            <div class="assigned-save-status" id="assigned-save-status" style="font-size: 0.72rem; color: var(--bell-gold); margin-top: 6px; display: none;">
+              💾 Salvo automaticamente para esta música
+            </div>
           </div>
-          <div class="assigned-list" id="assigned-bells-list">
+
+          <!-- Presets Rápidos por Sineiro (Ringer 1 a 8) -->
+          <div class="ringers-section">
+            <span class="ringers-section-title">Atalhos por Tocador (Ringers)</span>
+            <div class="ringers-grid" id="ringers-grid">
+              <!-- Botões dos sineiros gerados via JS -->
+            </div>
+          </div>
+
+          <!-- Mesa Interativa de Sinos (Rack de Teclas) -->
+          <div class="bell-rack-container">
+            <div class="bell-rack-title">
+              <span>Conjunto de Sinos</span>
+              <span class="bell-rack-tip">Clique no sino para ouvir e marcar</span>
+            </div>
+            <div class="bell-rack-board" id="bell-rack-board">
+              <!-- Oitavas e teclas de sinos geradas via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Visão 2: Escala do Grupo (Quem toca o quê nesta música) -->
+        <div id="view-group-roster" style="display: none;">
+          <div class="roster-header">
+            <h4 class="roster-title">👥 Escala do Grupo de Sinos</h4>
+            <p class="roster-sub" id="roster-sub">Notas atribuídas a cada sineiro para a música atual:</p>
+          </div>
+          <div class="roster-list" id="group-roster-list">
             <!-- Gerado via JavaScript -->
-          </div>
-        </div>
-
-        <!-- Presets Rápidos por Sineiro (Ringer 1 a 8) -->
-        <div class="ringers-section">
-          <span class="ringers-section-title">Atalhos por Tocador (Ringers)</span>
-          <div class="ringers-grid" id="ringers-grid">
-            <!-- Botões dos sineiros gerados via JS -->
-          </div>
-        </div>
-
-        <!-- Mesa Interativa de Sinos (Rack de Teclas) -->
-        <div class="bell-rack-container">
-          <div class="bell-rack-title">
-            <span>Conjunto de Sinos</span>
-            <span class="bell-rack-tip">Clique no sino para ouvir e marcar</span>
-          </div>
-          <div class="bell-rack-board" id="bell-rack-board">
-            <!-- Oitavas e teclas de sinos geradas via JS -->
           </div>
         </div>
 
@@ -222,7 +260,7 @@
   <div class="drag-drop-overlay" id="drag-drop-overlay">
     <div class="drag-drop-icon">🎼</div>
     <h2 style="font-size: 1.8rem; font-weight: 700;">Solte sua partitura aqui!</h2>
-    <p style="color: var(--text-muted);">Formatos suportados: .musicxml, .mxl, .mxml, .xml</p>
+    <p style="color: var(--text-muted);">Formatos suportados: .musicxml, .mxl, .mxml, .xml, .msf (MobileSheets)</p>
   </div>
 
   <!-- Modal de OCR / Leitura de Fotos via Gemini Vision -->
@@ -266,6 +304,121 @@
       <div class="modal-actions">
         <button class="btn-secondary" id="btn-cancel-ocr">Cancelar</button>
         <button class="btn-primary" id="btn-submit-ocr" disabled>✨ Iniciar Transcrição com IA</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Conversão de Arquivo .MSF (MobileSheets) -->
+  <div class="modal-overlay" id="msf-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>📑</span> Importar Arquivo .MSF (MobileSheets)
+        </div>
+        <button class="modal-close" id="btn-close-msf" title="Fechar">&times;</button>
+      </div>
+
+      <p class="modal-intro">
+        O seu regente enviou a partitura no formato <strong>.msf</strong> (ou <strong>.msb</strong> do MobileSheets)? 
+        O Campana analisa a estrutura interna do arquivo, extrai as folhas ou partituras embutidas e converte diretamente para MusicXML 3.1 interativo através do <strong>Google Gemini</strong>!
+      </p>
+
+      <div class="ocr-dropzone" id="msf-dropzone">
+        <div class="ocr-dropzone-icon">🎼</div>
+        <div class="ocr-dropzone-text">
+          <strong>Clique para selecionar o arquivo .msf</strong> ou arraste o arquivo aqui
+        </div>
+        <div class="ocr-dropzone-sub">Suporta arquivos .msf e .msb de qualquer regente ou tablet</div>
+        <input type="file" id="msf-file-input" accept=".msf,.msb" style="display: none;">
+      </div>
+
+      <div id="msf-selected-file-info" style="display: none; padding: 10px; background: var(--bg-tertiary); border-radius: var(--radius-sm); margin-top: 10px; font-size: 0.85rem;">
+        <strong>Arquivo selecionado:</strong> <span id="msf-selected-filename"></span>
+      </div>
+
+      <div class="form-group ocr-title-group" style="margin-top: 12px;">
+        <label for="msf-title-input" class="ocr-label">Nome da Música (opcional):</label>
+        <input type="text" id="msf-title-input" class="ocr-input" placeholder="Ex: Prelúdio dos Sinos, Glória a Deus, etc.">
+      </div>
+
+      <div class="ocr-status" id="msf-status" style="display: none;">
+        <div class="ocr-spinner"></div>
+        <div class="ocr-status-text" id="msf-status-text">Processando arquivo .msf com IA...</div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" id="btn-cancel-msf">Cancelar</button>
+        <button class="btn-primary" id="btn-submit-msf" disabled>✨ Converter para MusicXML</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Multi-Usuário / Perfis de Sineiros -->
+  <div class="modal-overlay" id="user-modal">
+    <div class="modal-card user-modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>👥</span> Perfis dos Sineiros
+        </div>
+        <button class="modal-close" id="btn-close-user-modal" title="Fechar">&times;</button>
+      </div>
+
+      <!-- Seção 1: Sineiro Ativo & Troca Rápida de Quem está tocando -->
+      <div class="user-modal-section">
+        <h4 class="user-modal-heading" style="font-size: 1rem; color: #fff; margin-bottom: 6px;">Quem está tocando agora?</h4>
+        <p class="user-modal-sub" style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
+          Selecione seu nome para carregar suas notas automaticamente nesta e em todas as músicas:
+        </p>
+        <div class="ringers-chips-grid" id="ringers-chips-grid" style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <!-- Carregado via JS -->
+        </div>
+      </div>
+
+      <!-- Seção 2: Cadastrar Novo Sineiro -->
+      <div class="user-modal-section" style="border-top: 1px solid var(--border-subtle); padding-top: 16px; margin-top: 16px;">
+        <h4 class="user-modal-heading" style="font-size: 0.95rem; color: #fff; margin-bottom: 8px;">Adicionar Novo Sineiro ao Grupo</h4>
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label class="ocr-label">Nome do Sineiro:</label>
+            <input type="text" id="new-user-name" class="ocr-input" placeholder="Ex: Maria Clara">
+          </div>
+          <div class="form-group">
+            <label class="ocr-label">E-mail:</label>
+            <input type="email" id="new-user-email" class="ocr-input" placeholder="Ex: maria@gmail.com">
+          </div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+          <button class="btn-primary" id="btn-create-ringer" style="font-size: 0.85rem; padding: 8px 16px;">
+            + Cadastrar Sineiro
+          </button>
+        </div>
+      </div>
+
+      <!-- Seção 3: Acesso Administrador -->
+      <div class="user-modal-section admin-access-box" style="border-top: 1px solid var(--border-subtle); padding-top: 16px; margin-top: 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <h4 class="user-modal-heading" style="color: #ffd700; font-size: 0.95rem; margin-bottom: 4px;">🔐 Acesso Administrador</h4>
+            <p class="user-modal-sub" style="margin: 0; font-size: 0.78rem; color: var(--text-dim);">
+              Exclusivo para <strong>flavioflavia@gmail.com</strong> (gerenciamento e exclusão de partituras).
+            </p>
+          </div>
+          <button class="btn-secondary" id="btn-show-admin-login" style="font-size: 0.8rem; padding: 6px 12px;">
+            Entrar como Admin
+          </button>
+        </div>
+        <div id="admin-login-fields" style="display: none; margin-top: 12px;">
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="password" id="admin-password-input" class="ocr-input" placeholder="Senha do Administrador (padrão: admin123)" style="flex: 1;">
+            <button class="btn-primary" id="btn-submit-admin-login" style="padding: 8px 16px;">
+              Entrar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 20px;">
+        <button class="btn-secondary" id="btn-close-user-modal-action">Fechar</button>
       </div>
     </div>
   </div>

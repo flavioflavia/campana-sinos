@@ -39,6 +39,10 @@ uploads/*
 !uploads/.gitkeep
 musicas/*
 !musicas/.gitkeep
+data/*.json
+data/*.tmp
+!data/.gitkeep
+!data/.htaccess
 
 # Mídias pesadas de teste e capturas de tela
 *.mp4

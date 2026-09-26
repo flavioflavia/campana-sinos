@@ -17,7 +17,11 @@
     zoom: 1.0,
     userBells: new Map(), // pitch => { color, activeColor, hand, label }
     isRackCollapsed: false,
-    ocrSelectedFiles: []
+    ocrSelectedFiles: [],
+    currentUser: null, // { id, name, email, role, isAdmin, avatar_color }
+    allRingers: [],
+    currentSongRoster: {}, // email => { name, email, bells }
+    msfSelectedFile: null
   };
 
   // Mapa em memória de partituras carregadas localmente pelo usuário
@@ -174,7 +178,47 @@
     ocrTitleInput: document.getElementById('ocr-title-input'),
     ocrStatus: document.getElementById('ocr-status'),
     ocrStatusText: document.getElementById('ocr-status-text'),
-    btnSubmitOcr: document.getElementById('btn-submit-ocr')
+    btnSubmitOcr: document.getElementById('btn-submit-ocr'),
+
+    // Perfil do Usuário / Multi-usuário
+    btnUserProfile: document.getElementById('btn-user-profile'),
+    userAvatarBadge: document.getElementById('user-avatar-badge'),
+    userNameLabel: document.getElementById('user-name-label'),
+    userRoleTag: document.getElementById('user-role-tag'),
+    userModal: document.getElementById('user-modal'),
+    btnCloseUserModal: document.getElementById('btn-close-user-modal'),
+    btnCloseUserModalAction: document.getElementById('btn-close-user-modal-action'),
+    ringersChipsGrid: document.getElementById('ringers-chips-grid'),
+    newUserName: document.getElementById('new-user-name'),
+    newUserEmail: document.getElementById('new-user-email'),
+    btnCreateRinger: document.getElementById('btn-create-ringer'),
+    btnShowAdminLogin: document.getElementById('btn-show-admin-login'),
+    adminLoginFields: document.getElementById('admin-login-fields'),
+    adminPasswordInput: document.getElementById('admin-password-input'),
+    btnSubmitAdminLogin: document.getElementById('btn-submit-admin-login'),
+
+    // Conversor de arquivos .MSF (MobileSheets)
+    btnOpenMsf: document.getElementById('btn-open-msf'),
+    msfModal: document.getElementById('msf-modal'),
+    btnCloseMsf: document.getElementById('btn-close-msf'),
+    btnCancelMsf: document.getElementById('btn-cancel-msf'),
+    msfDropzone: document.getElementById('msf-dropzone'),
+    msfFileInput: document.getElementById('msf-file-input'),
+    msfSelectedFileInfo: document.getElementById('msf-selected-file-info'),
+    msfSelectedFilename: document.getElementById('msf-selected-filename'),
+    msfTitleInput: document.getElementById('msf-title-input'),
+    msfStatus: document.getElementById('msf-status'),
+    msfStatusText: document.getElementById('msf-status-text'),
+    btnSubmitMsf: document.getElementById('btn-submit-msf'),
+
+    // Abas e Escala da Música
+    tabMyBells: document.getElementById('tab-my-bells'),
+    tabGroupRoster: document.getElementById('tab-group-roster'),
+    viewMyBells: document.getElementById('view-my-bells'),
+    viewGroupRoster: document.getElementById('view-group-roster'),
+    groupRosterList: document.getElementById('group-roster-list'),
+    assignedSectionHeading: document.getElementById('assigned-section-heading'),
+    assignedSaveStatus: document.getElementById('assigned-save-status')
   };
 
   // Inicialização
@@ -183,6 +227,11 @@
     buildBellRackUI();
     buildRingerPresetsUI();
     loadStoredPreferences();
+
+    await loadCurrentUser();
+    setupUserModal();
+    setupMsfModal();
+    setupPanelTabs();
 
     // No celular e tablet retrato, a mesa de sinos começa recolhida para dar destaque total à partitura
     if (window.innerWidth <= 991) {
@@ -417,6 +466,16 @@
       // Atualiza controles de BPM com o tempo da partitura
       updateBpmUI();
       hideLoading();
+
+      // Carrega os sinos do sineiro e a escala do grupo para esta partitura
+      try {
+        const scoreId = getCurrentScoreId();
+        if (scoreId) {
+          await loadSongAssignments(scoreId, true);
+        }
+      } catch (assignErr) {
+        console.warn('Erro ao carregar escala da música:', assignErr);
+      }
 
       const totalPages = (osmd && osmd.GraphicSheet && osmd.GraphicSheet.MusicPages) ? osmd.GraphicSheet.MusicPages.length : 1;
       const totalMeasures = (scorePlayer && scorePlayer.totalMeasures) ? `${scorePlayer.totalMeasures} compassos` : '';
@@ -855,6 +914,11 @@
     // Exclusão de Partitura selecionada
     if (dom.btnDeleteScore) {
       dom.btnDeleteScore.addEventListener('click', async () => {
+        if (!state.currentUser || !state.currentUser.isAdmin) {
+          alert('Apenas o administrador (flavioflavia@gmail.com) tem permissão para excluir partituras do acervo.');
+          return;
+        }
+
         const selectedOpt = dom.scoreSelect.options[dom.scoreSelect.selectedIndex];
         if (!selectedOpt) return;
         const scoreVal = selectedOpt.value;
@@ -875,8 +939,14 @@
           try {
             const res = await fetch('api/delete_score.php', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ filename: scoreVal })
+              headers: {
+                'Content-Type': 'application/json',
+                'X-User-Email': state.currentUser ? state.currentUser.email : ''
+              },
+              body: JSON.stringify({
+                filename: scoreVal,
+                user_email: state.currentUser ? state.currentUser.email : ''
+              })
             });
             const data = await res.json();
             if (!data.success) {
@@ -1088,8 +1158,15 @@
   async function handleFileUpload(file) {
     if (!file) return;
 
-    // Se o usuário arrastou/enviou imagem de partitura, abre o modal de IA Gemini
     const ext = file.name.split('.').pop().toLowerCase();
+
+    // Se o usuário arrastou/enviou arquivo do MobileSheets (.msf ou .msb), abre o conversor MSF
+    if (['msf', 'msb'].includes(ext)) {
+      openMsfModalWithFile(file);
+      return;
+    }
+
+    // Se o usuário arrastou/enviou imagem de partitura, abre o modal de IA Gemini
     if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
       if (dom.ocrModal) {
         dom.ocrModal.classList.add('open');
@@ -1114,11 +1191,16 @@
       try {
         const uploadRes = await fetch('api/upload_score.php', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Email': state.currentUser ? state.currentUser.email : ''
+          },
           body: JSON.stringify({
             filename: file.name,
             content: sanitizedXml,
-            title: file.name.replace(/\.[^/.]+$/, '')
+            title: file.name.replace(/\.[^/.]+$/, ''),
+            user_name: state.currentUser ? state.currentUser.name : 'Sineiro',
+            user_email: state.currentUser ? state.currentUser.email : ''
           })
         });
         const uploadData = await uploadRes.json();
@@ -1371,6 +1453,749 @@
     }
   }
 
+  // ==========================================
+  // IDENTIFICAÇÃO E ESCALA DE SINOS POR MÚSICA
+  // ==========================================
+
+  function getCurrentScoreId() {
+    const url = state.currentScoreUrl || (dom.scoreSelect ? dom.scoreSelect.value : '');
+    if (!url) return 'hino-da-alegria.musicxml';
+    return url.replace(/^scores\//, '');
+  }
+
+  async function loadSongAssignments(scoreId, silent = false) {
+    if (!scoreId) scoreId = getCurrentScoreId();
+    if (!scoreId) return;
+
+    const userEmail = state.currentUser ? state.currentUser.email : '';
+
+    try {
+      const res = await fetch(`api/assignments.php?action=get_song_assignments&score_id=${encodeURIComponent(scoreId)}&user_email=${encodeURIComponent(userEmail)}&v=${Date.now()}`, {
+        headers: {
+          'X-User-Email': userEmail
+        }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data || !data.success) return;
+
+      state.currentSongRoster = data.all_ringers_bells || {};
+
+      // Se este sineiro já tem notas salvas especificamente nesta música, restaura-as
+      if (Array.isArray(data.user_bells) && data.user_bells.length > 0) {
+        state.userBells.clear();
+        data.user_bells.forEach((item, idx) => {
+          const note = item.note;
+          if (!note) return;
+          const isSecond = idx % 2 === 1;
+          state.userBells.set(note, {
+            color: item.color || (isSecond ? '#00F5D4' : '#FFD166'),
+            activeColor: item.activeColor || (isSecond ? '#7000FF' : '#FF0055'),
+            hand: item.hand || (isSecond ? 'left' : 'right'),
+            label: note
+          });
+        });
+
+        updateBellRackSelectionUI();
+        renderAssignedBellsList();
+        scorePlayer.setUserBells(state.userBells);
+        if (!silent && state.currentUser) {
+          setHudMessage(`Sinos de ${state.currentUser.name} carregados para esta partitura (${data.user_bells.length} sinos).`, 'normal');
+        }
+      } else {
+        // Se mudou para outra partitura e ela ainda não tem sinos deste sineiro
+        if (state._lastAssignedScoreId && state._lastAssignedScoreId !== scoreId) {
+          state.userBells.clear();
+          updateBellRackSelectionUI();
+          renderAssignedBellsList();
+          scorePlayer.setUserBells(state.userBells);
+          if (!silent) {
+            setHudMessage('Nenhum sino gravado para você nesta música. Clique nos sinos para marcar.', 'normal');
+          }
+        } else if (state.userBells.size > 0 && userEmail) {
+          // Ponto de partida inicial: grava automaticamente
+          saveCurrentSongAssignment(true);
+        }
+      }
+      state._lastAssignedScoreId = scoreId;
+
+      // Atualiza a visão da escala do grupo
+      renderGroupRoster(data.all_ringers_bells, data.roster);
+    } catch (err) {
+      console.warn('Erro ao carregar atribuições da música:', err);
+    }
+  }
+
+  let _saveAssignmentTimer = null;
+  function scheduleSaveSongAssignment() {
+    clearTimeout(_saveAssignmentTimer);
+    _saveAssignmentTimer = setTimeout(() => {
+      saveCurrentSongAssignment(false);
+    }, 600);
+  }
+
+  async function saveCurrentSongAssignment(silent = false) {
+    const scoreId = getCurrentScoreId();
+    if (!scoreId || !state.currentUser || !state.currentUser.email) return;
+
+    const bellsList = [];
+    for (const [note, conf] of state.userBells.entries()) {
+      bellsList.push({
+        note: note,
+        hand: conf.hand || 'both',
+        color: conf.color || null,
+        activeColor: conf.activeColor || null
+      });
+    }
+
+    if (dom.assignedSaveStatus && !silent) {
+      dom.assignedSaveStatus.style.display = 'block';
+      dom.assignedSaveStatus.textContent = 'Salvando notas na nuvem...';
+    }
+
+    try {
+      const res = await fetch('api/assignments.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Email': state.currentUser.email
+        },
+        body: JSON.stringify({
+          score_id: scoreId,
+          user_email: state.currentUser.email,
+          user_name: state.currentUser.name,
+          bells: bellsList
+        })
+      });
+
+      const data = await res.json();
+      if (data && data.success) {
+        if (dom.assignedSaveStatus) {
+          dom.assignedSaveStatus.style.display = 'block';
+          dom.assignedSaveStatus.textContent = '💾 Notas salvas para esta música ✓';
+          clearTimeout(dom.assignedSaveStatus._hideTimer);
+          dom.assignedSaveStatus._hideTimer = setTimeout(() => {
+            if (dom.assignedSaveStatus) dom.assignedSaveStatus.style.display = 'none';
+          }, 2500);
+        }
+
+        // Atualiza a escala localmente
+        if (!state.currentSongRoster) state.currentSongRoster = {};
+        state.currentSongRoster[state.currentUser.email] = {
+          name: state.currentUser.name,
+          email: state.currentUser.email,
+          bells: bellsList
+        };
+        renderGroupRoster(state.currentSongRoster, null);
+      }
+    } catch (err) {
+      console.warn('Erro ao salvar escala na nuvem:', err);
+    }
+  }
+
+  function renderGroupRoster(allRingersBells, rosterSummary) {
+    if (!dom.groupRosterList) return;
+    dom.groupRosterList.innerHTML = '';
+
+    const ringers = allRingersBells ? Object.values(allRingersBells) : [];
+    const activeRingers = ringers.filter(r => Array.isArray(r.bells) && r.bells.length > 0);
+
+    // Atualiza contador na aba
+    if (dom.tabGroupRoster) {
+      dom.tabGroupRoster.innerHTML = `<span>👥</span> Escala da Música (${activeRingers.length})`;
+    }
+
+    if (activeRingers.length === 0) {
+      dom.groupRosterList.innerHTML = `
+        <div class="roster-empty" style="text-align: center; padding: 24px 12px; color: var(--text-dim); font-size: 0.85rem;">
+          <div style="font-size: 1.8rem; margin-bottom: 8px;">🔔</div>
+          Nenhum sineiro marcou notas para esta música ainda.<br>
+          Marque seus sinos na aba <strong>Meus Sinos</strong> para compor a escala do grupo!
+        </div>
+      `;
+      return;
+    }
+
+    activeRingers.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+    activeRingers.forEach(ringer => {
+      const card = document.createElement('div');
+      card.className = 'roster-ringer-card';
+      const isMe = state.currentUser && (ringer.email && ringer.email.toLowerCase() === state.currentUser.email.toLowerCase());
+
+      const bellsHtml = ringer.bells.map(b => {
+        const noteName = typeof b === 'string' ? b : (b.note || '');
+        const hand = typeof b === 'object' && b.hand ? (b.hand === 'left' ? 'M.E.' : b.hand === 'right' ? 'M.D.' : '') : '';
+        const color = (typeof b === 'object' && b.color) ? b.color : '#ffd700';
+        return `
+          <span class="roster-bell-chip" style="border-left: 3px solid ${color};">
+            <strong>${noteName}</strong>
+            ${hand ? `<small class="roster-hand-tag">${hand}</small>` : ''}
+          </span>
+        `;
+      }).join('');
+
+      card.innerHTML = `
+        <div class="roster-ringer-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="user-avatar-badge" style="width: 28px; height: 28px; font-size: 0.75rem; background-color: ${isMe ? 'var(--bell-gold)' : '#3a4a5e'};">
+              ${(ringer.name || 'S').charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <span class="roster-ringer-name" style="font-weight: 600; font-size: 0.88rem; color: #fff;">
+                ${ringer.name}
+              </span>
+              ${isMe ? '<span class="roster-me-badge" style="margin-left: 6px; font-size: 0.7rem; background: var(--bg-tertiary); color: var(--bell-gold); padding: 2px 6px; border-radius: 4px;">Você</span>' : ''}
+            </div>
+          </div>
+          <span class="roster-count-badge" style="font-size: 0.75rem; color: var(--text-dim); background: var(--bg-primary); padding: 2px 8px; border-radius: 10px;">
+            ${ringer.bells.length} sino${ringer.bells.length > 1 ? 's' : ''}
+          </span>
+        </div>
+        <div class="roster-ringer-bells" style="display: flex; flex-wrap: wrap; gap: 6px;">
+          ${bellsHtml}
+        </div>
+      `;
+
+      dom.groupRosterList.appendChild(card);
+    });
+  }
+
+  function setupPanelTabs() {
+    if (!dom.tabMyBells || !dom.tabGroupRoster) return;
+
+    dom.tabMyBells.addEventListener('click', () => {
+      dom.tabMyBells.classList.add('active');
+      dom.tabGroupRoster.classList.remove('active');
+      if (dom.viewMyBells) dom.viewMyBells.style.display = 'block';
+      if (dom.viewGroupRoster) dom.viewGroupRoster.style.display = 'none';
+    });
+
+    dom.tabGroupRoster.addEventListener('click', () => {
+      dom.tabGroupRoster.classList.add('active');
+      dom.tabMyBells.classList.remove('active');
+      if (dom.viewMyBells) dom.viewMyBells.style.display = 'none';
+      if (dom.viewGroupRoster) dom.viewGroupRoster.style.display = 'block';
+      const scoreId = getCurrentScoreId();
+      if (scoreId) {
+        loadSongAssignments(scoreId, true);
+      }
+    });
+  }
+
+  // ==========================================
+  // MULTI-USUÁRIO E PERFIS DE SINEIROS
+  // ==========================================
+
+  async function loadCurrentUser() {
+    const storedEmail = localStorage.getItem('sinos_current_user_email') || '';
+    try {
+      const res = await fetch('api/auth.php?action=get_current&v=' + Date.now(), {
+        headers: {
+          'X-User-Email': storedEmail
+        }
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        if (data.user) {
+          state.currentUser = data.user;
+        } else if (data.suggested_user) {
+          state.currentUser = data.suggested_user;
+        }
+      }
+    } catch (err) {
+      console.warn('Erro ao obter usuário atual:', err);
+    }
+
+    if (!state.currentUser) {
+      state.currentUser = {
+        id: 'u_admin',
+        name: 'Flávio (Admin)',
+        email: 'flavioflavia@gmail.com',
+        role: 'admin',
+        isAdmin: true,
+        avatar_color: '#ffd700'
+      };
+    }
+
+    localStorage.setItem('sinos_current_user_email', state.currentUser.email);
+    updateUserUI();
+  }
+
+  function updateUserUI() {
+    if (!state.currentUser) return;
+    const u = state.currentUser;
+
+    if (dom.userAvatarBadge) {
+      dom.userAvatarBadge.textContent = (u.name || 'S').charAt(0).toUpperCase();
+      if (u.avatar_color) {
+        dom.userAvatarBadge.style.backgroundColor = u.avatar_color;
+      }
+    }
+
+    if (dom.userNameLabel) {
+      dom.userNameLabel.textContent = u.name;
+    }
+
+    if (dom.userRoleTag) {
+      dom.userRoleTag.textContent = u.isAdmin ? 'Admin' : 'Sineiro';
+      dom.userRoleTag.classList.toggle('badge-admin', !!u.isAdmin);
+    }
+
+    // Regra estrita: O botão de exclusão só é visível para o Admin
+    if (dom.btnDeleteScore) {
+      dom.btnDeleteScore.style.display = u.isAdmin ? 'inline-flex' : 'none';
+    }
+
+    if (dom.assignedSectionHeading) {
+      dom.assignedSectionHeading.textContent = `Notas de ${u.name} nesta Música`;
+    }
+  }
+
+  async function refreshRingersList() {
+    if (!dom.ringersChipsGrid) return;
+    dom.ringersChipsGrid.innerHTML = '<div style="color: var(--text-dim); font-size: 0.8rem;">Carregando sineiros...</div>';
+
+    try {
+      const res = await fetch('api/auth.php?action=list_ringers&v=' + Date.now());
+      const data = await res.json();
+      if (!data || !data.success || !Array.isArray(data.ringers)) return;
+
+      state.allRingers = data.ringers;
+      dom.ringersChipsGrid.innerHTML = '';
+
+      data.ringers.forEach(ringer => {
+        const isCurrent = state.currentUser && (ringer.email.toLowerCase() === state.currentUser.email.toLowerCase());
+        const chip = document.createElement('div');
+        chip.className = `ringer-profile-card ${isCurrent ? 'active' : ''}`;
+        chip.style.cssText = `
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 12px;
+          background: ${isCurrent ? 'rgba(255, 215, 0, 0.15)' : 'var(--bg-tertiary)'};
+          border: 1px solid ${isCurrent ? 'var(--bell-gold)' : 'var(--border-subtle)'};
+          border-radius: 20px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        `;
+
+        chip.innerHTML = `
+          <span class="user-avatar-badge" style="width: 22px; height: 22px; font-size: 0.7rem; background-color: ${ringer.avatar_color || '#ffd700'};">
+            ${(ringer.name || 'S').charAt(0).toUpperCase()}
+          </span>
+          <span style="font-size: 0.85rem; font-weight: ${isCurrent ? '700' : '500'}; color: ${isCurrent ? '#ffd700' : '#fff'};">
+            ${ringer.name}
+          </span>
+          ${ringer.isAdmin ? '<span style="font-size: 0.65rem; background: rgba(255,215,0,0.2); color: #ffd700; padding: 1px 5px; border-radius: 4px;">Admin</span>' : ''}
+          ${isCurrent ? '<span style="font-size: 0.75rem; color: #ffd700; font-weight: bold;">✓</span>' : ''}
+        `;
+
+        chip.addEventListener('click', async () => {
+          if (isCurrent) return;
+          await switchRinger(ringer);
+        });
+
+        dom.ringersChipsGrid.appendChild(chip);
+      });
+    } catch (err) {
+      console.error('Erro ao listar sineiros:', err);
+      dom.ringersChipsGrid.innerHTML = '<div style="color: var(--accent-red); font-size: 0.8rem;">Não foi possível carregar a lista de sineiros.</div>';
+    }
+  }
+
+  async function switchRinger(ringer) {
+    try {
+      const res = await fetch('api/auth.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'switch_ringer',
+          email: ringer.email
+        })
+      });
+      const data = await res.json();
+      if (data && data.success && data.user) {
+        state.currentUser = data.user;
+      } else {
+        state.currentUser = ringer;
+      }
+    } catch (e) {
+      state.currentUser = ringer;
+    }
+
+    localStorage.setItem('sinos_current_user_email', state.currentUser.email);
+    updateUserUI();
+    await refreshRingersList();
+    if (dom.userModal) dom.userModal.classList.remove('open');
+
+    setHudMessage(`Perfil alterado para ${state.currentUser.name}. Carregando seus sinos...`, 'ready');
+
+    const scoreId = getCurrentScoreId();
+    if (scoreId) {
+      await loadSongAssignments(scoreId);
+    }
+  }
+
+  function setupUserModal() {
+    if (!dom.btnUserProfile || !dom.userModal) return;
+
+    dom.btnUserProfile.addEventListener('click', () => {
+      dom.userModal.classList.add('open');
+      refreshRingersList();
+    });
+
+    if (dom.btnCloseUserModal) {
+      dom.btnCloseUserModal.addEventListener('click', () => {
+        dom.userModal.classList.remove('open');
+      });
+    }
+
+    if (dom.btnCloseUserModalAction) {
+      dom.btnCloseUserModalAction.addEventListener('click', () => {
+        dom.userModal.classList.remove('open');
+      });
+    }
+
+    dom.userModal.addEventListener('click', (e) => {
+      if (e.target === dom.userModal) {
+        dom.userModal.classList.remove('open');
+      }
+    });
+
+    // Cadastro de novo sineiro
+    if (dom.btnCreateRinger) {
+      dom.btnCreateRinger.addEventListener('click', async () => {
+        const name = (dom.newUserName ? dom.newUserName.value : '').trim();
+        const email = (dom.newUserEmail ? dom.newUserEmail.value : '').trim().toLowerCase();
+
+        if (!name || !email) {
+          alert('Por favor, informe o nome e o e-mail do sineiro.');
+          return;
+        }
+
+        if (!email.includes('@') || !email.includes('.')) {
+          alert('Por favor, informe um e-mail válido.');
+          return;
+        }
+
+        try {
+          dom.btnCreateRinger.disabled = true;
+          dom.btnCreateRinger.textContent = 'Cadastrando...';
+
+          const res = await fetch('api/auth.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'register',
+              name: name,
+              email: email
+            })
+          });
+
+          const data = await res.json();
+          if (!data.success) {
+            alert('Erro ao cadastrar: ' + (data.error || 'Erro desconhecido'));
+            return;
+          }
+
+          if (dom.newUserName) dom.newUserName.value = '';
+          if (dom.newUserEmail) dom.newUserEmail.value = '';
+
+          state.currentUser = data.user;
+          localStorage.setItem('sinos_current_user_email', data.user.email);
+          updateUserUI();
+          await refreshRingersList();
+          dom.userModal.classList.remove('open');
+
+          const scoreId = getCurrentScoreId();
+          if (scoreId) {
+            await loadSongAssignments(scoreId);
+          }
+
+          setHudMessage(`Sineiro "${data.user.name}" cadastrado e selecionado!`, 'ready');
+        } catch (err) {
+          console.error('Erro ao cadastrar sineiro:', err);
+          alert('Erro de conexão ao cadastrar sineiro.');
+        } finally {
+          dom.btnCreateRinger.disabled = false;
+          dom.btnCreateRinger.textContent = '+ Cadastrar Sineiro';
+        }
+      });
+    }
+
+    // Toggle do Login Admin
+    if (dom.btnShowAdminLogin && dom.adminLoginFields) {
+      dom.btnShowAdminLogin.addEventListener('click', () => {
+        const isVisible = dom.adminLoginFields.style.display !== 'none';
+        dom.adminLoginFields.style.display = isVisible ? 'none' : 'block';
+        if (!isVisible && dom.adminPasswordInput) {
+          dom.adminPasswordInput.focus();
+        }
+      });
+    }
+
+    // Login Admin
+    if (dom.btnSubmitAdminLogin && dom.adminPasswordInput) {
+      dom.btnSubmitAdminLogin.addEventListener('click', async () => {
+        const password = dom.adminPasswordInput.value;
+        if (!password) {
+          alert('Digite a senha de administrador.');
+          return;
+        }
+
+        try {
+          dom.btnSubmitAdminLogin.disabled = true;
+          const res = await fetch('api/auth.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'login',
+              email: 'flavioflavia@gmail.com',
+              password: password
+            })
+          });
+
+          const data = await res.json();
+          if (!data.success) {
+            alert('Acesso negado: ' + (data.error || 'Senha incorreta'));
+            return;
+          }
+
+          state.currentUser = data.user;
+          localStorage.setItem('sinos_current_user_email', data.user.email);
+          updateUserUI();
+          await refreshRingersList();
+          dom.adminPasswordInput.value = '';
+          dom.adminLoginFields.style.display = 'none';
+          dom.userModal.classList.remove('open');
+
+          const scoreId = getCurrentScoreId();
+          if (scoreId) {
+            await loadSongAssignments(scoreId);
+          }
+
+          setHudMessage('Bem-vindo, Administrador Flávio!', 'ready');
+        } catch (err) {
+          console.error('Erro no login admin:', err);
+          alert('Erro ao validar acesso de administrador.');
+        } finally {
+          dom.btnSubmitAdminLogin.disabled = false;
+        }
+      });
+    }
+  }
+
+  // ==========================================
+  // CONVERSOR DE ARQUIVOS .MSF (MOBILESHEETS)
+  // ==========================================
+
+  function setupMsfModal() {
+    if (!dom.btnOpenMsf || !dom.msfModal) return;
+
+    dom.btnOpenMsf.addEventListener('click', () => {
+      dom.msfModal.classList.add('open');
+    });
+
+    if (dom.btnCloseMsf) {
+      dom.btnCloseMsf.addEventListener('click', () => {
+        dom.msfModal.classList.remove('open');
+      });
+    }
+
+    if (dom.btnCancelMsf) {
+      dom.btnCancelMsf.addEventListener('click', () => {
+        dom.msfModal.classList.remove('open');
+      });
+    }
+
+    dom.msfModal.addEventListener('click', (e) => {
+      if (e.target === dom.msfModal) {
+        dom.msfModal.classList.remove('open');
+      }
+    });
+
+    // Dropzone .msf
+    if (dom.msfDropzone) {
+      dom.msfDropzone.addEventListener('click', () => {
+        if (dom.msfFileInput) dom.msfFileInput.click();
+      });
+
+      dom.msfDropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dom.msfDropzone.classList.add('dragover');
+      });
+
+      dom.msfDropzone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dom.msfDropzone.classList.remove('dragover');
+      });
+
+      dom.msfDropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dom.msfDropzone.classList.remove('dragover');
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          openMsfModalWithFile(e.dataTransfer.files[0]);
+        }
+      });
+    }
+
+    if (dom.msfFileInput) {
+      dom.msfFileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+          openMsfModalWithFile(e.target.files[0]);
+          dom.msfFileInput.value = '';
+        }
+      });
+    }
+
+    if (dom.btnSubmitMsf) {
+      dom.btnSubmitMsf.addEventListener('click', () => {
+        submitMsfConversion();
+      });
+    }
+  }
+
+  function openMsfModalWithFile(file) {
+    if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext !== 'msf' && ext !== 'msb') {
+      alert('Por favor, selecione um arquivo de partitura do MobileSheets (.msf ou .msb).');
+      return;
+    }
+
+    state.msfSelectedFile = file;
+    if (dom.msfModal) dom.msfModal.classList.add('open');
+
+    if (dom.msfSelectedFileInfo && dom.msfSelectedFilename) {
+      dom.msfSelectedFileInfo.style.display = 'block';
+      dom.msfSelectedFilename.textContent = file.name;
+    }
+
+    if (dom.msfTitleInput) {
+      const rawTitle = file.name.replace(/\.[^/.]+$/, '').replace(/[_\\-]+/g, ' ');
+      dom.msfTitleInput.value = rawTitle;
+    }
+
+    if (dom.btnSubmitMsf) {
+      dom.btnSubmitMsf.disabled = false;
+    }
+  }
+
+  async function submitMsfConversion() {
+    if (!state.msfSelectedFile) {
+      alert('Nenhum arquivo .msf selecionado.');
+      return;
+    }
+
+    const file = state.msfSelectedFile;
+    const title = (dom.msfTitleInput ? dom.msfTitleInput.value.trim() : '') || file.name.replace(/\.[^/.]+$/, '');
+
+    dom.msfStatus.style.display = 'flex';
+    dom.msfStatusText.textContent = `Enviando "${file.name}" para o conversor de MobileSheets...`;
+    dom.btnSubmitMsf.disabled = true;
+    if (dom.btnCancelMsf) dom.btnCancelMsf.disabled = true;
+
+    const formData = new FormData();
+    formData.append('msf_file', file);
+    formData.append('title', title);
+    formData.append('user_name', state.currentUser ? state.currentUser.name : 'Sineiro');
+    formData.append('user_email', state.currentUser ? state.currentUser.email : '');
+
+    try {
+      const resp = await fetch('api/convert_msf.php', {
+        method: 'POST',
+        headers: {
+          'X-User-Email': state.currentUser ? state.currentUser.email : ''
+        },
+        body: formData
+      });
+
+      const rawText = await resp.text();
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch (e) {
+        throw new Error('Resposta inválida do servidor: ' + (rawText.substring(0, 80) || ''));
+      }
+
+      if (!data.success || !data.jobId) {
+        throw new Error(data.error || 'Falha ao iniciar conversão do arquivo .msf.');
+      }
+
+      const jobId = data.jobId;
+      dom.msfStatusText.textContent = 'Descompactando .msf e transcrevendo partitura com Google Gemini...';
+
+      // Polling a cada 2.5s
+      let completed = false;
+      const startTime = Date.now();
+      const maxTimeoutMs = 10 * 60 * 1000;
+
+      while (!completed) {
+        if (Date.now() - startTime > maxTimeoutMs) {
+          throw new Error('Tempo limite excedido na conversão do arquivo .msf.');
+        }
+
+        await new Promise(r => setTimeout(r, 2500));
+
+        let statusResp;
+        try {
+          statusResp = await fetch(`api/transcribe_status.php?jobId=${encodeURIComponent(jobId)}&t=${Date.now()}`);
+        } catch (e) {
+          continue;
+        }
+
+        if (!statusResp.ok) continue;
+
+        const statusRaw = await statusResp.text();
+        let job;
+        try {
+          job = JSON.parse(statusRaw);
+        } catch (e) {
+          continue;
+        }
+
+        if (job.status === 'processing' || job.status === 'analyzing' || job.status === 'transcribing' || job.status === 'converting') {
+          const pct = job.percent !== undefined ? ` (${job.percent}%)` : '';
+          dom.msfStatusText.textContent = (job.message || 'Convertendo partitura...') + pct;
+        } else if (job.status === 'completed') {
+          completed = true;
+          dom.msfStatusText.textContent = 'Partitura MusicXML gerada com sucesso! Carregando no estúdio de sinos...';
+          
+          const finalFilename = job.output || job.outputFilename || data.outputFilename;
+          const scoreUrl = finalFilename.startsWith('scores/') ? finalFilename : ('scores/' + finalFilename);
+          const scoreTitle = job.title || title;
+
+          await loadServerScoresList();
+          addNewOptionToSelect(scoreTitle, scoreUrl);
+          state.currentScoreUrl = scoreUrl;
+          savePreferences();
+          await loadScore(scoreUrl);
+
+          setTimeout(() => {
+            dom.msfModal.classList.remove('open');
+            dom.msfStatus.style.display = 'none';
+            dom.btnSubmitMsf.disabled = false;
+            if (dom.btnCancelMsf) dom.btnCancelMsf.disabled = false;
+            state.msfSelectedFile = null;
+            if (dom.msfSelectedFileInfo) dom.msfSelectedFileInfo.style.display = 'none';
+            if (dom.msfTitleInput) dom.msfTitleInput.value = '';
+            setHudMessage(`Música "${scoreTitle}" convertida de .msf e salva no acervo!`, 'ready');
+          }, 1200);
+          return;
+        } else if (job.status === 'error') {
+          completed = true;
+          throw new Error(job.message || job.error || 'Erro na conversão do arquivo .msf.');
+        }
+      }
+    } catch (err) {
+      console.error('Erro na conversão .msf:', err);
+      dom.msfStatusText.textContent = `Erro: ${err.message}`;
+      dom.btnSubmitMsf.disabled = false;
+      if (dom.btnCancelMsf) dom.btnCancelMsf.disabled = false;
+    }
+  }
+
   function showLoading(msg) {
     dom.loadingText.textContent = msg;
     dom.scoreLoading.style.display = 'flex';
@@ -1397,6 +2222,9 @@
       };
       localStorage.setItem('bellringer_prefs_v1', JSON.stringify(prefs));
     } catch (e) {}
+
+    // Grava também as notas atribuídas para esta música no servidor
+    scheduleSaveSongAssignment();
   }
 
   function loadStoredPreferences() {
