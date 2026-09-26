@@ -293,9 +293,104 @@ def save_score_meta(output_xml_path, title, uploader_name="Sineiro", uploader_em
     except Exception as e:
         print(f"[!] Erro ao salvar scores_meta: {e}")
 
+def extract_measures(xml_text):
+    cleaned = re.sub(r'^\s*```(?:xml)?\s*', '', xml_text, flags=re.IGNORECASE)
+    cleaned = re.sub(r'\s*```\s*$', '', cleaned)
+    measures = re.findall(r'(<measure\s+number="(\d+)"[^>]*>.*?</measure>)', cleaned, re.DOTALL)
+    if not measures:
+        measures = re.findall(r'(<measure\s+number=\'(\d+)\'[^>]*>.*?</measure>)', cleaned, re.DOTALL)
+    result = []
+    for full_tag, num in measures:
+        result.append((int(num), full_tag))
+    return result
+
+def convert_pdf_multipage(pdf_path, output_xml_path, title, job_file=None, user_name="Sineiro", user_email=""):
+    import subprocess, glob, shutil, tempfile
+    temp_dir = tempfile.mkdtemp(prefix="sinos_pdf_")
+    try:
+        update_job_status(job_file, "processing", "Renderizando páginas do PDF em alta resolução...", 20)
+        prefix = os.path.join(temp_dir, "page")
+        cmd = ["/usr/bin/pdftoppm", "-png", "-r", "150", pdf_path, prefix]
+        subprocess.run(cmd, check=True)
+        
+        page_files = sorted(glob.glob(os.path.join(temp_dir, "page-*.png")))
+        valid_pages = [p for p in page_files if os.path.getsize(p) > 20480]
+        if not valid_pages:
+            valid_pages = page_files
+
+        total_pages = len(valid_pages)
+        print(f"[*] PDF renderizado em {total_pages} páginas válidas para transcrição.")
+        
+        all_measures = []
+        for idx, page_img in enumerate(valid_pages):
+            p_num = idx + 1
+            pct = 25 + int((idx / total_pages) * 65)
+            update_job_status(job_file, "transcribing", f"Transcrevendo página {p_num} de {total_pages} com IA...", pct)
+            print(f"[*] Transcrevendo página {p_num}/{total_pages} ({os.path.basename(page_img)})...")
+            
+            with open(page_img, "rb") as f:
+                img_bytes = f.read()
+                
+            prompt = (
+                f"Você é um perito em transcrição de partituras musicais para Orquestra de Sinos (Handbells).\n"
+                f"Esta imagem é a Página {p_num} de {total_pages} da partitura '{title}'.\n"
+                "DIRETRIZES TÉCNICAS:\n"
+                "1. Transcreva com fidelidade ABSOLUTA todas as notas, pausas, acordes (<chord/>), claves e tempos desta página.\n"
+                "2. 2 pautas: Staff 1 (Clave de Sol) e Staff 2 (Clave de Fá). Use <backup> para alternar pautas/vozes.\n"
+                "3. Formate cada elemento <note> concisamente em linha única (ex: <note><pitch><step>D</step><octave>4</octave></pitch><duration>2</duration><type>quarter</type><staff>1</staff></note>) para caber na resposta.\n"
+                "4. Transcreva todos os compassos da página do início ao fim sem omitir nada.\n"
+                "5. Retorne os blocos <measure number=\"...\">...</measure> completos."
+            )
+            
+            img_part = types.Part.from_bytes(data=img_bytes, mime_type='image/png')
+            raw_xml = call_gemini([prompt, img_part])
+            
+            extracted = extract_measures(raw_xml)
+            print(f"[✓] Página {p_num}: {len(extracted)} compassos extraídos.")
+            for m_num, m_content in extracted:
+                all_measures.append((m_num, m_content))
+                
+        all_measures.sort(key=lambda x: x[0])
+        print(f"[✓] Total de compassos coletados de todas as páginas: {len(all_measures)}")
+        
+        header = f'''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 3.1 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
+<score-partwise version="3.1">
+  <work>
+    <work-title>{title}</work-title>
+  </work>
+  <part-list>
+    <score-part id="P1">
+      <part-name>Handbells</part-name>
+      <part-abbreviation>H.B.</part-abbreviation>
+    </score-part>
+  </part-list>
+  <part id="P1">
+'''
+        footer = '''  </part>
+</score-partwise>
+'''
+        measures_xml = "\n".join([m[1] for m in all_measures])
+        full_xml = header + measures_xml + "\n" + footer
+        final_xml = repair_xml(full_xml)
+        
+        with open(output_xml_path, "w", encoding="utf-8") as out:
+            out.write(final_xml)
+        save_score_meta(output_xml_path, title, user_name, user_email)
+        update_job_status(job_file, "completed", "Conversão de partitura PDF concluída com sucesso!", 100, {"output": os.path.basename(output_xml_path)})
+        print(f"[✓] Partitura salva em {output_xml_path}")
+        return True
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
 def convert_msf(msf_path, output_xml_path, song_title=None, job_file=None, user_name="Sineiro", user_email=""):
-    update_job_status(job_file, "analyzing", "Examinando estrutura do arquivo .msf...", 10)
-    print(f"[*] Analisando arquivo .msf: {msf_path}")
+    update_job_status(job_file, "analyzing", "Examinando estrutura do arquivo...", 10)
+    print(f"[*] Analisando arquivo: {msf_path}")
+
+    # Se for PDF diretamente
+    if msf_path.lower().endswith('.pdf'):
+        title = song_title or os.path.splitext(os.path.basename(msf_path))[0].replace('_', ' ')
+        return convert_pdf_multipage(msf_path, output_xml_path, title, job_file, user_name, user_email)
 
     extracted = extract_from_msf(msf_path)
     title = song_title or os.path.splitext(os.path.basename(msf_path))[0].replace('_', ' ')
@@ -319,53 +414,14 @@ def convert_msf(msf_path, output_xml_path, song_title=None, job_file=None, user_
     # Caso 2: Contém PDF embutido
     if extracted["pdfs"]:
         pdf_name, pdf_bytes = extracted["pdfs"][0]
-        pdf_size_kb = len(pdf_bytes) // 1024
-        update_job_status(job_file, "processing", f"Processando partitura em PDF ({pdf_size_kb} KB). Preparando envio para Gemini...", 30)
-        print(f"[*] Enviando PDF ({len(pdf_bytes)} bytes, {pdf_size_kb} KB) para transcrição via Gemini...")
-        
-        prompt = (
-            f"Transcreva a partitura musical deste PDF em anexo com o título '{title}'. "
-            "Se houver múltiplas páginas, transcreva todas as páginas sequencialmente compasso por compasso do início ao fim. "
-            "IMPORTANTE: Formate os elementos <note> de modo conciso em linhas compactas (ex: <note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><type>quarter</type><staff>1</staff></note>) para que toda a música e todos os compassos caibam na resposta sem truncamento. "
-            "Retorne o arquivo MusicXML 3.1 completo e bem-formatado para Orquestra de Sinos (Handbells com 2 pautas Clave de Sol e Fá)."
-        )
-        
-        uploaded_gemini_file = None
-        temp_pdf_to_clean = None
+        temp_pdf = output_xml_path + ".temp.pdf"
+        with open(temp_pdf, "wb") as f_tmp:
+            f_tmp.write(pdf_bytes)
         try:
-            # Se for maior que 10MB, usa a API de arquivos (Files API) do Gemini para evitar estouro de payload REST
-            if len(pdf_bytes) > 10 * 1024 * 1024:
-                update_job_status(job_file, "processing", f"Upload de PDF grande ({pdf_size_kb // 1024} MB) para a API Gemini...", 40)
-                temp_pdf_to_clean = output_xml_path + ".upload.pdf"
-                with open(temp_pdf_to_clean, "wb") as f_tmp:
-                    f_tmp.write(pdf_bytes)
-                print(f"[*] Fazendo upload do PDF grande ({pdf_size_kb // 1024} MB) para Gemini Files API...")
-                uploaded_gemini_file = client.files.upload(file=temp_pdf_to_clean, config=dict(mime_type="application/pdf"))
-                pdf_input = uploaded_gemini_file
-            else:
-                pdf_input = types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf")
-            
-            update_job_status(job_file, "transcribing", "Gemini gerando notação MusicXML 3.1 com claves e tempos...", 60)
-            response_text = call_gemini([prompt, pdf_input])
-            
-            final_xml = repair_xml(response_text)
-            with open(output_xml_path, "w", encoding="utf-8") as out:
-                out.write(final_xml)
-            save_score_meta(output_xml_path, title, user_name, user_email)
-            update_job_status(job_file, "completed", "Conversão de partitura PDF/MSF para MusicXML concluída com sucesso!", 100, {"output": os.path.basename(output_xml_path)})
-            print(f"[✓] Partitura convertida e salva em: {output_xml_path}")
-            return True
+            return convert_pdf_multipage(temp_pdf, output_xml_path, title, job_file, user_name, user_email)
         finally:
-            if uploaded_gemini_file:
-                try:
-                    client.files.delete(name=uploaded_gemini_file.name)
-                except Exception as e:
-                    print(f"[!] Aviso ao excluir arquivo temporário no Gemini: {e}")
-            if temp_pdf_to_clean and os.path.exists(temp_pdf_to_clean):
-                try:
-                    os.remove(temp_pdf_to_clean)
-                except Exception:
-                    pass
+            if os.path.exists(temp_pdf):
+                os.remove(temp_pdf)
 
     # Caso 3: Contém imagens embutidas
     if extracted["images"]:
