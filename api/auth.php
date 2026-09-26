@@ -255,6 +255,75 @@ switch ($action) {
         echo json_encode(['success' => true, 'message' => 'Sessão encerrada.']);
         break;
 
+    // Excluir perfil de sineiro (EXCLUSIVO PARA O ADMINISTRADOR flavioflavia@gmail.com)
+    case 'delete_ringer':
+    case 'delete_user':
+        // Identifica e-mail de quem solicita a exclusão
+        $requesterEmail = $_SESSION['sinos_user_email'] ?? ($_SERVER['HTTP_X_USER_EMAIL'] ?? ($body['admin_email'] ?? ($body['requester_email'] ?? '')));
+        $requesterEmail = strtolower(trim($requesterEmail));
+
+        if ($requesterEmail !== strtolower($adminEmail)) {
+            http_response_code(403);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Acesso negado. Apenas o administrador (' . $adminEmail . ') tem permissão para remover sineiros.'
+            ]);
+            exit;
+        }
+
+        $targetEmail = strtolower(trim($body['email'] ?? ''));
+        if (empty($targetEmail)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'E-mail do sineiro a ser removido não informado.']);
+            exit;
+        }
+
+        if ($targetEmail === strtolower($adminEmail)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'O perfil do Administrador principal não pode ser removido.']);
+            exit;
+        }
+
+        if (!isset($users[$targetEmail])) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Sineiro não encontrado no cadastro.']);
+            exit;
+        }
+
+        $removedName = $users[$targetEmail]['name'] ?? $targetEmail;
+        unset($users[$targetEmail]);
+        saveUsers($usersFile, $users);
+
+        // Limpa atribuições/escalas desse usuário em todas as músicas
+        $assignmentsFile = $dataDir . '/assignments.json';
+        if (file_exists($assignmentsFile)) {
+            $assignments = json_decode(@file_get_contents($assignmentsFile), true);
+            if (is_array($assignments)) {
+                $changed = false;
+                foreach ($assignments as $song => $userList) {
+                    if (isset($assignments[$song][$targetEmail])) {
+                        unset($assignments[$song][$targetEmail]);
+                        $changed = true;
+                    }
+                }
+                if ($changed) {
+                    file_put_contents($assignmentsFile, json_encode($assignments, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                }
+            }
+        }
+
+        // Se o usuário excluído era o que estava na sessão, retorna a sessão para o admin
+        if (isset($_SESSION['sinos_user_email']) && strtolower($_SESSION['sinos_user_email']) === $targetEmail) {
+            $_SESSION['sinos_user_email'] = $adminEmail;
+        }
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Perfil do sineiro "' . $removedName . '" foi removido com sucesso pelo administrador.',
+            'removed_email' => $targetEmail
+        ]);
+        break;
+
     default:
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Ação inválida.']);

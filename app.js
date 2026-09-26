@@ -1787,6 +1787,9 @@
 
       data.ringers.forEach(ringer => {
         const isCurrent = state.currentUser && (ringer.email.toLowerCase() === state.currentUser.email.toLowerCase());
+        const isAdminLogged = state.currentUser && (state.currentUser.isAdmin || state.currentUser.email.toLowerCase() === 'flavioflavia@gmail.com');
+        const canDelete = isAdminLogged && !ringer.isAdmin;
+
         const chip = document.createElement('div');
         chip.className = `ringer-profile-card ${isCurrent ? 'active' : ''}`;
         chip.style.cssText = `
@@ -1799,6 +1802,7 @@
           border-radius: 20px;
           cursor: pointer;
           transition: all 0.2s ease;
+          position: relative;
         `;
 
         chip.innerHTML = `
@@ -1810,18 +1814,87 @@
           </span>
           ${ringer.isAdmin ? '<span style="font-size: 0.65rem; background: rgba(255,215,0,0.2); color: #ffd700; padding: 1px 5px; border-radius: 4px;">Admin</span>' : ''}
           ${isCurrent ? '<span style="font-size: 0.75rem; color: #ffd700; font-weight: bold;">✓</span>' : ''}
+          ${canDelete ? `<button class="btn-delete-ringer" data-email="${ringer.email}" title="Remover sineiro ${ringer.name}" style="background: none; border: none; color: #ff6b6b; cursor: pointer; padding: 2px 6px; font-size: 0.85rem; border-radius: 12px; margin-left: 4px; line-height: 1; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,107,107,0.25)'" onmouseout="this.style.background='none'">🗑️</button>` : ''}
         `;
 
-        chip.addEventListener('click', async () => {
+        chip.addEventListener('click', async (e) => {
+          if (e.target.closest('.btn-delete-ringer')) return;
           if (isCurrent) return;
           await switchRinger(ringer);
         });
+
+        const btnDel = chip.querySelector('.btn-delete-ringer');
+        if (btnDel) {
+          btnDel.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            await deleteRinger(ringer);
+          });
+        }
 
         dom.ringersChipsGrid.appendChild(chip);
       });
     } catch (err) {
       console.error('Erro ao listar sineiros:', err);
       dom.ringersChipsGrid.innerHTML = '<div style="color: var(--accent-red); font-size: 0.8rem;">Não foi possível carregar a lista de sineiros.</div>';
+    }
+  }
+
+  async function deleteRinger(ringer) {
+    if (!state.currentUser || (!state.currentUser.isAdmin && state.currentUser.email.toLowerCase() !== 'flavioflavia@gmail.com')) {
+      alert('Apenas o Administrador pode remover sineiros.');
+      return;
+    }
+
+    const confirmDelete = confirm(
+      `Remover Perfil de Sineiro?\n\n` +
+      `Sineiro: ${ringer.name}\n` +
+      `E-mail: ${ringer.email}\n\n` +
+      `Esta ação removerá permanentemente o perfil do grupo e desvinculará suas notas. Confirmar exclusão?`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      setHudMessage(`Removendo sineiro "${ringer.name}"...`, 'loading');
+
+      const res = await fetch('api/auth.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Email': state.currentUser.email
+        },
+        body: JSON.stringify({
+          action: 'delete_ringer',
+          email: ringer.email,
+          admin_email: state.currentUser.email
+        })
+      });
+
+      const data = await res.json();
+      if (!data || !data.success) {
+        alert('Erro ao remover sineiro: ' + (data ? data.error : 'Erro desconhecido'));
+        setHudMessage('Falha ao remover sineiro.', 'ready');
+        return;
+      }
+
+      setHudMessage(data.message || `Perfil "${ringer.name}" removido com sucesso.`, 'ready');
+
+      // Se o usuário excluído era o que estava ativo, volta para o admin
+      if (state.currentUser && state.currentUser.email.toLowerCase() === ringer.email.toLowerCase()) {
+        const adminUser = state.allRingers.find(r => r.isAdmin || r.email.toLowerCase() === 'flavioflavia@gmail.com') || {
+          email: 'flavioflavia@gmail.com',
+          name: 'Flávio (Admin)',
+          isAdmin: true,
+          role: 'admin'
+        };
+        await switchRinger(adminUser);
+      } else {
+        await refreshRingersList();
+      }
+    } catch (err) {
+      console.error('Erro ao excluir sineiro:', err);
+      alert('Erro de conexão ao tentar remover o sineiro.');
+      setHudMessage('Erro ao comunicar com o servidor.', 'ready');
     }
   }
 
