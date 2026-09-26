@@ -196,6 +196,14 @@
     adminLoginFields: document.getElementById('admin-login-fields'),
     adminPasswordInput: document.getElementById('admin-password-input'),
     btnSubmitAdminLogin: document.getElementById('btn-submit-admin-login'),
+    adminNotLoggedBox: document.getElementById('admin-not-logged-box'),
+    adminLoggedBox: document.getElementById('admin-logged-box'),
+    btnToggleChangePwd: document.getElementById('btn-toggle-change-pwd'),
+    adminChangePwdFields: document.getElementById('admin-change-pwd-fields'),
+    adminCurrPwd: document.getElementById('admin-curr-pwd'),
+    adminNewPwd: document.getElementById('admin-new-pwd'),
+    btnSubmitChangePwd: document.getElementById('btn-submit-change-pwd'),
+    changePwdFeedback: document.getElementById('change-pwd-feedback'),
 
     // Conversor de arquivos .MSF (MobileSheets)
     btnOpenMsf: document.getElementById('btn-open-msf'),
@@ -1771,6 +1779,14 @@
     if (dom.assignedSectionHeading) {
       dom.assignedSectionHeading.textContent = `Notas de ${u.name} nesta Música`;
     }
+
+    const isAdmin = !!u.isAdmin || (u.email && u.email.toLowerCase() === 'flavioflavia@gmail.com');
+    if (dom.adminNotLoggedBox && dom.adminLoggedBox) {
+      dom.adminNotLoggedBox.style.display = isAdmin ? 'none' : 'block';
+      dom.adminLoggedBox.style.display = isAdmin ? 'block' : 'none';
+      if (dom.adminChangePwdFields) dom.adminChangePwdFields.style.display = 'none';
+      if (dom.changePwdFeedback) dom.changePwdFeedback.textContent = '';
+    }
   }
 
   async function refreshRingersList() {
@@ -2075,6 +2091,104 @@
           alert('Erro ao validar acesso de administrador.');
         } finally {
           dom.btnSubmitAdminLogin.disabled = false;
+        }
+      });
+    }
+
+    // Toggle dos campos de Trocar Senha Admin
+    if (dom.btnToggleChangePwd && dom.adminChangePwdFields) {
+      dom.btnToggleChangePwd.addEventListener('click', () => {
+        const isVisible = dom.adminChangePwdFields.style.display !== 'none';
+        dom.adminChangePwdFields.style.display = isVisible ? 'none' : 'block';
+        if (!isVisible && dom.adminCurrPwd) {
+          dom.adminCurrPwd.focus();
+        }
+        if (dom.changePwdFeedback) dom.changePwdFeedback.textContent = '';
+      });
+    }
+
+    // Salvar Nova Senha de Admin
+    if (dom.btnSubmitChangePwd) {
+      dom.btnSubmitChangePwd.addEventListener('click', async () => {
+        const currPwd = (dom.adminCurrPwd ? dom.adminCurrPwd.value : '').trim();
+        const newPwd = (dom.adminNewPwd ? dom.adminNewPwd.value : '').trim();
+
+        if (!currPwd) {
+          if (dom.changePwdFeedback) {
+            dom.changePwdFeedback.style.color = 'var(--accent-red)';
+            dom.changePwdFeedback.textContent = 'Informe a sua senha atual.';
+          }
+          alert('Por favor, informe a senha atual.');
+          return;
+        }
+
+        if (newPwd.length < 4) {
+          if (dom.changePwdFeedback) {
+            dom.changePwdFeedback.style.color = 'var(--accent-red)';
+            dom.changePwdFeedback.textContent = 'A nova senha deve ter no mínimo 4 caracteres.';
+          }
+          alert('A nova senha deve ter no mínimo 4 caracteres.');
+          return;
+        }
+
+        try {
+          dom.btnSubmitChangePwd.disabled = true;
+          dom.btnSubmitChangePwd.textContent = 'Salvando...';
+          if (dom.changePwdFeedback) {
+            dom.changePwdFeedback.style.color = 'var(--text-muted)';
+            dom.changePwdFeedback.textContent = 'Atualizando senha...';
+          }
+
+          const res = await fetch('api/auth.php', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-User-Email': state.currentUser ? state.currentUser.email : ''
+            },
+            body: JSON.stringify({
+              action: 'change_password',
+              email: state.currentUser ? state.currentUser.email : '',
+              current_password: currPwd,
+              new_password: newPwd
+            })
+          });
+
+          const data = await res.json();
+          if (!data || !data.success) {
+            const errMsg = data ? data.error : 'Erro ao alterar senha.';
+            if (dom.changePwdFeedback) {
+              dom.changePwdFeedback.style.color = 'var(--accent-red)';
+              dom.changePwdFeedback.textContent = errMsg;
+            }
+            alert(errMsg);
+            return;
+          }
+
+          if (dom.changePwdFeedback) {
+            dom.changePwdFeedback.style.color = '#06d6a0';
+            dom.changePwdFeedback.textContent = '✓ Senha alterada com sucesso!';
+          }
+
+          if (dom.adminCurrPwd) dom.adminCurrPwd.value = '';
+          if (dom.adminNewPwd) dom.adminNewPwd.value = '';
+
+          setHudMessage('Senha de Administrador alterada com sucesso!', 'ready');
+          alert('Senha de Administrador alterada com sucesso!');
+
+          setTimeout(() => {
+            if (dom.adminChangePwdFields) dom.adminChangePwdFields.style.display = 'none';
+            if (dom.changePwdFeedback) dom.changePwdFeedback.textContent = '';
+          }, 2000);
+        } catch (err) {
+          console.error('Erro ao trocar senha admin:', err);
+          if (dom.changePwdFeedback) {
+            dom.changePwdFeedback.style.color = 'var(--accent-red)';
+            dom.changePwdFeedback.textContent = 'Erro de conexão com o servidor.';
+          }
+          alert('Erro de conexão ao salvar nova senha.');
+        } finally {
+          dom.btnSubmitChangePwd.disabled = false;
+          dom.btnSubmitChangePwd.textContent = 'Salvar Nova Senha';
         }
       });
     }

@@ -183,6 +183,50 @@ switch ($action) {
         ]);
         break;
 
+    // Alterar senha (exclusivo para o usuário autenticado / admin)
+    case 'change_password':
+        $requesterEmail = $_SESSION['sinos_user_email'] ?? ($_SERVER['HTTP_X_USER_EMAIL'] ?? ($body['admin_email'] ?? ($body['email'] ?? '')));
+        $requesterEmail = strtolower(trim($requesterEmail));
+
+        if (empty($requesterEmail) || !isset($users[$requesterEmail])) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'error' => 'Sessão não autenticada. Faça login como administrador primeiro.']);
+            exit;
+        }
+
+        $currentPassword = $body['current_password'] ?? '';
+        $newPassword = $body['new_password'] ?? '';
+
+        if (empty($currentPassword)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Informe a senha atual.']);
+            exit;
+        }
+
+        if (strlen($newPassword) < 4) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'A nova senha deve possuir no mínimo 4 caracteres.']);
+            exit;
+        }
+
+        $user = $users[$requesterEmail];
+        // Valida se a senha atual confere
+        if (!empty($user['password_hash']) && !password_verify($currentPassword, $user['password_hash'])) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'error' => 'A senha atual digitada está incorreta.']);
+            exit;
+        }
+
+        // Grava o novo hash de senha
+        $users[$requesterEmail]['password_hash'] = password_hash($newPassword, PASSWORD_DEFAULT);
+        saveUsers($usersFile, $users);
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Senha de Administrador alterada com sucesso!'
+        ]);
+        break;
+
     // Cadastro de novo sineiro
     case 'register':
         $name = trim($body['name'] ?? '');

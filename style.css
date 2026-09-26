@@ -56,6 +56,11 @@
   padding: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 175px;
+}
+
 body {
   font-family: var(--font-main);
   background-color: var(--bg-primary);
@@ -64,6 +69,16 @@ body {
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
+}
+
+/* Container Fixo do Topo (Cabeçalho + Playback Bar + Live Cue HUD sempre visíveis) */
+.app-top-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+  background-color: var(--bg-primary);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
 }
 
 /* Header */
@@ -75,9 +90,7 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  position: relative;
   backdrop-filter: blur(8px);
 }
 
