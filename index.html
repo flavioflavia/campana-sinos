@@ -2,10 +2,14 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Campana - Orquestra de Sinos | Estudo Interativo de Partituras</title>
   <meta name="description" content="Aplicativo interativo para estudo em orquestra de sinos (handbells). Marque seus sinos, acompanhe a partitura e veja as notas mudarem de cor quando tocadas.">
-  <link rel="stylesheet" href="style.css?v=3.2">
+  <link rel="stylesheet" href="style.css?v=3.3">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔔</text></svg>">
 </head>
 <body>
@@ -58,6 +62,21 @@
           <span>📸</span> Escanear Fotos (IA)
         </button>
 
+        <!-- Escala Geral do Regente & Detecção de Notas Órfãs -->
+        <button class="btn-icon" id="btn-open-roster" title="Escala Geral de Sinos & Detecção de Notas Órfãs">
+          <span>🎼</span> Escala Geral
+        </button>
+
+        <!-- Ensaio Coletivo: Sincronização em Tempo Real (Maestro Sync) -->
+        <button class="btn-icon" id="btn-open-sync" title="Ensaio Coletivo: Sincronização em Tempo Real (Maestro Sync)">
+          <span>📡</span> Ensaio Sync
+        </button>
+
+        <!-- Exportar / Imprimir Partitura em PDF com Marca-Texto Colorido -->
+        <button class="btn-icon" id="btn-print-score" title="Imprimir ou Exportar Partitura em PDF com Destaque Colorido dos seus sinos">
+          <span>🖨️</span> Imprimir PDF
+        </button>
+
         <!-- Botão Excluir: visível exclusivamente para o Admin (flavioflavia@gmail.com) -->
         <button class="btn-delete-score" id="btn-delete-score" style="display: none;" title="Apagar a partitura selecionada (Permissão exclusiva do Administrador)">
           <span>🗑️</span> Apagar
@@ -81,6 +100,23 @@
           <span class="measure-badge-label">Compasso</span>
           <span class="measure-badge-val" id="measure-badge-val">C. 1</span>
         </div>
+      </div>
+
+      <!-- Loop de Trecho Difícil (Modo A-B Loop & Treino Acelerador) -->
+      <div class="loop-group" title="Modo A-B Loop: repita trechos difíceis continuamente">
+        <div class="loop-points-wrap">
+          <button class="btn-loop-point" id="btn-set-loop-a" title="Marcar início do loop no compasso atual">Ponto A</button>
+          <span class="loop-tag" id="loop-a-display">A: --</span>
+          <button class="btn-loop-point" id="btn-set-loop-b" title="Marcar fim do loop no compasso atual">Ponto B</button>
+          <span class="loop-tag" id="loop-b-display">B: --</span>
+        </div>
+        <button class="toggle-pill" id="btn-toggle-loop" title="Ativar ou desativar repetição contínua entre os pontos A e B">
+          <span>🔁</span> Loop A-B
+        </button>
+        <button class="toggle-pill" id="btn-toggle-accelerator" title="Treino Acelerador: Acelera +5% a cada ciclo até 100%">
+          <span>⚡</span> Acelerador
+        </button>
+        <button class="btn-loop-clear" id="btn-clear-loop" title="Limpar pontos de Loop">✕</button>
       </div>
 
       <!-- Controle de Velocidade / BPM -->
@@ -127,6 +163,11 @@
             <option value="glockenspiel">🌟 Glockenspiel</option>
           </select>
         </div>
+
+        <!-- Afinador & Microfone -->
+        <button class="toggle-pill" id="btn-open-tuner" title="Afinador Acústico de Sinos & Treino Interativo 'Ouça meu Sino' pelo microfone">
+          <span>🎙️</span> Afinador & Mic
+        </button>
 
         <!-- Recolher / Expandir Mesa de Sinos -->
         <button class="toggle-pill active" id="btn-toggle-rack" title="Mostrar ou ocultar a mesa de sinos lateral">
@@ -207,6 +248,17 @@
             </div>
           </div>
 
+          <!-- Alerta de Trocas Rápidas (Weaving Detection) -->
+          <div class="weaving-section" id="weaving-section" style="display: none;">
+            <div class="weaving-header">
+              <span class="weaving-title">⚠️ Trocas Rápidas (Weaving)</span>
+              <span class="weaving-count-badge" id="weaving-count-badge">0</span>
+            </div>
+            <div class="weaving-list" id="weaving-list">
+              <!-- Itens de trocas rápidas gerados via JS com salto para o compasso -->
+            </div>
+          </div>
+
           <!-- Presets Rápidos por Sineiro (Ringer 1 a 8) -->
           <div class="ringers-section">
             <span class="ringers-section-title">Atalhos por Tocador (Ringers)</span>
@@ -247,6 +299,23 @@
         <button class="btn-score-tool" id="btn-zoom-out" title="Reduzir Zoom">−</button>
         <button class="btn-score-tool" id="btn-zoom-reset" title="Zoom Normal 100%">100%</button>
         <button class="btn-score-tool" id="btn-zoom-in" title="Aumentar Zoom">+</button>
+      </div>
+
+      <!-- Cabeçalho Especial de Impressão (Visível apenas na impressão física / PDF) -->
+      <div class="print-score-header" id="print-score-header" style="display: none;">
+        <div class="print-brand">
+          <span style="font-size: 1.5rem;">🔔</span>
+          <div>
+            <h1 class="print-score-title" id="print-score-title">Nome da Partitura</h1>
+            <p class="print-score-subtitle" id="print-score-subtitle">Campana - Orquestra de Sinos</p>
+          </div>
+        </div>
+        <div class="print-ringer-box">
+          <div class="print-ringer-name" id="print-ringer-name">Sineiro: Flávio</div>
+          <div class="print-bell-legend" id="print-bell-legend">
+            <!-- Chips de sinos coloridos com M.D. / M.E. para o ensaio físico -->
+          </div>
+        </div>
       </div>
 
       <!-- Container do OpenSheetMusicDisplay -->
@@ -526,12 +595,212 @@
     </div>
   </div>
 
+  <!-- Modal da Escala Geral do Regente & Detecção de Notas Órfãs -->
+  <div class="modal-overlay" id="roster-modal">
+    <div class="modal-card roster-modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🎼</span> Escala Geral de Sinos & Detecção de Órfãs
+        </div>
+        <button class="modal-close" id="btn-close-roster">&times;</button>
+      </div>
+      <p class="modal-text">
+        Visão completa de todos os sinos necessários para esta partitura e quem está escalado para tocar cada um.
+      </p>
+
+      <!-- Painel de Estatísticas da Partitura -->
+      <div class="roster-stats-grid">
+        <div class="roster-stat-card">
+          <span class="stat-number" id="stat-total-score-bells">0</span>
+          <span class="stat-label">Sinos na Música</span>
+        </div>
+        <div class="roster-stat-card">
+          <span class="stat-number" id="stat-assigned-score-bells">0</span>
+          <span class="stat-label">Sinos Escalados</span>
+        </div>
+        <div class="roster-stat-card stat-alert" id="stat-card-orphans">
+          <span class="stat-number" id="stat-orphan-bells">0</span>
+          <span class="stat-label">Notas Órfãs (Sem sineiro)</span>
+        </div>
+      </div>
+
+      <div id="roster-orphan-alert" class="orphan-alert-banner" style="display: none;">
+        <span>⚠️</span> Atenção: Existem notas nesta partitura que ninguém vai tocar! Atribua-as abaixo:
+      </div>
+
+      <!-- Tabela Geral da Escala -->
+      <div class="roster-table-container">
+        <table class="roster-table">
+          <thead>
+            <tr>
+              <th>Sino</th>
+              <th>Ocorrências</th>
+              <th>Sineiro Escalado</th>
+              <th>Mão</th>
+              <th>Ação Rápida</th>
+            </tr>
+          </thead>
+          <tbody id="roster-table-body">
+            <!-- Gerado via JS dinamicamente -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 20px;">
+        <button class="btn-primary" id="btn-close-roster-action">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal do Afinador Acústico & Treino 'Ouça meu Sino' -->
+  <div class="modal-overlay" id="tuner-modal">
+    <div class="modal-card tuner-modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🎙️</span> Afinador & Treino com Microfone
+        </div>
+        <button class="modal-close" id="btn-close-tuner">&times;</button>
+      </div>
+
+      <div class="panel-tabs" style="margin-bottom: 16px;">
+        <button class="panel-tab active" id="tab-tuner-bench">🎯 Afinador de Bancada</button>
+        <button class="panel-tab" id="tab-tuner-interactive">🔔 Treino "Ouça meu Sino"</button>
+      </div>
+
+      <!-- Aba 1: Afinador de Bancada -->
+      <div id="view-tuner-bench">
+        <p class="modal-text">
+          Toque seu sino de bronze ou tubular próximo ao microfone. O aplicativo detectará a nota e o desvio em cents.
+        </p>
+
+        <div class="tuner-display-box">
+          <div class="tuner-note-main" id="tuner-note-name">--</div>
+          <div class="tuner-freq-text" id="tuner-freq-val">Frequência: --- Hz</div>
+          
+          <!-- Mostrador de Cents -->
+          <div class="tuner-gauge-wrap">
+            <div class="tuner-gauge-scale">
+              <span>-50</span>
+              <span>-25</span>
+              <span class="center-zero">0</span>
+              <span>+25</span>
+              <span>+50</span>
+            </div>
+            <div class="tuner-gauge-bar">
+              <div class="tuner-gauge-needle" id="tuner-needle" style="left: 50%;"></div>
+            </div>
+            <div class="tuner-cents-text" id="tuner-cents-val">0 cents</div>
+          </div>
+
+          <div class="tuner-status-pill" id="tuner-status-pill">Aguardando som...</div>
+        </div>
+
+        <div style="display: flex; justify-content: center; margin-top: 18px;">
+          <button class="btn-primary" id="btn-toggle-mic">
+            <span>🎙️</span> Ligar Microfone
+          </button>
+        </div>
+      </div>
+
+      <!-- Aba 2: Treino Interativo "Ouça meu Sino" -->
+      <div id="view-tuner-interactive" style="display: none;">
+        <p class="modal-text">
+          Treine ao vivo! No modo <strong>Treino Solo</strong>, quando a partitura passar pela sua nota, toque o sino real. O microfone detectará se você tocou na hora exata e com a afinação precisa.
+        </p>
+
+        <div class="interactive-stats-bar">
+          <div class="stat-pill">Acertos: <strong id="interactive-hits-count">0</strong></div>
+          <div class="stat-pill">Precisão: <strong id="interactive-accuracy-val">100%</strong></div>
+          <div class="stat-pill">Sequência: <strong id="interactive-streak-count">0 🔥</strong></div>
+        </div>
+
+        <div class="interactive-live-feedback" id="interactive-feedback">
+          Ative a validação e aperte Play para iniciar o treino interativo.
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+          <button class="btn-primary" id="btn-toggle-interactive-mode">
+            <span>✨</span> Ativar Avaliação ao Vivo
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 20px;">
+        <button class="btn-secondary" id="btn-close-tuner-action">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal do Maestro Sync (Ensaio Coletivo) -->
+  <div class="modal-overlay" id="sync-modal">
+    <div class="modal-card sync-modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>📡</span> Ensaio Coletivo (Maestro Sync)
+        </div>
+        <button class="modal-close" id="btn-close-sync">&times;</button>
+      </div>
+      <p class="modal-text">
+        Sincronize todos os tablets e celulares da orquestra de sinos em tempo real durante os ensaios.
+      </p>
+
+      <div class="sync-room-input-wrap">
+        <label class="ocr-label">Código da Sessão de Ensaio:</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="sync-room-code" class="ocr-input" value="ENSAIO_GERAL" style="font-weight: 700; letter-spacing: 1px;">
+          <button class="btn-secondary" id="btn-refresh-sync-status">Atualizar</button>
+        </div>
+      </div>
+
+      <div class="sync-roles-grid">
+        <!-- Cartão 1: Regente (Maestro) -->
+        <div class="sync-role-card" id="card-conductor-role">
+          <div class="sync-role-icon">🎼</div>
+          <h4 class="sync-role-title">Sou o Regente (Maestro)</h4>
+          <p class="sync-role-desc">
+            Você comanda o ensaio. Ao dar Play, Pausar, mudar o andamento ou selecionar um compasso, todos os sineiros acompanham instantaneamente.
+          </p>
+          <div class="sync-role-action">
+            <button class="btn-primary" id="btn-start-conductor">
+              <span>🔴</span> Transmitir como Regente
+            </button>
+            <span class="sync-status-indicator" id="conductor-status-indicator" style="display: none;">
+              ● Transmitindo em tempo real
+            </span>
+          </div>
+        </div>
+
+        <!-- Cartão 2: Sineiro (Seguidor) -->
+        <div class="sync-role-card" id="card-follower-role">
+          <div class="sync-role-icon">🔔</div>
+          <h4 class="sync-role-title">Sou Sineiro (Seguir Regente)</h4>
+          <p class="sync-role-desc">
+            Sua partitura carregará a mesma música do regente e avançará os compassos automaticamente em harmonia com o púlpito.
+          </p>
+          <div class="sync-role-action">
+            <button class="btn-primary" id="btn-start-follower">
+              <span>🟢</span> Conectar e Seguir Maestro
+            </button>
+            <span class="sync-status-indicator" id="follower-status-indicator" style="display: none;">
+              ● Conectado ao Maestro
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 20px;">
+        <button class="btn-secondary" id="btn-close-sync-action">Fechar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts: Dependências Locais e Aplicação -->
   <script src="libs/jszip.min.js"></script>
   <script src="libs/opensheetmusicdisplay.min.js"></script>
-  <script src="bell-audio.js?v=3.2"></script>
-  <script src="score-player.js?v=3.2"></script>
-  <script src="app.js?v=3.2"></script>
+  <script src="bell-audio.js?v=3.3"></script>
+  <script src="pitch-detector.js?v=3.3"></script>
+  <script src="score-player.js?v=3.3"></script>
+  <script src="app.js?v=3.3"></script>
 
 </body>
 </html>

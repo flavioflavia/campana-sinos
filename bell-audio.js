@@ -94,8 +94,9 @@ class BellAudioEngine {
    * @param {number} velocity - Dinâmica (0.1 a 1.0)
    * @param {boolean} isSoloHighlight - Se é o sino atribuído ao usuário
    * @param {number|null} exactFreq - Frequência direta em Hz (opcional)
+   * @param {string} technique - Técnica: 'norm' | 'lv' | 'damp' | 'martellato' | 'shake' | 'pluck'
    */
-  playBell(pitch, when = null, duration = 2.5, velocity = 0.8, isSoloHighlight = false, exactFreq = null) {
+  playBell(pitch, when = null, duration = 2.5, velocity = 0.8, isSoloHighlight = false, exactFreq = null, technique = 'norm') {
     this.init();
     const freq = exactFreq && exactFreq > 20 ? exactFreq : this.getFrequency(pitch);
     if (!freq || isNaN(freq)) return null;
@@ -105,14 +106,14 @@ class BellAudioEngine {
     let voice = null;
     switch (this.soundType) {
       case 'tonechime':
-        voice = this.synthTonechime(freq, startTime, duration, velocity, isSoloHighlight);
+        voice = this.synthTonechime(freq, startTime, duration, velocity, isSoloHighlight, technique);
         break;
       case 'glockenspiel':
-        voice = this.synthGlockenspiel(freq, startTime, duration, velocity, isSoloHighlight);
+        voice = this.synthGlockenspiel(freq, startTime, duration, velocity, isSoloHighlight, technique);
         break;
       case 'handbell':
       default:
-        voice = this.synthHandbell(freq, startTime, duration, velocity, isSoloHighlight);
+        voice = this.synthHandbell(freq, startTime, duration, velocity, isSoloHighlight, technique);
         break;
     }
 
@@ -120,7 +121,7 @@ class BellAudioEngine {
       this.activeVoices.add(voice);
       setTimeout(() => {
         this.activeVoices.delete(voice);
-      }, Math.max(1000, (duration + 1) * 1000));
+      }, Math.max(1000, (duration + 2) * 1000));
     }
 
     return voice;
@@ -128,15 +129,48 @@ class BellAudioEngine {
 
   /**
    * Síntese Acústica Cristalina de Handbell de Bronze (English Handbell)
-   * Timbre quente, rico e ressonante de bronze polido.
+   * Suporta técnicas profissionais: Normal, LV, Martellato, Shake, Pluck e Damp.
    */
-  synthHandbell(f0, t0, duration, vel, isHighlight) {
+  synthHandbell(f0, t0, duration, vel, isHighlight, technique = 'norm') {
     const ctx = this.ctx;
     const effectiveVel = Math.min(1.0, vel * (isHighlight ? 1.15 : 1.0));
 
-    // Sinos graves de bronze (Oitava 3) ressoam por até 5-6s; agudos ressoam 2.5-3.5s
-    const decayTime = f0 < 180 ? 5.8 : (f0 < 350 ? 4.5 : (f0 < 700 ? 3.4 : 2.6));
-    const bellDecay = Math.max(duration * 1.3, decayTime);
+    // Determina duração acústica conforme a técnica aplicada
+    const tech = (technique || 'norm').toLowerCase();
+    const naturalDecay = f0 < 180 ? 5.8 : (f0 < 350 ? 4.5 : (f0 < 700 ? 3.4 : 2.6));
+    let bellDecay;
+
+    if (tech === 'lv') {
+      bellDecay = Math.max(duration * 2.2, naturalDecay * 1.4, 6.0);
+    } else if (tech === 'martellato') {
+      bellDecay = Math.min(0.45, Math.max(0.25, duration * 0.4));
+    } else if (tech === 'pluck') {
+      bellDecay = Math.min(0.55, Math.max(0.3, duration * 0.5));
+    } else if (tech === 'damp') {
+      bellDecay = Math.min(duration + 0.12, naturalDecay);
+    } else {
+      bellDecay = Math.max(duration * 1.3, naturalDecay);
+    }
+
+    // Voice Master Gain para tremolo/modulações sem ruído de fase
+    const voiceGain = ctx.createGain();
+    voiceGain.gain.setValueAtTime(1.0, t0);
+    voiceGain.connect(this.masterGain);
+
+    // Efeito Shake (Tremolo a 5.8 Hz modulando a amplitude do sino)
+    let lfoOsc = null;
+    if (tech === 'shake') {
+      lfoOsc = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      lfoOsc.type = 'sine';
+      lfoOsc.frequency.setValueAtTime(5.8, t0);
+      lfoGain.gain.setValueAtTime(0.42, t0); // oscilação de 42% na amplitude
+      voiceGain.gain.setValueAtTime(0.65, t0);
+      lfoOsc.connect(lfoGain);
+      lfoGain.connect(voiceGain.gain);
+      lfoOsc.start(t0);
+      lfoOsc.stop(t0 + bellDecay);
+    }
 
     // 1. FUNDAMENTAL (f0) - O corpo ressonante do sino
     const oscFund = ctx.createOscillator();
@@ -152,7 +186,7 @@ class BellAudioEngine {
     gainFund.gain.exponentialRampToValueAtTime(0.00001, t0 + bellDecay);
 
     oscFund.connect(gainFund);
-    gainFund.connect(this.masterGain);
+    gainFund.connect(voiceGain);
 
     // 2. SEGUNDO HARMÔNICO AFINADO (A clássica 12ª de sino inglês: 3.0 * f0)
     // Nos sinos ingleses afinados (Malmark / Schulmerich), este harmônico produz o brilho celestial
@@ -162,7 +196,7 @@ class BellAudioEngine {
     // Pequeníssimo desvio (detune natural do bronze ~0.15%) para calor acústico
     oscHarm1.frequency.setValueAtTime(f0 * 3.002, t0);
 
-    const harm1Vol = (f0 < 250 ? 0.22 : 0.32) * effectiveVel;
+    const harm1Vol = (f0 < 250 ? 0.22 : 0.32) * effectiveVel * (tech === 'martellato' || tech === 'pluck' ? 0.4 : 1.0);
     const harm1Decay = bellDecay * 0.65;
 
     gainHarm1.gain.setValueAtTime(0.00001, t0);
@@ -170,7 +204,7 @@ class BellAudioEngine {
     gainHarm1.gain.exponentialRampToValueAtTime(0.00001, t0 + harm1Decay);
 
     oscHarm1.connect(gainHarm1);
-    gainHarm1.connect(this.masterGain);
+    gainHarm1.connect(voiceGain);
 
     // 3. HARMÔNICO DE OITAVA (2.0 * f0) - Muito presente em sinos médios e graves
     const oscHarm2 = ctx.createOscillator();
@@ -186,12 +220,12 @@ class BellAudioEngine {
     gainHarm2.gain.exponentialRampToValueAtTime(0.00001, t0 + harm2Decay);
 
     oscHarm2.connect(gainHarm2);
-    gainHarm2.connect(this.masterGain);
+    gainHarm2.connect(voiceGain);
 
     // 4. HARMÔNICO SUPERIOR BRILHANTE (5.0 * f0) - Ataque luminoso de bronze
     let oscHarm3 = null;
     let gainHarm3 = null;
-    if (f0 < 1000) {
+    if (f0 < 1000 && tech !== 'martellato' && tech !== 'pluck') {
       oscHarm3 = ctx.createOscillator();
       gainHarm3 = ctx.createGain();
       oscHarm3.type = 'sine';
@@ -202,7 +236,7 @@ class BellAudioEngine {
       gainHarm3.gain.exponentialRampToValueAtTime(0.00001, t0 + 0.45);
 
       oscHarm3.connect(gainHarm3);
-      gainHarm3.connect(this.masterGain);
+      gainHarm3.connect(voiceGain);
       oscHarm3.start(t0);
       oscHarm3.stop(t0 + 0.5);
     }
@@ -220,6 +254,7 @@ class BellAudioEngine {
     const voice = {
       stop: (dampTime = ctx.currentTime) => {
         try {
+          if (tech === 'lv' && !this.forceAllDamp) return; // LV sustenta livremente
           const dt = Math.max(dampTime, ctx.currentTime);
           gainFund.gain.cancelScheduledValues(dt);
           gainFund.gain.setValueAtTime(Math.max(0.00001, gainFund.gain.value), dt);
@@ -243,10 +278,27 @@ class BellAudioEngine {
    * Síntese de Tonechime (Sino tubular / Chime de alumínio)
    * Som puro, macio e aveludado
    */
-  synthTonechime(f0, t0, duration, vel, isHighlight) {
+  synthTonechime(f0, t0, duration, vel, isHighlight, technique = 'norm') {
     const ctx = this.ctx;
     const effectiveVel = Math.min(1.0, vel * (isHighlight ? 1.15 : 1.0));
-    const decay = Math.max(duration * 1.5, 3.8);
+    const tech = (technique || 'norm').toLowerCase();
+    const decay = tech === 'lv' ? Math.max(duration * 2.2, 5.5) : (tech === 'martellato' || tech === 'pluck' ? 0.45 : Math.max(duration * 1.5, 3.8));
+
+    const voiceGain = ctx.createGain();
+    voiceGain.gain.setValueAtTime(1.0, t0);
+    voiceGain.connect(this.masterGain);
+
+    if (tech === 'shake') {
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      lfo.frequency.setValueAtTime(5.8, t0);
+      lfoGain.gain.setValueAtTime(0.4, t0);
+      voiceGain.gain.setValueAtTime(0.68, t0);
+      lfo.connect(lfoGain);
+      lfoGain.connect(voiceGain.gain);
+      lfo.start(t0);
+      lfo.stop(t0 + decay);
+    }
 
     const oscFund = ctx.createOscillator();
     const gainFund = ctx.createGain();
@@ -268,9 +320,9 @@ class BellAudioEngine {
     gainHarm.gain.exponentialRampToValueAtTime(0.00001, t0 + decay * 0.4);
 
     oscFund.connect(gainFund);
-    gainFund.connect(this.masterGain);
+    gainFund.connect(voiceGain);
     oscHarm.connect(gainHarm);
-    gainHarm.connect(this.masterGain);
+    gainHarm.connect(voiceGain);
 
     oscFund.start(t0);
     oscHarm.start(t0);
@@ -282,6 +334,7 @@ class BellAudioEngine {
     return {
       stop: (dampTime = ctx.currentTime) => {
         try {
+          if (tech === 'lv' && !this.forceAllDamp) return;
           const dt = Math.max(dampTime, ctx.currentTime);
           gainFund.gain.cancelScheduledValues(dt);
           gainFund.gain.exponentialRampToValueAtTime(0.00001, dt + 0.08);
@@ -293,10 +346,27 @@ class BellAudioEngine {
   /**
    * Síntese de Glockenspiel / Celesta
    */
-  synthGlockenspiel(f0, t0, duration, vel, isHighlight) {
+  synthGlockenspiel(f0, t0, duration, vel, isHighlight, technique = 'norm') {
     const ctx = this.ctx;
     const effectiveVel = Math.min(1.0, vel * (isHighlight ? 1.15 : 1.0));
-    const decay = 2.2;
+    const tech = (technique || 'norm').toLowerCase();
+    const decay = tech === 'lv' ? 3.5 : (tech === 'martellato' || tech === 'pluck' ? 0.35 : 2.2);
+
+    const voiceGain = ctx.createGain();
+    voiceGain.gain.setValueAtTime(1.0, t0);
+    voiceGain.connect(this.masterGain);
+
+    if (tech === 'shake') {
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      lfo.frequency.setValueAtTime(6.0, t0);
+      lfoGain.gain.setValueAtTime(0.38, t0);
+      voiceGain.gain.setValueAtTime(0.7, t0);
+      lfo.connect(lfoGain);
+      lfoGain.connect(voiceGain.gain);
+      lfo.start(t0);
+      lfo.stop(t0 + decay);
+    }
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -308,7 +378,7 @@ class BellAudioEngine {
     gain.gain.exponentialRampToValueAtTime(0.00001, t0 + decay);
 
     osc.connect(gain);
-    gain.connect(this.masterGain);
+    gain.connect(voiceGain);
 
     osc.start(t0);
     osc.stop(t0 + decay);
@@ -316,6 +386,7 @@ class BellAudioEngine {
     return {
       stop: (dampTime = ctx.currentTime) => {
         try {
+          if (tech === 'lv' && !this.forceAllDamp) return;
           gain.gain.cancelScheduledValues(dampTime);
           gain.gain.exponentialRampToValueAtTime(0.00001, dampTime + 0.04);
         } catch (e) {}
@@ -352,6 +423,7 @@ class BellAudioEngine {
 
   dampAll() {
     if (!this.ctx) return;
+    this.forceAllDamp = true;
     const now = this.ctx.currentTime;
     for (const voice of this.activeVoices) {
       if (voice && typeof voice.stop === 'function') {
@@ -359,6 +431,7 @@ class BellAudioEngine {
       }
     }
     this.activeVoices.clear();
+    this.forceAllDamp = false;
   }
 }
 

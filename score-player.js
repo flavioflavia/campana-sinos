@@ -26,6 +26,20 @@ class ScorePlayer {
     this.countInEnabled = true;
     this.lookaheadNotice = true;
 
+    // Loop de Trecho Difícil (Modo A-B Loop & Treino Acelerador)
+    this.loopA = null; // Compasso inicial
+    this.loopB = null; // Compasso final
+    this.loopEnabled = false;
+    this.acceleratorEnabled = false;
+    this.acceleratorStep = 0.05; // Acelera +5% a cada ciclo
+    this.acceleratorMax = 1.30;  // Limite máximo do acelerador
+    this.onAcceleratorTick = null;
+    this.onLoopIteration = null;
+
+    // Maestro Sync (Regente e Seguidores)
+    this.onSyncBroadcast = null;
+    this.isSyncFollower = false;
+
     // Sinos atribuídos ao usuário: Map de pitch => { color, activeColor, hand, label }
     this.userBells = new Map();
 
@@ -54,9 +68,62 @@ class ScorePlayer {
     this.refreshStaticHighlights();
   }
 
-  setBpmMultiplier(factor) {
+  setLoop(startMeasure, endMeasure, enabled = true) {
+    this.loopA = startMeasure !== null ? Math.max(1, startMeasure) : null;
+    this.loopB = endMeasure !== null ? Math.max(1, endMeasure) : null;
+    if (this.loopA !== null && this.loopB !== null && this.loopB < this.loopA) {
+      const tmp = this.loopA;
+      this.loopA = this.loopB;
+      this.loopB = tmp;
+    }
+    this.loopEnabled = enabled && this.loopA !== null && this.loopB !== null;
+  }
+
+  setLoopA(measureNum) {
+    this.loopA = measureNum ? Math.max(1, measureNum) : null;
+    if (this.loopA !== null && this.loopB !== null && this.loopB < this.loopA) {
+      this.loopB = this.loopA;
+    }
+  }
+
+  setLoopB(measureNum) {
+    this.loopB = measureNum ? Math.max(1, measureNum) : null;
+    if (this.loopA !== null && this.loopB !== null && this.loopB < this.loopA) {
+      this.loopA = this.loopB;
+    }
+  }
+
+  toggleLoop(enabled = null) {
+    if (enabled !== null) {
+      this.loopEnabled = enabled;
+    } else {
+      this.loopEnabled = !this.loopEnabled;
+    }
+    return this.loopEnabled;
+  }
+
+  clearLoop() {
+    this.loopA = null;
+    this.loopB = null;
+    this.loopEnabled = false;
+  }
+
+  setAccelerator(enabled, step = 0.05, max = 1.30) {
+    this.acceleratorEnabled = !!enabled;
+    this.acceleratorStep = step;
+    this.acceleratorMax = max;
+  }
+
+  setBpmMultiplier(factor, notifySync = true) {
     this.tempoMultiplier = Math.max(0.3, Math.min(2.0, factor));
     this.updateEffectiveBpm();
+    if (notifySync && this.onSyncBroadcast && !this.isSyncFollower) {
+      this.onSyncBroadcast({
+        type: 'tempo',
+        tempoMultiplier: this.tempoMultiplier,
+        bpm: this.effectiveBpm
+      });
+    }
   }
 
   setCustomBpm(bpm) {
@@ -127,6 +194,39 @@ class ScorePlayer {
     }
 
     return `${name}${realOctave}`;
+  }
+
+  /**
+   * Detecta técnicas de sinos (LV, Martellato, Shake, Pluck, Damp) a partir de notações do OSMD
+   */
+  detectNoteTechnique(note, cursor, measureIndex) {
+    try {
+      // 1. Notações do note
+      const notations = note?.Notations || note?.notations || [];
+      for (const n of notations) {
+        const text = String(n?.name || n?.articulation || n?.technical || '').toLowerCase();
+        if (text.includes('martellato') || text.includes('mart')) return 'martellato';
+        if (text.includes('shake') || text.includes('sk')) return 'shake';
+        if (text.includes('pluck') || text.includes('pl')) return 'pluck';
+        if (text.includes('lv') || text.includes('vibrate')) return 'lv';
+        if (text.includes('damp')) return 'damp';
+      }
+
+      // 2. Directions / Words da medida
+      if (this.osmd?.Sheet?.SourceMeasures && this.osmd.Sheet.SourceMeasures[measureIndex]) {
+        const sm = this.osmd.Sheet.SourceMeasures[measureIndex];
+        const dirs = sm.Directions || sm.directions || [];
+        for (const dir of dirs) {
+          const words = String(dir?.label || dir?.text || dir?.words || '').toLowerCase();
+          if (words.includes('lv') || words.includes('l.v.')) return 'lv';
+          if (words.includes('martellato') || words.includes('mart')) return 'martellato';
+          if (words.includes('shake') || words.includes('sk')) return 'shake';
+          if (words.includes('pluck') || words.includes('pl.')) return 'pluck';
+          if (words.includes('damp') || words.includes('d.')) return 'damp';
+        }
+      }
+    } catch (e) {}
+    return 'norm';
   }
 
   /**
@@ -203,6 +303,7 @@ class ScorePlayer {
         const gNote = gNotes && gNotes[i] ? gNotes[i] : null;
         const noteDurationQuarters = ScorePlayer.getNoteLengthQuarters(note);
         const exactFreq = pitch.frequency ?? pitch.Frequency ?? null;
+        const technique = this.detectNoteTechnique(note, cursor, measureIndex);
 
         stepNotes.push({
           pitchStr: pitchShort,
@@ -211,6 +312,7 @@ class ScorePlayer {
           noteObj: note,
           gNote: gNote,
           durationQuarters: noteDurationQuarters,
+          technique: technique,
           isUserBell: this.isUserBell(pitchShort)
         });
       }
@@ -372,7 +474,7 @@ class ScorePlayer {
     } catch (e) {}
   }
 
-  play() {
+  play(notifySync = true) {
     if (this.isPlaying) return;
     this.audio.init();
 
@@ -384,10 +486,32 @@ class ScorePlayer {
       }
     }
 
+    // Se o loop estiver ativo e o cursor estiver antes de loopA, pula direto para o início do loop
+    if (this.loopEnabled && this.loopA !== null) {
+      const currentM = this.timeline[this.currentStepIndex]?.measureNumber || 1;
+      if (currentM < this.loopA || (this.loopB !== null && currentM > this.loopB)) {
+        const loopIdx = this.timeline.findIndex(s => s.measureNumber === this.loopA);
+        if (loopIdx !== -1) {
+          this.currentStepIndex = loopIdx;
+          this.syncCursorToStep(loopIdx);
+        }
+      }
+    }
+
     this.isPlaying = true;
     this.isPaused = false;
     this.stepCursorNeedsAdvance = false;
     this.notifyState();
+
+    if (notifySync && this.onSyncBroadcast && !this.isSyncFollower) {
+      const curM = this.timeline[this.currentStepIndex]?.measureNumber || 1;
+      this.onSyncBroadcast({
+        type: 'play',
+        measure: curM,
+        tempoMultiplier: this.tempoMultiplier,
+        bpm: this.effectiveBpm
+      });
+    }
 
     // Se estiver no passo 0, posiciona o cursor no início
     if (this.currentStepIndex === 0 && this.osmd?.cursor) {
@@ -506,7 +630,7 @@ class ScorePlayer {
       }
     }
 
-    // 2. Toca as notas do passo com afinação cristalina no momento exato e colore notas
+    // 2. Toca as notas do passo com afinação cristalina e técnica acústica
     const userNotesHit = [];
     for (const item of step.notes) {
       const isMine = item.isUserBell;
@@ -520,7 +644,15 @@ class ScorePlayer {
       }
 
       if (shouldPlayAudio) {
-        this.audio.playBell(item.pitchStr, targetAudioTime, noteDurationSec * 1.5, 0.85, isMine, item.exactFreq);
+        this.audio.playBell(
+          item.pitchStr,
+          targetAudioTime,
+          noteDurationSec * 1.5,
+          0.85,
+          isMine,
+          item.exactFreq,
+          item.technique || 'norm'
+        );
       }
 
       // Mudança dinâmica de cor na partitura
@@ -531,7 +663,8 @@ class ScorePlayer {
         userNotesHit.push({
           pitch: item.pitchStr,
           hand: bellConf?.hand || 'right',
-          color: activeColor
+          color: activeColor,
+          technique: item.technique || 'norm'
         });
 
         try {
@@ -567,8 +700,47 @@ class ScorePlayer {
     }
     this.stepCursorNeedsAdvance = true;
 
-    // 5. Agendamento do próximo passo com relógio de áudio
-    if (this.currentStepIndex + 1 >= this.timeline.length) {
+    // 5. Agendamento do próximo passo com relógio de áudio (ou Loop A-B)
+    let willLoop = false;
+    let nextIndex = this.currentStepIndex + 1;
+
+    if (this.loopEnabled && this.loopA !== null && this.loopB !== null && this.loopB >= this.loopA) {
+      if (nextIndex >= this.timeline.length || this.timeline[nextIndex].measureNumber > this.loopB) {
+        const loopStartIndex = this.timeline.findIndex(s => s.measureNumber === this.loopA);
+        if (loopStartIndex !== -1) {
+          willLoop = true;
+          nextIndex = loopStartIndex;
+        }
+      }
+    }
+
+    if (willLoop) {
+      if (this.acceleratorEnabled) {
+        this.tempoMultiplier = Math.min(this.acceleratorMax, +(this.tempoMultiplier + this.acceleratorStep).toFixed(2));
+        this.updateEffectiveBpm();
+        if (this.onAcceleratorTick) {
+          this.onAcceleratorTick(this.tempoMultiplier, this.effectiveBpm);
+        }
+      }
+      if (this.onLoopIteration) {
+        this.onLoopIteration(this.loopA, this.loopB, this.tempoMultiplier);
+      }
+
+      this.currentStepIndex = nextIndex;
+      this.syncCursorToStep(nextIndex);
+      this.stepCursorNeedsAdvance = false;
+
+      const loopStartStep = this.timeline[nextIndex];
+      this.playbackStartTimeStamp = loopStartStep.timeStamp;
+      this.playbackStartAudioTime = this.audio.ctx.currentTime + stepDurationSec;
+
+      this.playbackTimer = setTimeout(() => {
+        this.executeStep();
+      }, stepDurationSec * 1000);
+      return;
+    }
+
+    if (nextIndex >= this.timeline.length) {
       this.currentStepIndex++;
       this.playbackTimer = setTimeout(() => {
         this.stop();
@@ -576,7 +748,7 @@ class ScorePlayer {
       return;
     }
 
-    const nextStep = this.timeline[this.currentStepIndex + 1];
+    const nextStep = this.timeline[nextIndex];
     const nextQuartersFromStart = (nextStep.timeStamp - this.playbackStartTimeStamp) * 4;
     const nextTargetAudioTime = this.playbackStartAudioTime + (nextQuartersFromStart * quarterDurationSec);
 
@@ -632,7 +804,7 @@ class ScorePlayer {
     cursor.update();
   }
 
-  pause() {
+  pause(notifySync = true) {
     if (!this.isPlaying) return;
     this.isPlaying = false;
     this.isPaused = true;
@@ -643,9 +815,17 @@ class ScorePlayer {
     this.refreshStaticHighlights();
     this.stepCursorNeedsAdvance = false;
     this.notifyState();
+
+    if (notifySync && this.onSyncBroadcast && !this.isSyncFollower) {
+      const curM = this.timeline[this.currentStepIndex]?.measureNumber || 1;
+      this.onSyncBroadcast({
+        type: 'pause',
+        measure: curM
+      });
+    }
   }
 
-  stop() {
+  stop(notifySync = true) {
     this.isPlaying = false;
     this.isPaused = false;
     this.isCountingIn = false;
@@ -662,9 +842,16 @@ class ScorePlayer {
     this.refreshStaticHighlights();
     this.notifyState();
     if (this.onUserBellPrepare) this.onUserBellPrepare([]);
+
+    if (notifySync && this.onSyncBroadcast && !this.isSyncFollower) {
+      this.onSyncBroadcast({
+        type: 'stop',
+        measure: 1
+      });
+    }
   }
 
-  seekToMeasure(measureNum) {
+  seekToMeasure(measureNum, notifySync = true) {
     const targetIdx = this.timeline.findIndex(s => s.measureNumber === measureNum);
     if (targetIdx !== -1) {
       const wasPlaying = this.isPlaying;
@@ -678,9 +865,44 @@ class ScorePlayer {
       this.stepCursorNeedsAdvance = false;
       this.lastActiveUserNotes = [];
       if (this.onMeasureChange) this.onMeasureChange(measureNum);
+
+      if (notifySync && this.onSyncBroadcast && !this.isSyncFollower) {
+        this.onSyncBroadcast({
+          type: 'seek',
+          measure: measureNum
+        });
+      }
+
       if (wasPlaying) {
         this.startPlaybackLoop();
       }
+    }
+  }
+
+  applySyncCommand(cmd) {
+    if (!cmd || !cmd.type) return;
+    this.isSyncFollower = true;
+    try {
+      if (cmd.tempoMultiplier && Math.abs(cmd.tempoMultiplier - this.tempoMultiplier) > 0.02) {
+        this.setBpmMultiplier(cmd.tempoMultiplier, false);
+      }
+      if (cmd.type === 'play') {
+        if (cmd.measure && (!this.isPlaying || Math.abs((this.timeline[this.currentStepIndex]?.measureNumber || 0) - cmd.measure) > 1)) {
+          this.seekToMeasure(cmd.measure, false);
+        }
+        if (!this.isPlaying) {
+          this.play(false);
+        }
+      } else if (cmd.type === 'pause') {
+        this.pause(false);
+        if (cmd.measure) this.seekToMeasure(cmd.measure, false);
+      } else if (cmd.type === 'stop') {
+        this.stop(false);
+      } else if (cmd.type === 'seek') {
+        if (cmd.measure) this.seekToMeasure(cmd.measure, false);
+      }
+    } finally {
+      // Deixa pronto para novos comandos
     }
   }
 

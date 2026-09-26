@@ -21,7 +21,29 @@
     currentUser: null, // { id, name, email, role, isAdmin, avatar_color }
     allRingers: [],
     currentSongRoster: {}, // email => { name, email, bells }
-    msfSelectedFile: null
+    msfSelectedFile: null,
+
+    // Feature 1: Loop A-B & Treino Acelerador
+    loopA: null,
+    loopB: null,
+
+    // Feature 2: Weaving Detection (Trocas Rápidas)
+    weavingEvents: [],
+    weavingEventsByMeasure: {},
+
+    // Feature 4: Afinador & Treino Interativo ("Ouça meu Sino")
+    pitchDetector: null,
+    isMicActive: false,
+    interactiveActive: false,
+    interactiveHits: 0,
+    interactiveStreak: 0,
+    interactiveTotal: 0,
+    currentExpectedNote: null,
+
+    // Feature 5: Maestro Sync (Ensaio Coletivo)
+    syncRole: 'none', // 'conductor' | 'follower' | 'none'
+    syncPollTimer: null,
+    lastSyncTimestamp: 0
   };
 
   // Mapa em memória de partituras carregadas localmente pelo usuário
@@ -226,7 +248,76 @@
     viewGroupRoster: document.getElementById('view-group-roster'),
     groupRosterList: document.getElementById('group-roster-list'),
     assignedSectionHeading: document.getElementById('assigned-section-heading'),
-    assignedSaveStatus: document.getElementById('assigned-save-status')
+    assignedSaveStatus: document.getElementById('assigned-save-status'),
+
+    // Feature 1: Loop A-B & Treino Acelerador
+    btnSetLoopA: document.getElementById('btn-set-loop-a'),
+    loopADisplay: document.getElementById('loop-a-display'),
+    btnSetLoopB: document.getElementById('btn-set-loop-b'),
+    loopBDisplay: document.getElementById('loop-b-display'),
+    btnToggleLoop: document.getElementById('btn-toggle-loop'),
+    btnToggleAccelerator: document.getElementById('btn-toggle-accelerator'),
+    btnClearLoop: document.getElementById('btn-clear-loop'),
+
+    // Feature 2: Alertas de Trocas Rápidas (Weaving)
+    weavingSection: document.getElementById('weaving-section'),
+    weavingCountBadge: document.getElementById('weaving-count-badge'),
+    weavingList: document.getElementById('weaving-list'),
+
+    // Feature 3: Escala Geral do Regente & Detecção de Notas Órfãs
+    btnOpenRoster: document.getElementById('btn-open-roster'),
+    rosterModal: document.getElementById('roster-modal'),
+    btnCloseRoster: document.getElementById('btn-close-roster'),
+    btnCloseRosterAction: document.getElementById('btn-close-roster-action'),
+    statTotalScoreBells: document.getElementById('stat-total-score-bells'),
+    statAssignedScoreBells: document.getElementById('stat-assigned-score-bells'),
+    statOrphanBells: document.getElementById('stat-orphan-bells'),
+    statCardOrphans: document.getElementById('stat-card-orphans'),
+    rosterOrphanAlert: document.getElementById('roster-orphan-alert'),
+    rosterTableBody: document.getElementById('roster-table-body'),
+
+    // Feature 4: Afinador Acústico & Treino Interativo ("Ouça meu Sino")
+    btnOpenTuner: document.getElementById('btn-open-tuner'),
+    tunerModal: document.getElementById('tuner-modal'),
+    btnCloseTuner: document.getElementById('btn-close-tuner'),
+    btnCloseTunerAction: document.getElementById('btn-close-tuner-action'),
+    tabTunerBench: document.getElementById('tab-tuner-bench'),
+    tabTunerInteractive: document.getElementById('tab-tuner-interactive'),
+    viewTunerBench: document.getElementById('view-tuner-bench'),
+    viewTunerInteractive: document.getElementById('view-tuner-interactive'),
+    tunerNoteName: document.getElementById('tuner-note-name'),
+    tunerFreqVal: document.getElementById('tuner-freq-val'),
+    tunerNeedle: document.getElementById('tuner-needle'),
+    tunerCentsVal: document.getElementById('tuner-cents-val'),
+    tunerStatusPill: document.getElementById('tuner-status-pill'),
+    btnToggleMic: document.getElementById('btn-toggle-mic'),
+    btnToggleInteractiveMode: document.getElementById('btn-toggle-interactive-mode'),
+    interactiveHitsCount: document.getElementById('interactive-hits-count'),
+    interactiveAccuracyVal: document.getElementById('interactive-accuracy-val'),
+    interactiveStreakCount: document.getElementById('interactive-streak-count'),
+    interactiveFeedback: document.getElementById('interactive-feedback'),
+
+    // Feature 5: Maestro Sync (Ensaio Coletivo)
+    btnOpenSync: document.getElementById('btn-open-sync'),
+    syncModal: document.getElementById('sync-modal'),
+    btnCloseSync: document.getElementById('btn-close-sync'),
+    btnCloseSyncAction: document.getElementById('btn-close-sync-action'),
+    syncRoomCode: document.getElementById('sync-room-code'),
+    btnRefreshSyncStatus: document.getElementById('btn-refresh-sync-status'),
+    cardConductorRole: document.getElementById('card-conductor-role'),
+    cardFollowerRole: document.getElementById('card-follower-role'),
+    btnStartConductor: document.getElementById('btn-start-conductor'),
+    btnStartFollower: document.getElementById('btn-start-follower'),
+    conductorStatusIndicator: document.getElementById('conductor-status-indicator'),
+    followerStatusIndicator: document.getElementById('follower-status-indicator'),
+
+    // Feature 6: Impressão / Exportação em PDF
+    btnPrintScore: document.getElementById('btn-print-score'),
+    printScoreHeader: document.getElementById('print-score-header'),
+    printScoreTitle: document.getElementById('print-score-title'),
+    printScoreSubtitle: document.getElementById('print-score-subtitle'),
+    printRingerName: document.getElementById('print-ringer-name'),
+    printBellLegend: document.getElementById('print-bell-legend')
   };
 
   // Inicialização
@@ -240,6 +331,15 @@
     setupUserModal();
     setupMsfModal();
     setupPanelTabs();
+
+    // Configuração dos novos recursos
+    setupLoopAndAccelerator();
+    setupWeavingDetection();
+    setupRosterModal();
+    setupTunerAndInteractive();
+    setupMaestroSync();
+    setupPrintExport();
+    registerServiceWorker();
 
     // No celular e tablet retrato, a mesa de sinos começa recolhida para dar destaque total à partitura
     if (window.innerWidth <= 991) {
@@ -514,6 +614,7 @@
       ].filter(Boolean).join(', ');
 
       setHudMessage(`Partitura pronta para estudo (${summaryInfo}). Marque seus sinos e aperte Play!`, 'ready');
+      detectWeaving();
     } catch (err) {
       console.error('Erro ao renderizar partitura:', err);
       hideLoading();
@@ -762,9 +863,32 @@
     }
 
     dom.measureBadgeVal.textContent = `C. ${info.measureNumber}`;
+
+    // Alerta de Weaving (Troca rápida de sinos no compasso)
+    if (state.weavingEventsByMeasure && state.weavingEventsByMeasure[info.measureNumber]) {
+      const evts = state.weavingEventsByMeasure[info.measureNumber];
+      const first = evts[0];
+      setHudMessage(`⚠️ Atenção ${first.hand === 'left' ? 'M.E.' : 'M.D.'}: Troca rápida de ${first.fromPitch} para ${first.toPitch}!`, 'prepare');
+    }
   }
 
   function handleUserBellHit(hitNotes, measureNum) {
+    if (state.interactiveActive && hitNotes && hitNotes.length > 0) {
+      state.currentExpectedNote = hitNotes[0];
+      setTimeout(() => {
+        if (state.currentExpectedNote === hitNotes[0]) {
+          state.currentExpectedNote = null;
+          state.interactiveTotal++;
+          state.interactiveStreak = 0;
+          if (dom.interactiveStreakCount) dom.interactiveStreakCount.textContent = '0';
+          if (dom.interactiveAccuracyVal) {
+            const acc = Math.round((state.interactiveHits / state.interactiveTotal) * 100);
+            dom.interactiveAccuracyVal.textContent = `${acc}%`;
+          }
+        }
+      }, 450);
+    }
+
     // Muda a cor e pulsa o HUD e os sinos
     dom.hudActiveBells.innerHTML = '';
 
@@ -772,7 +896,8 @@
       const chip = document.createElement('span');
       chip.className = 'hud-bell-chip striking';
       chip.style.backgroundColor = item.color;
-      chip.textContent = `🔔 TOQUE: ${item.pitch} (${item.hand === 'left' ? 'M.E.' : 'M.D.'})`;
+      const techText = item.technique && item.technique !== 'norm' ? ` [${item.technique.toUpperCase()}]` : '';
+      chip.textContent = `🔔 TOQUE: ${item.pitch} (${item.hand === 'left' ? 'M.E.' : 'M.D.'})${techText}`;
       dom.hudActiveBells.appendChild(chip);
 
       // Animação na mesa de sinos correspondente
@@ -2498,6 +2623,593 @@
         }
       }
     } catch (e) {}
+  }
+
+  // =========================================================================
+  // RECURSO 1: LOOP DE TRECHO DIFÍCIL (MODO A-B LOOP & TREINO ACELERADOR)
+  // =========================================================================
+  function setupLoopAndAccelerator() {
+    if (dom.btnSetLoopA) {
+      dom.btnSetLoopA.addEventListener('click', () => {
+        const curM = scorePlayer.timeline[scorePlayer.currentStepIndex]?.measureNumber || 1;
+        scorePlayer.setLoopA(curM);
+        state.loopA = curM;
+        if (dom.loopADisplay) dom.loopADisplay.textContent = `A: C. ${curM}`;
+        if (scorePlayer.loopB) {
+          scorePlayer.toggleLoop(true);
+          if (dom.btnToggleLoop) dom.btnToggleLoop.classList.add('active');
+        }
+        setHudMessage(`Ponto A do Loop marcado no compasso ${curM}`, 'prepare');
+      });
+    }
+
+    if (dom.btnSetLoopB) {
+      dom.btnSetLoopB.addEventListener('click', () => {
+        const curM = scorePlayer.timeline[scorePlayer.currentStepIndex]?.measureNumber || 1;
+        scorePlayer.setLoopB(curM);
+        state.loopB = curM;
+        if (dom.loopBDisplay) dom.loopBDisplay.textContent = `B: C. ${curM}`;
+        if (scorePlayer.loopA) {
+          scorePlayer.toggleLoop(true);
+          if (dom.btnToggleLoop) dom.btnToggleLoop.classList.add('active');
+        }
+        setHudMessage(`Ponto B do Loop marcado no compasso ${curM}`, 'prepare');
+      });
+    }
+
+    if (dom.btnToggleLoop) {
+      dom.btnToggleLoop.addEventListener('click', () => {
+        if (!scorePlayer.loopA || !scorePlayer.loopB) {
+          const curM = scorePlayer.timeline[scorePlayer.currentStepIndex]?.measureNumber || 1;
+          scorePlayer.setLoop(curM, curM + 1, true);
+          state.loopA = curM;
+          state.loopB = curM + 1;
+          if (dom.loopADisplay) dom.loopADisplay.textContent = `A: C. ${curM}`;
+          if (dom.loopBDisplay) dom.loopBDisplay.textContent = `B: C. ${curM + 1}`;
+          dom.btnToggleLoop.classList.add('active');
+          setHudMessage(`Loop A-B ativado: compassos ${curM} a ${curM + 1}`, 'prepare');
+          return;
+        }
+
+        const isLoop = scorePlayer.toggleLoop();
+        dom.btnToggleLoop.classList.toggle('active', isLoop);
+        setHudMessage(isLoop ? `🔁 Loop A-B ativado (C. ${scorePlayer.loopA} ao ${scorePlayer.loopB})` : 'Loop A-B desativado', 'normal');
+      });
+    }
+
+    if (dom.btnToggleAccelerator) {
+      dom.btnToggleAccelerator.addEventListener('click', () => {
+        const active = !scorePlayer.acceleratorEnabled;
+        scorePlayer.setAccelerator(active);
+        dom.btnToggleAccelerator.classList.toggle('active', active);
+        setHudMessage(active ? '⚡ Treino Acelerador ativado (+5% a cada volta até 100%)' : 'Treino Acelerador desativado', 'ready');
+      });
+    }
+
+    if (dom.btnClearLoop) {
+      dom.btnClearLoop.addEventListener('click', () => {
+        scorePlayer.clearLoop();
+        scorePlayer.setAccelerator(false);
+        state.loopA = null;
+        state.loopB = null;
+        if (dom.loopADisplay) dom.loopADisplay.textContent = 'A: --';
+        if (dom.loopBDisplay) dom.loopBDisplay.textContent = 'B: --';
+        if (dom.btnToggleLoop) dom.btnToggleLoop.classList.remove('active');
+        if (dom.btnToggleAccelerator) dom.btnToggleAccelerator.classList.remove('active');
+        setHudMessage('Pontos de loop limpos.', 'normal');
+      });
+    }
+
+    scorePlayer.onAcceleratorTick = (multiplier, bpm) => {
+      if (dom.speedSlider) dom.speedSlider.value = multiplier;
+      if (dom.speedVal) dom.speedVal.textContent = `${bpm} BPM (${Math.round(multiplier * 100)}%)`;
+      updateSpeedPresetButtons();
+    };
+
+    scorePlayer.onLoopIteration = (loopA, loopB, multiplier) => {
+      setHudMessage(`🔁 Loop repetido (C. ${loopA} ao ${loopB}) - Andamento: ${Math.round(multiplier * 100)}%`, 'prepare');
+      audioEngine.playMetronomeClick(true);
+    };
+  }
+
+  // =========================================================================
+  // RECURSO 2: ALERTA DE TROCAS RÁPIDAS (WEAVING DETECTION)
+  // =========================================================================
+  function setupWeavingDetection() {
+    // Configura container de weaving
+  }
+
+  function detectWeaving() {
+    state.weavingEvents = [];
+    state.weavingEventsByMeasure = {};
+
+    if (!scorePlayer || !scorePlayer.timeline || scorePlayer.timeline.length === 0 || state.userBells.size <= 1) {
+      if (dom.weavingSection) dom.weavingSection.style.display = 'none';
+      return;
+    }
+
+    const quarterDurationSec = 60 / (scorePlayer.effectiveBpm || 100);
+    const userNotesInTimeline = [];
+
+    for (const step of scorePlayer.timeline) {
+      for (const item of step.notes) {
+        if (item.isUserBell) {
+          const bellConf = scorePlayer.getUserBellConfig(item.pitchStr);
+          userNotesInTimeline.push({
+            measureNumber: step.measureNumber,
+            timeStamp: step.timeStamp,
+            pitchStr: item.pitchStr,
+            hand: bellConf?.hand || 'right'
+          });
+        }
+      }
+    }
+
+    for (let i = 1; i < userNotesInTimeline.length; i++) {
+      const prev = userNotesInTimeline[i - 1];
+      const curr = userNotesInTimeline[i];
+
+      if (prev.pitchStr !== curr.pitchStr) {
+        const deltaQuarters = (curr.timeStamp - prev.timeStamp) * 4;
+        const deltaSec = deltaQuarters * quarterDurationSec;
+
+        if ((curr.hand === prev.hand && deltaSec < 1.4) || deltaSec < 0.8) {
+          const evt = {
+            measure: curr.measureNumber,
+            fromPitch: prev.pitchStr,
+            toPitch: curr.pitchStr,
+            hand: curr.hand,
+            deltaSec: deltaSec.toFixed(1)
+          };
+          state.weavingEvents.push(evt);
+          if (!state.weavingEventsByMeasure[curr.measureNumber]) {
+            state.weavingEventsByMeasure[curr.measureNumber] = [];
+          }
+          state.weavingEventsByMeasure[curr.measureNumber].push(evt);
+        }
+      }
+    }
+
+    if (dom.weavingSection && dom.weavingList && dom.weavingCountBadge) {
+      if (state.weavingEvents.length > 0) {
+        dom.weavingSection.style.display = 'block';
+        dom.weavingCountBadge.textContent = state.weavingEvents.length;
+        dom.weavingList.innerHTML = '';
+
+        state.weavingEvents.slice(0, 10).forEach(evt => {
+          const itemEl = document.createElement('div');
+          itemEl.className = 'weaving-item';
+          itemEl.title = `Clique para saltar ao compasso ${evt.measure}`;
+          itemEl.innerHTML = `
+            <span class="weaving-measure">C. ${evt.measure}</span>
+            <span class="weaving-bells">${evt.fromPitch} ➔ ${evt.toPitch} (${evt.hand === 'left' ? 'M.E.' : 'M.D.'})</span>
+            <span class="weaving-delta">${evt.deltaSec}s</span>
+          `;
+          itemEl.addEventListener('click', () => {
+            scorePlayer.seekToMeasure(evt.measure);
+            setHudMessage(`⚠️ Passagem rápida: Compasso ${evt.measure} (${evt.fromPitch} ➔ ${evt.toPitch})`, 'prepare');
+          });
+          dom.weavingList.appendChild(itemEl);
+        });
+      } else {
+        dom.weavingSection.style.display = 'none';
+      }
+    }
+  }
+
+  // =========================================================================
+  // RECURSO 3: ESCALA GERAL DO REGENTE & DETECÇÃO DE NOTAS ÓRFÃS
+  // =========================================================================
+  function setupRosterModal() {
+    if (dom.btnOpenRoster) {
+      dom.btnOpenRoster.addEventListener('click', () => {
+        populateRosterModal();
+        if (dom.rosterModal) dom.rosterModal.classList.add('active');
+      });
+    }
+
+    if (dom.btnCloseRoster) {
+      dom.btnCloseRoster.addEventListener('click', () => {
+        if (dom.rosterModal) dom.rosterModal.classList.remove('active');
+      });
+    }
+
+    if (dom.btnCloseRosterAction) {
+      dom.btnCloseRosterAction.addEventListener('click', () => {
+        if (dom.rosterModal) dom.rosterModal.classList.remove('active');
+      });
+    }
+  }
+
+  function populateRosterModal() {
+    if (!scorePlayer || !scorePlayer.timeline || scorePlayer.timeline.length === 0) return;
+
+    const pitchMap = new Map();
+    for (const step of scorePlayer.timeline) {
+      for (const item of step.notes) {
+        if (item.pitchStr) {
+          pitchMap.set(item.pitchStr, (pitchMap.get(item.pitchStr) || 0) + 1);
+        }
+      }
+    }
+
+    const sortedPitches = Array.from(pitchMap.keys()).sort((a, b) => {
+      const fA = audioEngine.getFrequency(a) || 0;
+      const fB = audioEngine.getFrequency(b) || 0;
+      return fA - fB;
+    });
+
+    let assignedCount = 0;
+    let orphanCount = 0;
+
+    dom.rosterTableBody.innerHTML = '';
+
+    sortedPitches.forEach(pitch => {
+      const occurrences = pitchMap.get(pitch);
+      let assignedRinger = null;
+      let hand = null;
+
+      if (state.userBells.has(pitch)) {
+        assignedRinger = `${state.currentUser?.name || 'Você'} (Você)`;
+        hand = state.userBells.get(pitch).hand === 'left' ? 'M.E.' : 'M.D.';
+      } else {
+        if (state.currentSongRoster) {
+          for (const [email, rData] of Object.entries(state.currentSongRoster)) {
+            if (Array.isArray(rData.bells) && rData.bells.includes(pitch)) {
+              assignedRinger = rData.name || email;
+              hand = 'Escalado';
+              break;
+            }
+          }
+        }
+      }
+
+      const isOrphan = !assignedRinger;
+      if (isOrphan) {
+        orphanCount++;
+      } else {
+        assignedCount++;
+      }
+
+      const tr = document.createElement('tr');
+      if (isOrphan) tr.className = 'orphan-row';
+
+      tr.innerHTML = `
+        <td><strong style="color: var(--bell-gold-light); font-size: 0.95rem;">${pitch}</strong></td>
+        <td>${occurrences} notas</td>
+        <td>
+          ${isOrphan 
+            ? '<span class="orphan-badge">⚠️ ÓRFÃ (Sem sineiro)</span>' 
+            : `<span class="assigned-badge">${assignedRinger}</span>`}
+        </td>
+        <td>${hand || '-'}</td>
+        <td>
+          ${isOrphan 
+            ? `<button class="btn-assign-quick" data-pitch="${pitch}">+ Tocar este Sino</button>` 
+            : '<span style="color: var(--text-dim); font-size: 0.72rem;">Escalado</span>'}
+        </td>
+      `;
+
+      if (isOrphan) {
+        const btn = tr.querySelector('.btn-assign-quick');
+        btn.addEventListener('click', () => {
+          toggleBellSelection(pitch);
+          savePreferences();
+          populateRosterModal();
+          detectWeaving();
+        });
+      }
+
+      dom.rosterTableBody.appendChild(tr);
+    });
+
+    if (dom.statTotalScoreBells) dom.statTotalScoreBells.textContent = sortedPitches.length;
+    if (dom.statAssignedScoreBells) dom.statAssignedScoreBells.textContent = assignedCount;
+    if (dom.statOrphanBells) dom.statOrphanBells.textContent = orphanCount;
+
+    if (dom.statCardOrphans) {
+      dom.statCardOrphans.classList.toggle('stat-alert', orphanCount > 0);
+    }
+    if (dom.rosterOrphanAlert) {
+      dom.rosterOrphanAlert.style.display = orphanCount > 0 ? 'block' : 'none';
+    }
+  }
+
+  // =========================================================================
+  // RECURSO 4: EXPORTAR / IMPRIMIR PARTITURA EM PDF COM DESTAQUE COLORIDO
+  // =========================================================================
+  function setupPrintExport() {
+    if (dom.btnPrintScore) {
+      dom.btnPrintScore.addEventListener('click', () => {
+        const scoreTitle = dom.scoreSelect?.options[dom.scoreSelect.selectedIndex]?.text || 'Partitura de Sinos';
+        if (dom.printScoreTitle) dom.printScoreTitle.textContent = scoreTitle;
+        if (dom.printRingerName) dom.printRingerName.textContent = `Sineiro: ${state.currentUser?.name || 'Sineiro'}`;
+
+        if (dom.printBellLegend) {
+          dom.printBellLegend.innerHTML = '';
+          for (const [pitch, conf] of state.userBells.entries()) {
+            const chip = document.createElement('span');
+            chip.className = 'print-bell-chip';
+            chip.style.backgroundColor = conf.color || '#FFB703';
+            chip.textContent = `${pitch} (${conf.hand === 'left' ? 'M.E.' : 'M.D.'})`;
+            dom.printBellLegend.appendChild(chip);
+          }
+        }
+
+        window.print();
+      });
+    }
+  }
+
+  // =========================================================================
+  // RECURSO 5: AFINADOR ACÚSTICO & TREINO INTERATIVO ("OUÇA MEU SINO")
+  // =========================================================================
+  function setupTunerAndInteractive() {
+    try {
+      state.pitchDetector = new BellPitchDetector(audioEngine);
+    } catch (e) {
+      console.warn('PitchDetector não suportado:', e);
+      return;
+    }
+
+    if (dom.btnOpenTuner) {
+      dom.btnOpenTuner.addEventListener('click', () => {
+        if (dom.tunerModal) dom.tunerModal.classList.add('active');
+      });
+    }
+
+    if (dom.btnCloseTuner) {
+      dom.btnCloseTuner.addEventListener('click', () => {
+        if (dom.tunerModal) dom.tunerModal.classList.remove('active');
+        if (state.isMicActive && !state.interactiveActive) {
+          toggleMic();
+        }
+      });
+    }
+
+    if (dom.btnCloseTunerAction) {
+      dom.btnCloseTunerAction.addEventListener('click', () => {
+        if (dom.tunerModal) dom.tunerModal.classList.remove('active');
+        if (state.isMicActive && !state.interactiveActive) {
+          toggleMic();
+        }
+      });
+    }
+
+    if (dom.tabTunerBench && dom.tabTunerInteractive) {
+      dom.tabTunerBench.addEventListener('click', () => {
+        dom.tabTunerBench.classList.add('active');
+        dom.tabTunerInteractive.classList.remove('active');
+        dom.viewTunerBench.style.display = 'block';
+        dom.viewTunerInteractive.style.display = 'none';
+      });
+
+      dom.tabTunerInteractive.addEventListener('click', () => {
+        dom.tabTunerInteractive.classList.add('active');
+        dom.tabTunerBench.classList.remove('active');
+        dom.viewTunerInteractive.style.display = 'block';
+        dom.viewTunerBench.style.display = 'none';
+      });
+    }
+
+    async function toggleMic() {
+      try {
+        if (state.isMicActive) {
+          state.pitchDetector.stop();
+          state.isMicActive = false;
+          if (dom.btnToggleMic) dom.btnToggleMic.innerHTML = '<span>🎙️</span> Ligar Microfone';
+          if (dom.tunerStatusPill) dom.tunerStatusPill.textContent = 'Microfone desligado';
+        } else {
+          await state.pitchDetector.start();
+          state.isMicActive = true;
+          if (dom.btnToggleMic) dom.btnToggleMic.innerHTML = '<span>⏹️</span> Desligar Microfone';
+          if (dom.tunerStatusPill) dom.tunerStatusPill.textContent = 'Ouvindo sinos...';
+        }
+      } catch (err) {
+        alert('Não foi possível acessar o microfone: ' + err.message);
+      }
+    }
+
+    if (dom.btnToggleMic) {
+      dom.btnToggleMic.addEventListener('click', toggleMic);
+    }
+
+    state.pitchDetector.onPitch = (pData) => {
+      if (dom.tunerNoteName) dom.tunerNoteName.textContent = pData.pitchStr;
+      if (dom.tunerFreqVal) dom.tunerFreqVal.textContent = `Frequência: ${pData.freq.toFixed(1)} Hz`;
+      if (dom.tunerCentsVal) dom.tunerCentsVal.textContent = `${pData.cents > 0 ? '+' : ''}${pData.cents} cents`;
+
+      if (dom.tunerNeedle) {
+        const clampedCents = Math.max(-50, Math.min(50, pData.cents));
+        const leftPercent = 50 + clampedCents;
+        dom.tunerNeedle.style.left = `${leftPercent}%`;
+        dom.tunerNeedle.classList.toggle('in-tune', pData.inTune);
+      }
+
+      if (dom.tunerStatusPill) {
+        if (pData.inTune) {
+          dom.tunerStatusPill.textContent = `Afinado! ✅ (${pData.pitchStr})`;
+          dom.tunerStatusPill.classList.add('in-tune');
+        } else {
+          dom.tunerStatusPill.textContent = pData.cents > 0 ? 'Ligeiramente alto (sustenido)' : 'Ligeiramente baixo (bemol)';
+          dom.tunerStatusPill.classList.remove('in-tune');
+        }
+      }
+
+      if (state.interactiveActive && state.currentExpectedNote) {
+        if (state.pitchDetector.matchesTargetPitch(state.currentExpectedNote.pitch, 50)) {
+          handleInteractiveSuccess(state.currentExpectedNote.pitch);
+        }
+      }
+    };
+
+    if (dom.btnToggleInteractiveMode) {
+      dom.btnToggleInteractiveMode.addEventListener('click', async () => {
+        state.interactiveActive = !state.interactiveActive;
+        dom.btnToggleInteractiveMode.classList.toggle('active', state.interactiveActive);
+        dom.btnToggleInteractiveMode.innerHTML = state.interactiveActive 
+          ? '<span>⏹️</span> Desativar Avaliação' 
+          : '<span>✨</span> Ativar Avaliação ao Vivo';
+
+        if (state.interactiveActive && !state.isMicActive) {
+          await toggleMic();
+        }
+
+        if (dom.interactiveFeedback) {
+          dom.interactiveFeedback.textContent = state.interactiveActive 
+            ? 'Avaliação ativa! Toque seus sinos na hora certa durante a partitura.' 
+            : 'Avaliação desativada.';
+        }
+      });
+    }
+  }
+
+  function handleInteractiveSuccess(pitch) {
+    if (!state.currentExpectedNote) return;
+    state.currentExpectedNote = null;
+    state.interactiveHits++;
+    state.interactiveStreak++;
+    state.interactiveTotal++;
+
+    if (dom.interactiveHitsCount) dom.interactiveHitsCount.textContent = state.interactiveHits;
+    if (dom.interactiveStreakCount) dom.interactiveStreakCount.textContent = `${state.interactiveStreak} 🔥`;
+    if (dom.interactiveAccuracyVal) {
+      const acc = Math.round((state.interactiveHits / state.interactiveTotal) * 100);
+      dom.interactiveAccuracyVal.textContent = `${acc}%`;
+    }
+
+    if (dom.interactiveFeedback) {
+      dom.interactiveFeedback.className = 'interactive-live-feedback hit-success';
+      dom.interactiveFeedback.textContent = `✨ NA MOSCA! Sino ${pitch} tocado no tempo exato!`;
+      setTimeout(() => {
+        if (dom.interactiveFeedback) dom.interactiveFeedback.className = 'interactive-live-feedback';
+      }, 1200);
+    }
+
+    setHudMessage(`🎯 ACERTOU ${pitch} NO TEMPO CERTO!`, 'strike');
+  }
+
+  // =========================================================================
+  // RECURSO 6: MAESTRO SYNC (ENSAIO COLETIVO EM TEMPO REAL)
+  // =========================================================================
+  function setupMaestroSync() {
+    if (dom.btnOpenSync) {
+      dom.btnOpenSync.addEventListener('click', () => {
+        if (dom.syncModal) dom.syncModal.classList.add('active');
+      });
+    }
+
+    if (dom.btnCloseSync) {
+      dom.btnCloseSync.addEventListener('click', () => {
+        if (dom.syncModal) dom.syncModal.classList.remove('active');
+      });
+    }
+
+    if (dom.btnCloseSyncAction) {
+      dom.btnCloseSyncAction.addEventListener('click', () => {
+        if (dom.syncModal) dom.syncModal.classList.remove('active');
+      });
+    }
+
+    if (dom.btnStartConductor) {
+      dom.btnStartConductor.addEventListener('click', () => {
+        state.syncRole = 'conductor';
+        scorePlayer.isSyncFollower = false;
+
+        dom.cardConductorRole.classList.add('active-role');
+        dom.cardFollowerRole.classList.remove('active-role');
+        if (dom.conductorStatusIndicator) dom.conductorStatusIndicator.style.display = 'block';
+        if (dom.followerStatusIndicator) dom.followerStatusIndicator.style.display = 'none';
+
+        if (state.syncPollTimer) {
+          clearInterval(state.syncPollTimer);
+          state.syncPollTimer = null;
+        }
+
+        scorePlayer.onSyncBroadcast = async (data) => {
+          const room = dom.syncRoomCode?.value?.trim() || 'ENSAIO_GERAL';
+          try {
+            await fetch('api/sync.php?action=broadcast', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                session_id: room,
+                action_type: data.type,
+                measure: data.measure || 1,
+                tempo_multiplier: data.tempoMultiplier || scorePlayer.tempoMultiplier,
+                bpm: data.bpm || scorePlayer.effectiveBpm,
+                score_url: state.currentScoreUrl,
+                conductor: state.currentUser?.name || 'Regente'
+              })
+            });
+          } catch (e) {}
+        };
+
+        setHudMessage('🔴 Maestro Sync: Você é o Regente! Seus comandos sincronizam todos os sineiros.', 'ready');
+      });
+    }
+
+    if (dom.btnStartFollower) {
+      dom.btnStartFollower.addEventListener('click', () => {
+        state.syncRole = 'follower';
+        scorePlayer.isSyncFollower = true;
+        scorePlayer.onSyncBroadcast = null;
+
+        dom.cardFollowerRole.classList.add('active-role');
+        dom.cardConductorRole.classList.remove('active-role');
+        if (dom.followerStatusIndicator) dom.followerStatusIndicator.style.display = 'block';
+        if (dom.conductorStatusIndicator) dom.conductorStatusIndicator.style.display = 'none';
+
+        startFollowerSync();
+        setHudMessage('🟢 Maestro Sync: Seguindo o Regente automaticamente!', 'ready');
+      });
+    }
+
+    function startFollowerSync() {
+      if (state.syncPollTimer) clearInterval(state.syncPollTimer);
+      const room = dom.syncRoomCode?.value?.trim() || 'ENSAIO_GERAL';
+
+      state.syncPollTimer = setInterval(async () => {
+        if (state.syncRole !== 'follower') {
+          clearInterval(state.syncPollTimer);
+          return;
+        }
+        try {
+          const res = await fetch(`api/sync.php?action=poll&session_id=${encodeURIComponent(room)}&since=${state.lastSyncTimestamp}`);
+          if (!res.ok) return;
+          const data = await res.json();
+          if (data && data.success && data.state && data.has_update) {
+            state.lastSyncTimestamp = data.state.timestamp;
+            const cmd = data.state;
+
+            if (cmd.score_url && cmd.score_url !== state.currentScoreUrl) {
+              loadScore(cmd.score_url);
+            }
+
+            scorePlayer.applySyncCommand({
+              type: cmd.action,
+              measure: cmd.measure,
+              tempoMultiplier: cmd.tempo_multiplier
+            });
+          }
+        } catch (e) {}
+      }, 500);
+    }
+  }
+
+  // =========================================================================
+  // RECURSO 7: PWA OFFLINE (SERVICE WORKER)
+  // =========================================================================
+  function registerServiceWorker() {
+    if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      navigator.serviceWorker.register('sw.js?v=3.3')
+        .then(reg => {
+          console.log('Campana ServiceWorker registrado com sucesso:', reg.scope);
+        })
+        .catch(err => {
+          console.warn('Registro de ServiceWorker ignorado:', err);
+        });
+    }
   }
 
 })();
