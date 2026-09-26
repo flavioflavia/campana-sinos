@@ -298,23 +298,49 @@ def convert_msf(msf_path, output_xml_path, song_title=None, job_file=None, user_
 
     # Caso 2: Contém PDF embutido
     if extracted["pdfs"]:
-        update_job_status(job_file, "processing", f"Processando partitura em PDF ({len(extracted['pdfs'][0][1]) // 1024} KB). Enviando para Gemini...", 30)
         pdf_name, pdf_bytes = extracted["pdfs"][0]
-        print(f"[*] Enviando PDF ({len(pdf_bytes)} bytes) para transcrição via Gemini...")
+        pdf_size_kb = len(pdf_bytes) // 1024
+        update_job_status(job_file, "processing", f"Processando partitura em PDF ({pdf_size_kb} KB). Preparando envio para Gemini...", 30)
+        print(f"[*] Enviando PDF ({len(pdf_bytes)} bytes, {pdf_size_kb} KB) para transcrição via Gemini...")
         
-        pdf_part = types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf")
         prompt = f"Transcreva a partitura musical deste PDF em anexo com o título '{title}'. Se houver múltiplas páginas, transcreva todas as páginas sequencialmente compasso por compasso. Retorne o arquivo MusicXML 3.1 completo e bem-formatado para Orquestra de Sinos (Handbells com 2 pautas Clave de Sol e Fá)."
         
-        update_job_status(job_file, "transcribing", "Gemini gerando notação MusicXML 3.1 com claves e tempos...", 60)
-        response_text = call_gemini([prompt, pdf_part])
-        
-        final_xml = repair_xml(response_text)
-        with open(output_xml_path, "w", encoding="utf-8") as out:
-            out.write(final_xml)
-        save_score_meta(output_xml_path, title, user_name, user_email)
-        update_job_status(job_file, "completed", "Conversão de partitura PDF/MSF para MusicXML concluída com sucesso!", 100, {"output": os.path.basename(output_xml_path)})
-        print(f"[✓] Partitura convertida e salva em: {output_xml_path}")
-        return True
+        uploaded_gemini_file = None
+        temp_pdf_to_clean = None
+        try:
+            # Se for maior que 10MB, usa a API de arquivos (Files API) do Gemini para evitar estouro de payload REST
+            if len(pdf_bytes) > 10 * 1024 * 1024:
+                update_job_status(job_file, "processing", f"Upload de PDF grande ({pdf_size_kb // 1024} MB) para a API Gemini...", 40)
+                temp_pdf_to_clean = output_xml_path + ".upload.pdf"
+                with open(temp_pdf_to_clean, "wb") as f_tmp:
+                    f_tmp.write(pdf_bytes)
+                print(f"[*] Fazendo upload do PDF grande ({pdf_size_kb // 1024} MB) para Gemini Files API...")
+                uploaded_gemini_file = client.files.upload(file=temp_pdf_to_clean, mime_type="application/pdf")
+                pdf_input = uploaded_gemini_file
+            else:
+                pdf_input = types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf")
+            
+            update_job_status(job_file, "transcribing", "Gemini gerando notação MusicXML 3.1 com claves e tempos...", 60)
+            response_text = call_gemini([prompt, pdf_input])
+            
+            final_xml = repair_xml(response_text)
+            with open(output_xml_path, "w", encoding="utf-8") as out:
+                out.write(final_xml)
+            save_score_meta(output_xml_path, title, user_name, user_email)
+            update_job_status(job_file, "completed", "Conversão de partitura PDF/MSF para MusicXML concluída com sucesso!", 100, {"output": os.path.basename(output_xml_path)})
+            print(f"[✓] Partitura convertida e salva em: {output_xml_path}")
+            return True
+        finally:
+            if uploaded_gemini_file:
+                try:
+                    client.files.delete(name=uploaded_gemini_file.name)
+                except Exception as e:
+                    print(f"[!] Aviso ao excluir arquivo temporário no Gemini: {e}")
+            if temp_pdf_to_clean and os.path.exists(temp_pdf_to_clean):
+                try:
+                    os.remove(temp_pdf_to_clean)
+                except Exception:
+                    pass
 
     # Caso 3: Contém imagens embutidas
     if extracted["images"]:

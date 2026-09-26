@@ -31,6 +31,33 @@ $scriptPath = '/var/www/html/sinos/convert_msf.py';
 if (!is_dir($uploadDir)) @mkdir($uploadDir, 0775, true);
 if (!is_dir($scoresDir)) @mkdir($scoresDir, 0775, true);
 
+// Verifica se o POST foi truncado por post_max_size
+if (empty($_FILES) && empty($_POST) && isset($_SERVER['CONTENT_LENGTH']) && (int)$_SERVER['CONTENT_LENGTH'] > 0) {
+    http_response_code(413);
+    $sizeMb = round(((int)$_SERVER['CONTENT_LENGTH']) / (1024 * 1024), 1);
+    echo json_encode([
+        'success' => false,
+        'error' => "O arquivo enviado é muito grande ({$sizeMb} MB) e excedeu o limite máximo de POST do servidor (100 MB)."
+    ]);
+    exit;
+}
+
+$rawFile = $_FILES['file'] ?? $_FILES['msf_file'] ?? null;
+if ($rawFile && isset($rawFile['error']) && $rawFile['error'] !== UPLOAD_ERR_OK) {
+    http_response_code(400);
+    $errMsg = match ($rawFile['error']) {
+        UPLOAD_ERR_INI_SIZE => 'O arquivo enviado excede o limite máximo permitido pelo servidor (upload_max_filesize de 100 MB).',
+        UPLOAD_ERR_FORM_SIZE => 'O arquivo enviado excede o limite de tamanho do formulário.',
+        UPLOAD_ERR_PARTIAL => 'O envio do arquivo foi interrompido antes de ser concluído.',
+        UPLOAD_ERR_NO_FILE => 'Nenhum arquivo foi selecionado para upload.',
+        UPLOAD_ERR_NO_TMP_DIR => 'Diretório temporário de upload ausente no servidor.',
+        UPLOAD_ERR_CANT_WRITE => 'Falha ao salvar o arquivo temporário no disco do servidor.',
+        default => 'Erro no upload do arquivo (código PHP: ' . $rawFile['error'] . ').'
+    };
+    echo json_encode(['success' => false, 'error' => $errMsg]);
+    exit;
+}
+
 $fileField = null;
 if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
     $fileField = $_FILES['file'];
