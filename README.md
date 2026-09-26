@@ -1,11 +1,12 @@
 # 🔔 Campana - Orquestra de Sinos (Handbells)
 
-> **Estúdio Interativo para Estudo e Ensaio de Partituras em Orquestras de Sinos (Handbells)**  
-> Marque seus sinos, acompanhe a partitura compasso por compasso e veja suas notas brilharem na tela no momento exato do toque!
+> **Estúdio Web Interativo para Estudo, Ensaio e Regência em Orquestras de Sinos (Handbells & Tonechimes)**  
+> Marque seus sinos, acompanhe a partitura compasso por compasso, veja suas notas brilharem na tela e sincronize todo o coro em tempo real!
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-gold.svg)](LICENSE)
 [![MusicXML 3.1](https://img.shields.io/badge/Standard-MusicXML_3.1-blue.svg)](https://www.w3.org/2021/06/musicxml31/)
 [![Web Audio API](https://img.shields.io/badge/Audio-Web_Audio_API-green.svg)](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)
+[![PWA Ready](https://img.shields.io/badge/PWA-Offline_Ready-purple.svg)](manifest.json)
 [![OpenSheetMusicDisplay](https://img.shields.io/badge/Renderer-OpenSheetMusicDisplay-orange.svg)](https://opensheetmusicdisplay.org/)
 [![Google Gemini Vision](https://img.shields.io/badge/AI_OMR-Google_Gemini_Vision-4285F4.svg)](https://ai.google.dev/)
 
@@ -13,97 +14,147 @@
 
 ## 📖 Visão Geral
 
-Tocar em uma **orquestra de sinos (handbell choir)** é uma experiência musical única e desafiadora: cada integrante é responsável por apenas 2 ou 4 sinos específicos (por exemplo, `C5` e `D5`), tendo que contar compassos e entrar com extrema precisão em meio a dezenas de outras notas tocadas pelos colegas.
+Tocar em uma **orquestra de sinos (handbell choir)** é uma das artes musicais coletivas mais desafiadoras: cada sineiro é responsável por 2 a 4 sinos específicos (por exemplo, `C5` e `D5` na mão direita e `G4` na mão esquerda), precisando contar tempos com rigor cirúrgico para soar a nota exata na fração de segundo correta.
 
-O **Campana** foi desenvolvido para resolver a maior dor dos sineiros: **ensaiar em casa sem a orquestra completa**. 
+O **Campana** resolve a maior dor dos grupos de sinos: **estudar em casa com precisão sem precisar reunir a orquestra inteira**.
 
-O aplicativo renderiza a partitura completa, toca o acompanhamento com timbres sintéticos ultra-realistas de sinos ingleses e alerta visualmente o músico antes e durante o instante exato em que ele deve soar o seu sino.
+O aplicativo carrega partituras em MusicXML, MobileSheets (`.msf`) e PDF, renderiza as pautas em alta resolução, sintetiza o som físico dos sinos ingleses de bronze, guia a execução visualmente com cores e sincroniza toda a orquestra sob o comando do regente.
 
 ---
 
-## ✨ Principais Funcionalidades
+## ✨ Funcionalidades Principais
 
-### 🎼 1. Renderização Interativa de Partituras
-- Suporte nativo ao formato universal **MusicXML 3.1** (`.musicxml`, `.mxl` e `.xml`).
-- Renderização vetorial cristalina via **OpenSheetMusicDisplay (SVG)**.
-- Visualização vertical paginada (Formato A4) com margens, quebras de página físicas e sombras de papel.
-- **Clique Direto na Partitura**: Basta clicar em qualquer nota na pauta para ouvir seu tom e atribuí-la instantaneamente ao seu conjunto de estudo!
+### 🎼 1. Renderização Vetorial de Partituras
+- Suporte nativo ao formato padrão **MusicXML 3.1** (`.musicxml`, `.mxl`, `.xml`).
+- Renderização vetorial cristalina via **OpenSheetMusicDisplay (OSMD)** sobre SVG.
+- Formatação vertical em páginas A4 com paginação real, margens e sombras de papel.
+- **Clique Direto na Pauta**: Clique em qualquer nota da partitura para ouvir seu tom e atribuí-la instantaneamente ao seu conjunto de estudo.
 
 ### 🔔 2. Mesa de Sinos Interativa (Handbell Rack)
-- Abrangência completa de 4 oitavas:
+- Abrangência de 4 oitavas cromáticas completas (da Oitava 3 grave à Oitava 6 aguda):
   - **Oitava 3 (Sinos Graves / Baixos)**: `C3` a `B3`
-  - **Oitava 4 (Médios / Pauta Grave)**: `C4` a `B4`
-  - **Oitava 5 (Melodia Principal)**: `C5` a `B5`
+  - **Oitava 4 (Médios / Pauta de Fá)**: `C4` a `B4`
+  - **Oitava 5 (Melodia Principal / Pauta de Sol)**: `C5` a `B5`
   - **Oitava 6 (Agudos e Super-Agudos)**: `C6` a `B6`
-- **Atalhos por Tocador (Ringers)**: 12 predefinições ergonômicas prontas para uso (`Baixos 1`, `Médios 1`, `Central`, `Melodia`, etc.).
-- Identificação visual de mãos: alterne entre **Mão Direita (M.D.)** e **Mão Esquerda (M.E.)** com um clique.
+- **Atalhos Rápidos por Tocador (Ringers 1 a 12)**: Predefinições ergonômicas prontas para uso.
+- Identificação de pegada: alterne entre **Mão Direita (M.D.)** e **Mão Esquerda (M.E.)** com um clique.
 
-### 🎧 3. Áudio de Sinos de Alta Fidelidade (Web Audio API)
-- Síntese aditiva com modelagem física de harmônicos metálicos dos sinos ingleses:
-  - Fundamental pura com decaimento exponencial longo.
-  - Transiente de ataque metálico (*clapper strike*).
-  - 12 harmônicos parciais ressonantes com leve modulação de batimento acústico (*beating*).
-- Três perfis de timbre selecionáveis: **Sinos Ingleses Clássicos**, **Chimes Tubulares** e **Handbells Cristalinos**.
+### 🎧 3. Fidelidade Acústica das Técnicas de Handbells
+- Síntese aditiva física de sinos de bronze ingleses (*English Handbells*), tubos melódicos (*Tonechimes*) e *Glockenspiel*:
+  - **Normal (Ring)**: Ataque com decaimento exponencial natural de bronze polido.
+  - **LV (Let Vibrate)**: Sustentação ressonante longa (~6.5s) sem corte entre notas subsequentes.
+  - **Damp**: Abafamento rápido da cauda sonora no final da figura rítmica.
+  - **Martellato (Mart. / ▼)**: Batida no feltro da mesa com transiente percussivo e corpo abafado (0.4s).
+  - **Shake (Sk. / ~~~)**: Tremolo com LFO senoidal a 5.8 Hz modulando a amplitude do sino.
+  - **Pluck (Pl. / +)**: Ataque percussivo seco do badalo preso na mesa com amortecimento rápido.
 
-### 🎯 4. Modos de Prática e Estudo
-- **Prática Assistida (Recomendado)**: Toca todas as notas da partitura, destacando as suas notas em cores vivas no compasso atual e alertando no tempo anterior (*"Levante o sino!"*).
-- **Modo Mudo (Solo)**: Silencia apenas os sinos que você toca para que você toque o sino físico na sua casa, enquanto o computador toca o restante da orquestra como acompanhamento!
-- **Ouvir Tudo**: Modo demonstração para escutar o arranjo completo.
+### 🔁 4. Loop de Trecho Difícil & Treino Acelerador
+- Marque o **Ponto A** (compasso inicial) e o **Ponto B** (compasso final) diretamente durante a reprodução.
+- **Modo Loop A-B**: Repete indefinidamente passagens rápidas ou complexas sem interrupções.
+- **Treino Acelerador**: Aumenta automaticamente **+5%** no andamento a cada volta completada, permitindo ao sineiro começar lento (ex: 50%) e alcançar a velocidade final da música gradativamente.
 
-### ⏱️ 5. Ferramentas de Ensaio
-- **Controle de Andamento**: Slider e botões rápidos (0.5x, 0.75x, 1x, 1.25x) com aceleração e desaceleração contínua sem alterar a afinação.
-- **Metrônomo Integrado**: Sincronizado com os tempos e compassos da partitura.
-- **Contagem Prévia (Count-in)**: Compasso preparatório com cliques para você respirar e entrar no tempo certo.
+### ⚠️ 5. Alerta de Trocas Rápidas de Sinos (Detecção de Weaving)
+- Algoritmo que inspeciona a partitura buscando passagens com transições rápidas do mesmo sineiro (< 1.4s na mesma mão ou < 0.8s entre mãos).
+- Lista os compassos críticos no painel lateral; clicar no item transporta o cursor diretamente para o compasso em questão.
+- Durante o playback, o **Live Cue HUD** alerta com antecedência: `⚠️ Atenção M.D.: Troca rápida de C5 para E5!`.
 
-### 📸 6. Escaneamento e Transcrição por IA (Google Gemini Vision)
-- Tire fotos das folhas da sua partitura física com o celular e envie para o Campana.
-- A inteligência artificial analisa as pautas, claves, armaduras e compassos polifônicos, transcrevendo tudo para MusicXML 3.1.
-- **Processamento Assíncrono com Barra de Progresso**: Arquitetura desacoplada que processa múltiplas páginas sem travamentos ou timeouts de rede.
+### 👥 6. Escala Geral da Música & Detecção de Notas Órfãs
+- O botão **`🎼 Escala Geral`** gera o mapa completo de distribuição de sinos da música carregada.
+- **Detecção de Notas Órfãs**: Destaca em vermelho pulsante sinos exigidos no arranjo que não estão atribuídos a nenhum integrante da orquestra.
+- **Atribuição Instantânea**: Permite que o regente ou qualquer sineiro clique em `+ Tocar este Sino` para assumir a nota na hora.
 
-### 📂 7. Carregamento e Gerenciamento
-- **Carregar XML**: Envie arquivos `.musicxml` ou `.mxl` do MuseScore, Sibelius ou Finale.
-- **Drag & Drop**: Arraste a partitura de qualquer pasta do seu computador direto para a janela do navegador.
-- **🗑️ Apagar Partitura**: Remova músicas personalizadas com confirmação e segurança.
+### 🎙️ 7. Afinador Acústico & Treino Interativo ("Ouça meu Sino")
+- Processamento de sinal com o algoritmo de **Autocorrelação Normalizada (YIN)** via microfone:
+  - **Afinador de Bancada**: Mostra em tempo real a nota detectada (ex: `C5`), frequência em Hz e desvio em cents (-50 a +50) com agulha visual e indicador de afinação exata (`Afinado! ✅`).
+  - **Treino Interativo**: Em modo *Treino Solo*, o microfone avalia o toque do sino físico do sineiro, validando se ele tocou na hora e afinação corretas, com pontuação, taxa de precisão e sequência (*streak*).
+
+### 📡 8. Maestro Sync (Sincronização Coletiva em Ensaios)
+- Sincronização via API com arquitetura híbrida Server-Sent Events (SSE) e Long-Polling:
+  - **Modo Regente (Maestro)**: Controla a execução da orquestra a partir de seu tablet. Ao dar Play, Pausar, mudar o andamento (BPM) ou saltar para qualquer compasso, todos os tablets acompanham instantaneamente.
+  - **Modo Sineiro (Seguidor)**: A partitura conecta-se ao maestro e segue os comandos do regente em tempo real.
+
+### 📱 9. Modo Offline PWA (Progressive Web App)
+- Totalmente instalável na tela inicial de iPads, celulares Android, iPhones e desktops.
+- Suporte a funcionamento **100% offline** através de Service Worker (`sw.js`), permitindo ensaiar em igrejas, retiros ou palcos sem conexão de internet.
+
+### 🖨️ 10. Exportação e Impressão de Partituras em PDF com Destaque
+- O botão **`🖨️ Imprimir PDF`** formata a partitura em `@media print` de alta resolução:
+  - Fundo branco de alto contraste, sem botões de interface.
+  - Cabeçalho profissional com título, compositor e nome do sineiro.
+  - **Legenda Colorida de Sinos**: Chips visuais indicando as notas e mãos correspondentes (ex: `[🟡 C5 - Mão Direita]`).
+  - Notas na pauta mantêm as cores destacadas personalizadas para impressão em cores.
+
+### 📑 11. Conversor Inteligente de Arquivos MobileSheets (.MSF) e PDFs
+- Importe arquivos de backup `.msf` do MobileSheets ou partituras em PDF.
+- Motor de conversão com reparação estrutural automática de MusicXML (cura compassos sem pausas, acordes malformados e inconsistências de vozes polifônicas).
+
+### 👤 12. Gestão Multi-usuário & Segurança do Administrador
+- Cada integrante possui seu perfil com avatar e preferências salvas por partitura.
+- **Painel do Administrador** (`flavioflavia@gmail.com`):
+  - Permissão exclusiva para exclusão de partituras e remoção de sineiros.
+  - Alteração de senha administrativa protegida.
+  - Exclusão segura com confirmação e limpeza de escalas associadas.
+
+### 📌 13. Barra de Controles Sticky (Sempre Visível)
+- Cabeçalho e barra de reprodução fixados no topo com rolagem independente da partitura (`app-top-sticky`).
+- Permite pausar, alterar andamento e visualizar o compasso atual mesmo nas últimas páginas de obras longas.
 
 ---
 
-## ⌨️ Atalhos de Teclado
+## ⌨️ Atalhos de Teclado & Pedais Bluetooth
 
-| Tecla | Ação |
+| Tecla / Pedal | Ação |
 | :---: | :--- |
 | <kbd>Espaço</kbd> | Tocar / Pausar a execução |
-| <kbd>Esc</kbd> | Parar execução e voltar ao compasso 1 |
+| <kbd>Esc</kbd> | Parar execução e voltar ao início |
+| <kbd>Seta Esquerda</kbd> | Voltar 1 compasso (compatível com pedais PageFlip / AirTurn) |
+| <kbd>Seta Direita</kbd> | Avançar 1 compasso (compatível com pedais PageFlip / AirTurn) |
 | <kbd>M</kbd> | Ligar / Desligar o Metrônomo |
-| <kbd>F</kbd> | Alternar Modo Tela Cheia |
+| <kbd>F</kbd> | Alternar Modo Tela Cheia (Estante de Partitura) |
 
 ---
 
-## 🏗️ Arquitetura do Projeto
+## 🏗️ Estrutura do Repositório
 
 ```
 sinos/
-├── index.html                  # Interface principal da aplicação (SPA)
-├── style.css                   # Folha de estilos moderna (Dark theme + papel de partitura)
-├── app.js                      # Controlador da aplicação, estado e eventos do DOM
-├── bell-audio.js               # Motor de síntese de áudio Web Audio API para handbells
-├── score-player.js             # Timeline de playback, metrônomo e sincronização do cursor
+├── index.html                  # Interface principal com barra sticky, modais e PWA tags
+├── style.css                   # Tema moderno escuro + layout A4 de partitura + folha de impressão
+├── app.js                      # Controlador principal, eventos, estado e integração de módulos
+├── bell-audio.js               # Motor de síntese física Web Audio API (Bronze, Chime, Glockenspiel e técnicas)
+├── score-player.js             # Timeline precisa de reprodução, Loop A-B, acelerador e cursor OSMD
+├── pitch-detector.js           # Detector acústico de altura via microfone (Autocorrelação YIN)
+├── sw.js                       # Service Worker para suporte a cache e modo offline PWA
+├── manifest.json               # Web App Manifest para instalação em dispositivos móveis
+├── convert_msf.py              # Script Python de extração de MobileSheets e sanitização XML
 ├── omr_engine.py               # Motor Python de OMR via Google GenAI SDK (Gemini Vision)
-├── generate_scores.js          # Utilitário para geração de partituras demonstrativas
+├── generate_scores.js          # Utilitário para geração de partituras de demonstração
 ├── .env.example                # Modelo de variáveis de ambiente
-├── .gitignore                  # Arquivos ignorados pelo controle de versão
+├── .gitignore                  # Arquivos ignorados pelo Git (dados locais, caches)
 ├── api/
-│   ├── transcribe.php          # Inicia job assíncrono de transcrição OMR
-│   ├── transcribe_status.php   # Endpoint de polling para progresso em tempo real
-│   └── delete_score.php        # Exclusão segura de partituras do servidor
+│   ├── auth.php                # Autenticação de usuários, perfil, admin e troca de senha
+│   ├── assignments.php         # Armazenamento e consulta da escala de sinos por música
+│   ├── list_scores.php         # Listagem dinâmica de partituras cadastradas
+│   ├── upload_score.php        # Upload e validação de partituras MusicXML
+│   ├── delete_score.php        # Exclusão segura de partituras (restrita ao admin)
+│   ├── convert_msf.php         # Processamento de arquivos .msf do MobileSheets
+│   ├── sync.php                # Servidor de sincronização do Maestro Sync (broadcast, poll e SSE)
+│   ├── transcribe.php          # Inicia jobs de transcrição OMR via Gemini Vision
+│   └── transcribe_status.php   # Endpoint de polling do status da transcrição
+├── data/
+│   ├── users.json              # Cadastro de sineiros e credenciais administrativas
+│   ├── assignments.json        # Mapeamento de sinos atribuídos por usuário e música
+│   └── sync_session.json       # Estado da sessão em tempo real do Maestro Sync
 ├── libs/
-│   ├── opensheetmusicdisplay.min.js # Biblioteca de renderização vetorial OSMD
-│   └── jszip.min.js            # Descompactação client-side de arquivos .mxl
-├── scores/                     # Acervo de partituras MusicXML pré-instaladas
-│   ├── hino-da-alegria.musicxml
-│   ├── noite-feliz.musicxml
-│   ├── canon-em-re.musicxml
-│   └── brilha-brilha-estrelinha.musicxml
-└── uploads/                    # Diretório temporário para jobs de transcrição
+│   ├── opensheetmusicdisplay.min.js # Motor de renderização vetorial OSMD
+│   └── jszip.min.js            # Manipulação de arquivos compactados .mxl no navegador
+└── scores/                     # Acervo de partituras MusicXML prontas
+    ├── hino-da-alegria.musicxml
+    ├── shine_jesus_shine.musicxml
+    ├── a-mighty-fortess-is-our-god.musicxml
+    ├── noite-feliz.musicxml
+    ├── canon-em-re.musicxml
+    └── brilha-brilha-estrelinha.musicxml
 ```
 
 ---
@@ -112,8 +163,9 @@ sinos/
 
 ### Requisitos Prévios
 - Servidor Web (**Apache** ou **Nginx**) com suporte a **PHP 8.0+**.
-- **Python 3.10+** (para o recurso de transcrição via IA).
-- Chave de API do **Google Gemini** (gratuita em [Google AI Studio](https://aistudio.google.com/)).
+- Módulos PHP: `php-json`, `php-mbstring`, `php-zip`.
+- **Python 3.10+** (para o conversor .msf e transcrição via IA).
+- Chave de API do **Google Gemini** (opcional, apenas para transcrição de fotos no [Google AI Studio](https://aistudio.google.com/)).
 
 ### 1. Clonar o Repositório
 ```bash
@@ -121,34 +173,21 @@ git clone https://github.com/flavioflavia/campana-sinos.git /var/www/html/sinos
 cd /var/www/html/sinos
 ```
 
-### 2. Configurar o Ambiente Python (para IA OMR)
-Crie um ambiente virtual Python e instale o SDK oficial do Google GenAI:
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install google-genai python-dotenv
-```
-
-### 3. Configurar Chaves de API
-Copie o modelo de variáveis de ambiente e insira sua chave do Gemini:
-```bash
-cp .env.example .env
-nano .env
-```
-Conteúdo do arquivo `.env`:
-```env
-GEMINI_API_KEY=sua_chave_do_google_ai_studio_aqui
-```
-
-### 4. Ajustar Permissões de Pastas
-Certifique-se de que o servidor web possa ler e escrever nas pastas `scores/` e `uploads/`:
+### 2. Configurar Permissões de Pastas
 ```bash
 chown -R www-data:www-data /var/www/html/sinos
 chmod -R 775 /var/www/html/sinos
+chmod 666 /var/www/html/sinos/data/*.json
 ```
 
-### 5. Configurar o Servidor Web (Exemplo Apache)
-Adicione um VirtualHost no Apache (ex: `/etc/apache2/sites-available/sinos.conf`):
+### 3. Configurar Variáveis de Ambiente
+```bash
+cp .env.example .env
+# Edite .env inserindo sua GEMINI_API_KEY se desejar usar transcrição por foto
+```
+
+### 4. Configurar Servidor Web (Exemplo Apache)
+Certifique-se de habilitar o suporte aos cabeçalhos e MIME types de partituras:
 ```apache
 <VirtualHost *:80>
     ServerName sinos.seu-dominio.com.br
@@ -162,35 +201,14 @@ Adicione um VirtualHost no Apache (ex: `/etc/apache2/sites-available/sinos.conf`
 
     AddType application/xml .musicxml .xml
     AddType application/vnd.recordare.musicxml+xml .mxl
-
-    ErrorLog ${APACHE_LOG_DIR}/sinos_error.log
-    CustomLog ${APACHE_LOG_DIR}/sinos_access.log combined
 </VirtualHost>
 ```
-Habilite o site e recarregue o Apache:
+
+Habilite os módulos e recarregue:
 ```bash
-sudo a2ensite sinos.conf
-sudo a2enmod headers
+sudo a2enmod headers rewrite
 sudo systemctl reload apache2
 ```
-
-Se desejar habilitar HTTPS com Let's Encrypt:
-```bash
-sudo certbot --apache -d sinos.seu-dominio.com.br
-```
-
----
-
-## 🎼 Dicas para Adicionar Suas Próprias Partituras
-
-1. **MuseScore / Finale / Sibelius**:
-   - Abra sua partitura para Handbells no seu editor de partituras preferido.
-   - Vá em **Arquivo > Exportar > MusicXML (.musicxml ou .mxl)**.
-   - No Campana, clique em **📂 Carregar XML** ou simplesmente arraste o arquivo para a janela.
-
-2. **Fotos e Escaneamentos via Celular**:
-   - Para obter a melhor qualidade na transcrição por IA, tire fotos bem iluminadas, sem sombras e mantendo a folha plana e alinhada.
-   - Envie as folhas em ordem (Folha 1, Folha 2, etc.) no botão **📸 Escanear Fotos (IA)**.
 
 ---
 
