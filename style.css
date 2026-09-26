@@ -649,16 +649,19 @@ body {
 /* Painel Lateral / Mesa de Sinos (Bell Rack) */
 .bell-rack-panel {
   width: 380px;
+  min-width: 380px;
+  flex-shrink: 0;
   background-color: var(--bg-secondary);
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 20;
 }
 
 .bell-rack-panel.collapsed {
-  width: 0;
+  width: 0 !important;
+  min-width: 0 !important;
   overflow: hidden;
   border-right: none;
 }
@@ -670,6 +673,7 @@ body {
   justify-content: space-between;
   align-items: center;
   background-color: var(--bg-tertiary);
+  flex-shrink: 0;
 }
 
 .panel-title {
@@ -686,6 +690,7 @@ body {
   display: flex;
   background-color: var(--bg-primary);
   border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
 }
 
 .panel-tab {
@@ -817,6 +822,20 @@ body {
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+#view-my-bells {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+}
+
+#view-group-roster {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
 }
 
 /* Seção de Sinos Atribuídos */
@@ -1088,6 +1107,7 @@ body {
 /* Área Central da Partitura */
 .score-viewport {
   flex: 1;
+  min-width: 0;
   background-color: #fcfcfc;
   overflow: auto;
   position: relative;
@@ -2118,7 +2138,9 @@ body {
 
   /* Mesa de Sinos lateral otimizada para Paisagem */
   .bell-rack-panel {
-    width: 290px;
+    width: 330px;
+    min-width: 330px;
+    flex-shrink: 0;
     position: relative;
     transform: none;
     box-shadow: none;
@@ -2127,7 +2149,8 @@ body {
   }
 
   .bell-rack-panel.collapsed {
-    width: 0;
+    width: 0 !important;
+    min-width: 0 !important;
     overflow: hidden;
     border-right: none;
     visibility: visible;
