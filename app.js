@@ -347,6 +347,17 @@
       xml = xml.substring(1).trim();
     }
 
+    // Remove cercas de código markdown ```xml ou ```
+    xml = xml.replace(/^\s*```(?:xml)?\s*/i, '').replace(/\s*```\s*$/g, '').trim();
+
+    // Se o XML foi truncado no meio antes de </score-partwise>, fecha no último compasso completo
+    if (xml.includes('<score-partwise') && !xml.includes('</score-partwise>')) {
+      const lastMeasureEnd = xml.lastIndexOf('</measure>');
+      if (lastMeasureEnd !== -1) {
+        xml = xml.substring(0, lastMeasureEnd + '</measure>'.length) + '\n  </part>\n</score-partwise>';
+      }
+    }
+
     // Se houver declaração XML <?xml ... ?> no meio ou após comentários/espaços, move para o início
     const xmlDeclMatch = xml.match(/<\?xml[^>]*\?>/i);
     if (xmlDeclMatch) {
@@ -374,6 +385,7 @@
       .replace(/<fifths>\s*(-?\d+)\s*<\/[^>]+>/g, '<fifths>$1</fifths>')
       .replace(/<beats>\s*(\d+)\s*<\/[^>]+>/g, '<beats>$1</beats>')
       .replace(/<beat-type>\s*(\d+)\s*<\/[^>]+>/g, '<beat-type>$1</beat-type>')
+      .replace(/<note>\s*(?:<print[^>]*>.*?<\/print>\s*)?<rest\s*\/?>\s*<\/note>/gi, '<note><rest/><duration>16</duration><type>whole</type></note>')
       .replace(/&nbsp;/g, ' ');
 
     return xml;

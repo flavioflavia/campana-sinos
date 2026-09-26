@@ -53,9 +53,9 @@ DIRETRIZES TÉCNICAS:
 
 MODELS = [
     "gemini-3.8-flash",
+    "gemini-3.6-flash",
     "gemini-3.5-flash",
-    "gemini-3.5-flash-lite",
-    "gemini-3.1-pro-preview"
+    "gemini-flash-latest"
 ]
 
 def update_job_status(job_file, status, message, percent=0, extra=None):
@@ -81,26 +81,37 @@ def update_job_status(job_file, status, message, percent=0, extra=None):
 def call_gemini(contents, system_instruction=SYSTEM_PROMPT):
     last_err = None
     for m in MODELS:
-        try:
-            print(f"[*] Chamando modelo {m}...")
-            resp = client.models.generate_content(
-                model=m,
-                contents=contents,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_instruction,
-                    temperature=0.1
+        for attempt in range(3):
+            try:
+                print(f"[*] Chamando modelo {m} (tentativa {attempt + 1})...")
+                resp = client.models.generate_content(
+                    model=m,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_instruction,
+                        temperature=0.1,
+                        max_output_tokens=16384
+                    )
                 )
-            )
-            if resp.text:
-                return resp.text
-        except Exception as e:
-            print(f"[!] Modelo {m} falhou: {e}. Tentando próximo...")
-            last_err = e
+                if resp.text:
+                    return resp.text
+            except Exception as e:
+                last_err = e
+                err_str = str(e)
+                print(f"[!] Modelo {m} tentativa {attempt + 1} falhou: {e}")
+                if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
+                    time.sleep(2 * (attempt + 1))
+                    continue
+                break
     if last_err:
         raise last_err
     raise RuntimeError("Nenhum modelo Gemini retornou resposta.")
 
 def repair_xml(xml_str):
+    # 1. Remove cercas markdown ```xml ou ```
+    xml_str = re.sub(r'^\s*```(?:xml)?\s*', '', xml_str, flags=re.IGNORECASE)
+    xml_str = re.sub(r'\s*```\s*$', '', xml_str)
+
     m = re.search(r'```(?:xml)?\s*(<\?xml.*?</score-partwise>|<score-partwise.*?</score-partwise>)\s*```', xml_str, re.DOTALL)
     if m:
         xml_str = m.group(1)
@@ -108,6 +119,12 @@ def repair_xml(xml_str):
         m2 = re.search(r'(<\?xml.*?</score-partwise>|<score-partwise.*?</score-partwise>)', xml_str, re.DOTALL)
         if m2:
             xml_str = m2.group(1)
+
+    # 2. Se o XML foi truncado no meio antes de fechar score-partwise, corta no último compasso completo
+    if '<score-partwise' in xml_str and '</score-partwise>' not in xml_str:
+        last_measure_end = xml_str.rfind('</measure>')
+        if last_measure_end != -1:
+            xml_str = xml_str[:last_measure_end + len('</measure>')] + '\n  </part>\n</score-partwise>\n'
 
     # Normaliza acidentes e tags com fechamento incorreto da IA
     xml_str = re.sub(r'<step>\s*([A-Ga-g])#\s*</[^>]+>', r'<step>\1</step><alter>1</alter>', xml_str)
@@ -122,6 +139,9 @@ def repair_xml(xml_str):
     xml_str = re.sub(r'<beats>\s*(\d+)\s*</[^>]+>', r'<beats>\1</beats>', xml_str)
     xml_str = re.sub(r'<beat-type>\s*(\d+)\s*</[^>]+>', r'<beat-type>\1</beat-type>', xml_str)
     xml_str = xml_str.replace('&nbsp;', ' ')
+
+    # Corrige pausas <rest/> vazias sem duration/type geradas por IA que quebram o OSMD
+    xml_str = re.sub(r'<note>\s*(?:<print[^>]*>.*?<\/print>\s*)?<rest\s*\/?>\s*<\/note>', r'<note><rest/><duration>16</duration><type>whole</type></note>', xml_str)
 
     # Fechamentos automáticos
     if '</part>' not in xml_str and '<part' in xml_str:
@@ -303,7 +323,12 @@ def convert_msf(msf_path, output_xml_path, song_title=None, job_file=None, user_
         update_job_status(job_file, "processing", f"Processando partitura em PDF ({pdf_size_kb} KB). Preparando envio para Gemini...", 30)
         print(f"[*] Enviando PDF ({len(pdf_bytes)} bytes, {pdf_size_kb} KB) para transcrição via Gemini...")
         
-        prompt = f"Transcreva a partitura musical deste PDF em anexo com o título '{title}'. Se houver múltiplas páginas, transcreva todas as páginas sequencialmente compasso por compasso. Retorne o arquivo MusicXML 3.1 completo e bem-formatado para Orquestra de Sinos (Handbells com 2 pautas Clave de Sol e Fá)."
+        prompt = (
+            f"Transcreva a partitura musical deste PDF em anexo com o título '{title}'. "
+            "Se houver múltiplas páginas, transcreva todas as páginas sequencialmente compasso por compasso do início ao fim. "
+            "IMPORTANTE: Formate os elementos <note> de modo conciso em linhas compactas (ex: <note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><type>quarter</type><staff>1</staff></note>) para que toda a música e todos os compassos caibam na resposta sem truncamento. "
+            "Retorne o arquivo MusicXML 3.1 completo e bem-formatado para Orquestra de Sinos (Handbells com 2 pautas Clave de Sol e Fá)."
+        )
         
         uploaded_gemini_file = None
         temp_pdf_to_clean = None
