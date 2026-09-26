@@ -358,14 +358,23 @@
       xml = '<?xml version="1.0" encoding="UTF-8"?>\n' + xml;
     }
 
-    // Normaliza tags de pitch do MusicXML contra formatações fora do padrão (ex: <step>F#</step>)
+    // Corrige tags com fechamento incorreto geradas por modelos de IA (ex: <step>B</octave> -> <step>B</step>)
     xml = xml
-      .replace(/<step>\s*([A-Ga-g])#\s*<\/step>/g, '<step>$1</step><alter>1</alter>')
-      .replace(/<step>\s*([A-Ga-g])b\s*<\/step>/g, '<step>$1</step><alter>-1</alter>')
-      .replace(/<step>\s*([a-g])\s*<\/step>/g, (m, g) => '<step>' + g.toUpperCase() + '</step>')
-      .replace(/<alter>\s*#\s*<\/alter>/g, '<alter>1</alter>')
-      .replace(/<alter>\s*b\s*<\/alter>/g, '<alter>-1</alter>')
-      .replace(/<alter>\s*\+1\s*<\/alter>/g, '<alter>1</alter>');
+      .replace(/<step>\s*([A-Ga-g])#\s*<\/[^>]+>/g, '<step>$1</step><alter>1</alter>')
+      .replace(/<step>\s*([A-Ga-g])b\s*<\/[^>]+>/g, '<step>$1</step><alter>-1</alter>')
+      .replace(/<step>\s*([A-Ga-g])\s*<\/[^>]+>/g, (m, g) => '<step>' + g.toUpperCase() + '</step>')
+      .replace(/<octave>\s*(\d+)\s*<\/[^>]+>/g, '<octave>$1</octave>')
+      .replace(/<alter>\s*#\s*<\/[^>]+>/g, '<alter>1</alter>')
+      .replace(/<alter>\s*b\s*<\/[^>]+>/g, '<alter>-1</alter>')
+      .replace(/<alter>\s*\+1\s*<\/[^>]+>/g, '<alter>1</alter>')
+      .replace(/<duration>\s*(\d+)\s*<\/[^>]+>/g, '<duration>$1</duration>')
+      .replace(/<type>\s*([a-z]+)\s*<\/[^>]+>/g, '<type>$1</type>')
+      .replace(/<voice>\s*(\d+)\s*<\/[^>]+>/g, '<voice>$1</voice>')
+      .replace(/<staff>\s*(\d+)\s*<\/[^>]+>/g, '<staff>$1</staff>')
+      .replace(/<fifths>\s*(-?\d+)\s*<\/[^>]+>/g, '<fifths>$1</fifths>')
+      .replace(/<beats>\s*(\d+)\s*<\/[^>]+>/g, '<beats>$1</beats>')
+      .replace(/<beat-type>\s*(\d+)\s*<\/[^>]+>/g, '<beat-type>$1</beat-type>')
+      .replace(/&nbsp;/g, ' ');
 
     return xml;
   }

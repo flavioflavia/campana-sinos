@@ -109,10 +109,19 @@ def repair_xml(xml_str):
         if m2:
             xml_str = m2.group(1)
 
-    # Normaliza acidentes
+    # Normaliza acidentes e tags com fechamento incorreto da IA
     xml_str = re.sub(r'<step>\s*([A-Ga-g])#\s*</[^>]+>', r'<step>\1</step><alter>1</alter>', xml_str)
     xml_str = re.sub(r'<step>\s*([A-Ga-g])b\s*</[^>]+>', r'<step>\1</step><alter>-1</alter>', xml_str)
-    xml_str = re.sub(r'<step>\s*([a-g])\s*</[^>]+>', lambda match: f'<step>{match.group(1).upper()}</step>', xml_str)
+    xml_str = re.sub(r'<step>\s*([A-Ga-g])\s*</[^>]+>', lambda m: f'<step>{m.group(1).upper()}</step>', xml_str)
+    xml_str = re.sub(r'<octave>\s*(\d+)\s*</[^>]+>', r'<octave>\1</octave>', xml_str)
+    xml_str = re.sub(r'<duration>\s*(\d+)\s*</[^>]+>', r'<duration>\1</duration>', xml_str)
+    xml_str = re.sub(r'<type>\s*([a-z]+)\s*</[^>]+>', r'<type>\1</type>', xml_str)
+    xml_str = re.sub(r'<voice>\s*(\d+)\s*</[^>]+>', r'<voice>\1</voice>', xml_str)
+    xml_str = re.sub(r'<staff>\s*(\d+)\s*</[^>]+>', r'<staff>\1</staff>', xml_str)
+    xml_str = re.sub(r'<fifths>\s*(-?\d+)\s*</[^>]+>', r'<fifths>\1</fifths>', xml_str)
+    xml_str = re.sub(r'<beats>\s*(\d+)\s*</[^>]+>', r'<beats>\1</beats>', xml_str)
+    xml_str = re.sub(r'<beat-type>\s*(\d+)\s*</[^>]+>', r'<beat-type>\1</beat-type>', xml_str)
+    xml_str = xml_str.replace('&nbsp;', ' ')
 
     # Fechamentos automáticos
     if '</part>' not in xml_str and '<part' in xml_str:

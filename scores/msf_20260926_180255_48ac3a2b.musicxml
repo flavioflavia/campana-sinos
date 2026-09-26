@@ -352,7 +352,7 @@
       <note>
         <chord/>
         <pitch>
-          <step>B</octave>
+          <step>B</step>
           <octave>5</octave>
         </pitch>
         <duration>4</duration>
@@ -630,7 +630,7 @@
       </note>
       <note>
         <pitch>
-          <step>F</suppress>
+          <step>F</step>
           <step>F</step>
           <alter>1</alter>
           <octave>4</octave>
