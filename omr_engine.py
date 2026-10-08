@@ -14,21 +14,23 @@ import json
 import argparse
 import xml.etree.ElementTree as ET
 from dotenv import load_dotenv
-
-# Carrega variáveis de ambiente
-load_dotenv('/var/www/html/sinos/.env')
-if not os.getenv('GEMINI_API_KEY'):
-    load_dotenv('/var/www/html/aprendizado/backend/.env')
-
-api_key = os.getenv('GEMINI_API_KEY')
-if not api_key:
-    sys.stderr.write("ERRO: GEMINI_API_KEY não encontrada.\n")
-    sys.exit(1)
-
 from google import genai
 from google.genai import types
 
-client = genai.Client(api_key=api_key)
+_gemini_client = None
+
+def get_gemini_client():
+    global _gemini_client
+    if _gemini_client is not None:
+        return _gemini_client
+    load_dotenv('/var/www/html/sinos/.env', override=True)
+    if not os.getenv('GEMINI_API_KEY'):
+        load_dotenv('/var/www/html/aprendizado/backend/.env', override=True)
+    key = os.getenv('GEMINI_API_KEY')
+    if not key or not key.strip():
+        raise RuntimeError("Nenhuma chave GEMINI_API_KEY configurada. Configure uma chave gratuita em aistudio.google.com/app/apikey no Painel Admin.")
+    _gemini_client = genai.Client(api_key=key.strip())
+    return _gemini_client
 
 PAGE_SYSTEM_PROMPT = """Você é um especialista em transcrição e editoração musical profissional especializado em partituras para Orquestra de Sinos (Handbells).
 Sua missão é transcrever com precisão ABSOLUTA todos os compassos visíveis nesta folha da partitura para MusicXML 3.1.
@@ -79,10 +81,11 @@ def update_job_status(job_file, status, message, percent=0, extra=None):
         print(f"[!] Falha ao gravar status do job: {e}")
 
 def call_gemini_vision(contents, system_instruction=PAGE_SYSTEM_PROMPT):
+    c = get_gemini_client()
     last_err = None
     for m in MODELS:
         try:
-            resp = client.models.generate_content(
+            resp = c.models.generate_content(
                 model=m,
                 contents=contents,
                 config=types.GenerateContentConfig(
@@ -92,7 +95,12 @@ def call_gemini_vision(contents, system_instruction=PAGE_SYSTEM_PROMPT):
             )
             return resp.text
         except Exception as e:
-            print(f"[!] Modelo {m} falhou: {e}. Tentando próximo modelo...")
+            err_str = str(e)
+            print(f"[!] Modelo {m} falhou: {e}")
+            if "401" in err_str or "UNAUTHENTICATED" in err_str or "ACCOUNT_STATE_INVALID" in err_str or "API_KEY_INVALID" in err_str:
+                raise RuntimeError("Chave do Google Gemini desativada ou inválida (Erro 401: Conta de serviço desativada no Google Cloud). Obtenha uma nova chave gratuita em aistudio.google.com/app/apikey.")
+            if "403" in err_str or "PERMISSION_DENIED" in err_str:
+                raise RuntimeError("Acesso negado à API do Google Gemini (Erro 403).")
             last_err = e
     raise last_err
 
@@ -252,7 +260,16 @@ def main():
     except Exception as e:
         sys.stderr.write(f"\n[ERRO NA TRANSCRIÇÃO]: {e}\n")
         if args.job_file:
-            update_job_status(args.job_file, "error", f"Erro na transcrição: {str(e)}", 0)
+            err_msg = str(e)
+            if "401" in err_msg or "UNAUTHENTICATED" in err_msg or "ACCOUNT_STATE_INVALID" in err_msg:
+                user_msg = "Chave do Google Gemini desativada ou inválida (Erro 401). Configure uma nova chave gratuita em aistudio.google.com/app/apikey no Painel de Administrador ou no arquivo .env."
+            elif "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
+                user_msg = "Limite de requisições do Gemini atingido temporariamente (Erro 429). Aguarde alguns instantes."
+            elif "403" in err_msg or "PERMISSION_DENIED" in err_msg:
+                user_msg = "Acesso negado à API do Google Gemini (Erro 403). Verifique a chave no Google AI Studio."
+            else:
+                user_msg = f"Erro na transcrição: {err_msg}"
+            update_job_status(args.job_file, "error", user_msg, 0)
         sys.exit(1)
 
 if __name__ == "__main__":

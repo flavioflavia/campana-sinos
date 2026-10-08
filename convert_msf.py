@@ -15,20 +15,23 @@ import sqlite3
 import argparse
 import xml.etree.ElementTree as ET
 from dotenv import load_dotenv
-
-load_dotenv('/var/www/html/sinos/.env')
-if not os.getenv('GEMINI_API_KEY'):
-    load_dotenv('/var/www/html/aprendizado/backend/.env')
-
-api_key = os.getenv('GEMINI_API_KEY')
-if not api_key:
-    sys.stderr.write("ERRO: GEMINI_API_KEY não encontrada.\n")
-    sys.exit(1)
-
 from google import genai
 from google.genai import types
 
-client = genai.Client(api_key=api_key)
+_gemini_client = None
+
+def get_gemini_client():
+    global _gemini_client
+    if _gemini_client is not None:
+        return _gemini_client
+    load_dotenv('/var/www/html/sinos/.env', override=True)
+    if not os.getenv('GEMINI_API_KEY'):
+        load_dotenv('/var/www/html/aprendizado/backend/.env', override=True)
+    key = os.getenv('GEMINI_API_KEY')
+    if not key or not key.strip():
+        raise RuntimeError("Nenhuma chave GEMINI_API_KEY configurada. Obtenha uma chave gratuita em aistudio.google.com/app/apikey e salve no Painel Admin do Campana.")
+    _gemini_client = genai.Client(api_key=key.strip())
+    return _gemini_client
 
 SYSTEM_PROMPT = """Você é um especialista em transcrição e editoração musical profissional especializado em partituras para Orquestra de Sinos (Handbells).
 Sua missão é transcrever com precisão ABSOLUTA o arquivo musical fornecido (.msf / PDF / Imagem de partitura) para MusicXML 3.1 completo e bem-formado.
@@ -79,12 +82,13 @@ def update_job_status(job_file, status, message, percent=0, extra=None):
         print(f"[!] Erro ao atualizar status: {e}")
 
 def call_gemini(contents, system_instruction=SYSTEM_PROMPT):
+    c = get_gemini_client()
     last_err = None
     for m in MODELS:
         for attempt in range(3):
             try:
                 print(f"[*] Chamando modelo {m} (tentativa {attempt + 1})...")
-                resp = client.models.generate_content(
+                resp = c.models.generate_content(
                     model=m,
                     contents=contents,
                     config=types.GenerateContentConfig(
@@ -99,7 +103,11 @@ def call_gemini(contents, system_instruction=SYSTEM_PROMPT):
                 last_err = e
                 err_str = str(e)
                 print(f"[!] Modelo {m} tentativa {attempt + 1} falhou: {e}")
-                if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
+                if "401" in err_str or "UNAUTHENTICATED" in err_str or "ACCOUNT_STATE_INVALID" in err_str or "API_KEY_INVALID" in err_str:
+                    raise RuntimeError("Chave do Google Gemini desativada ou inválida (Erro 401: Conta de serviço desativada no Google Cloud). Gere uma chave gratuita em aistudio.google.com/app/apikey e atualize no Painel Admin ou no arquivo .env.")
+                if "403" in err_str or "PERMISSION_DENIED" in err_str:
+                    raise RuntimeError("Acesso negado à API do Google Gemini (Erro 403). Verifique se a Generative Language API está habilitada em aistudio.google.com.")
+                if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str or "503" in err_str or "UNAVAILABLE" in err_str:
                     time.sleep(2 * (attempt + 1))
                     continue
                 break
@@ -648,7 +656,16 @@ def main():
         convert_msf(args.msf_file, out_file, args.title, args.job_file, args.user_name, args.user_email)
     except Exception as e:
         print(f"[!] Erro fatal na conversão: {e}")
-        update_job_status(args.job_file, "error", f"Falha na conversão: {str(e)}")
+        err_msg = str(e)
+        if "401" in err_msg or "UNAUTHENTICATED" in err_msg or "ACCOUNT_STATE_INVALID" in err_msg:
+            user_msg = "Chave do Google Gemini desativada ou inválida (Erro 401). Obtenha uma chave gratuita em aistudio.google.com/app/apikey e configure no Painel de Administrador ou no arquivo .env."
+        elif "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
+            user_msg = "Limite temporário de requisições do Gemini atingido (Erro 429). Aguarde alguns instantes e tente novamente."
+        elif "403" in err_msg or "PERMISSION_DENIED" in err_msg:
+            user_msg = "Acesso negado à API do Google Gemini (Erro 403). Verifique se a Generative Language API está habilitada."
+        else:
+            user_msg = f"Falha na conversão: {err_msg}"
+        update_job_status(args.job_file, "error", user_msg)
         sys.exit(1)
 
 if __name__ == "__main__":

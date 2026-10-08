@@ -375,6 +375,24 @@
         <div class="ocr-status-text" id="ocr-status-text">Processando imagens com IA...</div>
       </div>
 
+      <!-- Alerta de Chave Gemini no OCR -->
+      <div id="ocr-gemini-alert" style="display: none; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: var(--radius-sm); padding: 12px; margin-top: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px; color: #f87171; font-weight: 600; font-size: 0.88rem; margin-bottom: 6px;">
+          <span>⚠️</span> <span>Chave do Google Gemini Necessária / Desativada</span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-dim); margin: 0 0 10px 0; line-height: 1.4;">
+          A transcrição por IA requer uma chave de API do Gemini ativa. Gere gratuitamente no Google AI Studio e salve nas opções de Administrador.
+        </p>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="btn-secondary" style="font-size: 0.78rem; padding: 6px 12px; text-decoration: none;">
+            🌐 Obter Chave Grátis (AI Studio)
+          </a>
+          <button type="button" class="btn-primary btn-open-gemini-admin" style="font-size: 0.78rem; padding: 6px 14px;">
+            ⚙️ Configurar Chave no Admin
+          </button>
+        </div>
+      </div>
+
       <div class="modal-actions">
         <button class="btn-secondary" id="btn-cancel-ocr">Cancelar</button>
         <button class="btn-primary" id="btn-submit-ocr" disabled>✨ Iniciar Transcrição com IA</button>
@@ -418,6 +436,24 @@
       <div class="ocr-status" id="msf-status" style="display: none;">
         <div class="ocr-spinner"></div>
         <div class="ocr-status-text" id="msf-status-text">Processando partitura com IA...</div>
+      </div>
+
+      <!-- Alerta de Chave Gemini no MSF -->
+      <div id="msf-gemini-alert" style="display: none; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: var(--radius-sm); padding: 12px; margin-top: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px; color: #f87171; font-weight: 600; font-size: 0.88rem; margin-bottom: 6px;">
+          <span>⚠️</span> <span>Chave do Google Gemini Necessária / Desativada</span>
+        </div>
+        <p id="msf-gemini-alert-msg" style="font-size: 0.8rem; color: var(--text-dim); margin: 0 0 10px 0; line-height: 1.4;">
+          A conversão de arquivos MobileSheets (.msf) e PDFs utiliza o Google Gemini. A chave configurada expirou ou foi desativada. Gere uma nova chave gratuita e salve no Painel Admin.
+        </p>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="btn-secondary" style="font-size: 0.78rem; padding: 6px 12px; text-decoration: none;">
+            🌐 Obter Chave Grátis (AI Studio)
+          </a>
+          <button type="button" class="btn-primary btn-open-gemini-admin" style="font-size: 0.78rem; padding: 6px 14px;">
+            ⚙️ Configurar Chave no Admin
+          </button>
+        </div>
       </div>
 
       <div class="modal-actions">
@@ -504,10 +540,17 @@
                 <strong>flavioflavia@gmail.com</strong> &bull; Acesso total para exclusão e gerenciamento.
               </p>
             </div>
-            <button class="btn-secondary" id="btn-toggle-change-pwd" style="font-size: 0.8rem; padding: 6px 12px;">
-              🔑 Trocar Senha
-            </button>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <button class="btn-secondary" id="btn-toggle-change-pwd" style="font-size: 0.8rem; padding: 6px 12px;">
+                🔑 Trocar Senha
+              </button>
+              <button class="btn-secondary" id="btn-toggle-gemini-key" style="font-size: 0.8rem; padding: 6px 12px; color: var(--bell-gold); border-color: rgba(255,215,0,0.4);">
+                ✨ Chave IA (Gemini)
+              </button>
+            </div>
           </div>
+
+          <!-- Troca de Senha do Admin -->
           <div id="admin-change-pwd-fields" style="display: none; margin-top: 12px; background: rgba(0,0,0,0.25); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
               <div>
@@ -524,6 +567,33 @@
               <button class="btn-primary" id="btn-submit-change-pwd" style="font-size: 0.82rem; padding: 7px 16px;">
                 Salvar Nova Senha
               </button>
+            </div>
+          </div>
+
+          <!-- Configuração da Chave do Google Gemini (IA) -->
+          <div id="admin-gemini-key-fields" style="display: none; margin-top: 12px; background: rgba(0,0,0,0.3); padding: 14px; border-radius: var(--radius-sm); border: 1px solid rgba(255, 215, 0, 0.25);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+              <span style="font-size: 0.84rem; font-weight: 600; color: #ffd700;">⚙️ Configuração da Chave Google Gemini API</span>
+              <span id="gemini-key-current-status" style="font-size: 0.74rem; color: var(--text-dim); background: var(--bg-tertiary); padding: 3px 8px; border-radius: 4px;">Status: verificando...</span>
+            </div>
+            <p style="font-size: 0.76rem; color: var(--text-muted); margin: 0 0 10px 0; line-height: 1.4;">
+              Necessária para importação de partituras <strong>.msf (MobileSheets)</strong>, <strong>PDFs</strong> e <strong>fotos</strong> com transcrição por IA.
+              Obtenha gratuitamente em <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="color: #64d2ff; text-decoration: underline;">aistudio.google.com/app/apikey</a>.
+            </p>
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+              <input type="password" id="admin-gemini-key-input" class="ocr-input" placeholder="Cole sua chave aqui (ex: AIzaSy...)" style="flex: 1; font-family: monospace; font-size: 0.82rem;">
+              <button type="button" class="btn-secondary" id="btn-toggle-show-gemini-key" title="Mostrar/ocultar chave" style="padding: 0 12px; font-size: 0.85rem;">👁️</button>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <div id="gemini-key-feedback" style="font-size: 0.78rem; max-width: 55%; min-height: 1.2rem;"></div>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn-secondary" id="btn-test-gemini-key" style="font-size: 0.8rem; padding: 6px 12px;">
+                  🔍 Testar Conexão
+                </button>
+                <button type="button" class="btn-primary" id="btn-save-gemini-key" style="font-size: 0.8rem; padding: 6px 14px;">
+                  💾 Salvar Chave
+                </button>
+              </div>
             </div>
           </div>
         </div>

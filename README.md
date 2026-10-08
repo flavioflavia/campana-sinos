@@ -180,11 +180,16 @@ chmod -R 775 /var/www/html/sinos
 chmod 666 /var/www/html/sinos/data/*.json
 ```
 
-### 3. Configurar Variáveis de Ambiente
-```bash
-cp .env.example .env
-# Edite .env inserindo sua GEMINI_API_KEY se desejar usar transcrição por foto
-```
+### 3. Configurar Variáveis de Ambiente & Chave Google Gemini (IA)
+Para utilizar a transcrição automática de partituras (.msf / PDF / Fotos), é necessário ter uma chave de API do **Google Gemini**:
+1. Obtenha uma chave gratuita em [Google AI Studio](https://aistudio.google.com/app/apikey) (clique em *"Create API key"*).
+2. Configure a chave de qualquer uma das duas formas:
+   - **Pelo próprio aplicativo (Mais fácil)**: Entre como Administrador no botão de usuário (`flavioflavia@gmail.com`), clique em *"✨ Chave IA (Gemini)"*, cole a chave e clique em *"Salvar Chave"* (você pode até testar a conexão na hora com o botão *"Testar Conexão"*).
+   - **Pelo terminal / arquivo `.env`**:
+     ```bash
+     cp .env.example .env
+     echo 'GEMINI_API_KEY="sua_chave_aqui"' > .env
+     ```
 
 ### 4. Configurar Servidor Web (Exemplo Apache)
 Certifique-se de habilitar o suporte aos cabeçalhos e MIME types de partituras:

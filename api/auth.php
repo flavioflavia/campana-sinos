@@ -368,6 +368,164 @@ switch ($action) {
         ]);
         break;
 
+    // Obter status da chave de API do Gemini (.env)
+    case 'get_gemini_config':
+        $requesterEmail = $_SESSION['sinos_user_email'] ?? ($_SERVER['HTTP_X_USER_EMAIL'] ?? ($body['admin_email'] ?? ''));
+        $isAdmin = (strtolower(trim($requesterEmail)) === strtolower($adminEmail));
+
+        $envFile = '/var/www/html/sinos/.env';
+        $currentKey = '';
+        if (file_exists($envFile)) {
+            $envLines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            foreach ($envLines as $line) {
+                if (preg_match('/^\s*GEMINI_API_KEY\s*=\s*["\']?(.*?)["\']?\s*$/', $line, $m)) {
+                    $currentKey = trim($m[1]);
+                    break;
+                }
+            }
+        }
+
+        $hasKey = !empty($currentKey);
+        $masked = '';
+        if ($hasKey) {
+            $len = strlen($currentKey);
+            if ($len > 12) {
+                $masked = substr($currentKey, 0, 8) . '...' . substr($currentKey, -4);
+            } else {
+                $masked = '********';
+            }
+        }
+
+        echo json_encode([
+            'success' => true,
+            'is_admin' => $isAdmin,
+            'has_key' => $hasKey,
+            'masked_key' => $masked
+        ]);
+        break;
+
+    // Salvar nova chave de API do Gemini (.env)
+    case 'save_gemini_key':
+        $requesterEmail = $_SESSION['sinos_user_email'] ?? ($_SERVER['HTTP_X_USER_EMAIL'] ?? ($body['admin_email'] ?? ''));
+        if (strtolower(trim($requesterEmail)) !== strtolower($adminEmail)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Apenas o administrador (' . $adminEmail . ') pode configurar a chave da API.']);
+            exit;
+        }
+
+        $newKey = trim($body['gemini_api_key'] ?? '');
+        if (empty($newKey)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'A chave de API não pode estar vazia.']);
+            exit;
+        }
+
+        $newKey = trim($newKey, "\"' \t\n\r\0\x0B");
+
+        $envFile = '/var/www/html/sinos/.env';
+        $content = "GEMINI_API_KEY=\"" . addslashes($newKey) . "\"\n";
+        if (file_put_contents($envFile, $content) === false) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Erro ao salvar a chave no arquivo .env']);
+            exit;
+        }
+
+        $altEnv = '/var/www/html/aprendizado/backend/.env';
+        if (file_exists($altEnv) && is_writable($altEnv)) {
+            @file_put_contents($altEnv, $content);
+        }
+
+        $masked = strlen($newKey) > 12 ? substr($newKey, 0, 8) . '...' . substr($newKey, -4) : '********';
+        echo json_encode([
+            'success' => true,
+            'message' => 'Chave da API Gemini salva com sucesso no sistema!',
+            'masked_key' => $masked
+        ]);
+        break;
+
+    // Testar chave de API do Gemini fazendo chamada ao Google
+    case 'test_gemini_key':
+        $requesterEmail = $_SESSION['sinos_user_email'] ?? ($_SERVER['HTTP_X_USER_EMAIL'] ?? ($body['admin_email'] ?? ''));
+        if (strtolower(trim($requesterEmail)) !== strtolower($adminEmail)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Apenas o administrador pode testar a chave.']);
+            exit;
+        }
+
+        $testKey = trim($body['gemini_api_key'] ?? '');
+        if (empty($testKey)) {
+            $envFile = '/var/www/html/sinos/.env';
+            if (file_exists($envFile)) {
+                $envLines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                foreach ($envLines as $line) {
+                    if (preg_match('/^\s*GEMINI_API_KEY\s*=\s*["\']?(.*?)["\']?\s*$/', $line, $m)) {
+                        $testKey = trim($m[1]);
+                        break;
+                    }
+                }
+            }
+        }
+
+        $testKey = trim($testKey, "\"' \t\n\r\0\x0B");
+        if (empty($testKey)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Nenhuma chave fornecida ou encontrada no .env para teste.']);
+            exit;
+        }
+
+        $url = 'https://generativelanguage.googleapis.com/v1beta/models?key=' . urlencode($testKey);
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        $resp = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlErr = curl_error($ch);
+        curl_close($ch);
+
+        if ($curlErr) {
+            echo json_encode([
+                'success' => false,
+                'valid' => false,
+                'error' => 'Falha de rede ao conectar com o Google: ' . $curlErr
+            ]);
+            exit;
+        }
+
+        $respData = json_decode($resp, true);
+        if ($httpCode === 200 && isset($respData['models'])) {
+            $numModels = count($respData['models']);
+            echo json_encode([
+                'success' => true,
+                'valid' => true,
+                'message' => "✓ Chave válida! Conectada com sucesso à Google Generative AI ({$numModels} modelos disponíveis)."
+            ]);
+        } else {
+            $errMsg = $respData['error']['message'] ?? "Código HTTP {$httpCode}";
+            $errStatus = $respData['error']['status'] ?? 'ERRO';
+            $reason = $respData['error']['details'][0]['reason'] ?? '';
+            $friendlyMsg = "Erro {$httpCode} ({$errStatus}): {$errMsg}";
+            if ($httpCode === 401) {
+                if ($reason === 'ACCOUNT_STATE_INVALID' || strpos($errMsg, 'service account is deleted') !== false) {
+                    $friendlyMsg = "Erro 401: A conta de serviço do Google vinculada a esta chave foi desativada ou excluída. Crie uma nova chave gratuita em aistudio.google.com/app/apikey.";
+                } else {
+                    $friendlyMsg = "Erro 401 (Não autenticado): Chave inválida ou incorreta. Copie a chave completa gerada no Google AI Studio.";
+                }
+            } elseif ($httpCode === 403) {
+                $friendlyMsg = "Erro 403: Acesso negado. Certifique-se de que a API Generative Language está habilitada no projeto.";
+            }
+
+            echo json_encode([
+                'success' => false,
+                'valid' => false,
+                'http_code' => $httpCode,
+                'error' => $friendlyMsg,
+                'raw_details' => $respData['error'] ?? null
+            ]);
+        }
+        break;
+
     default:
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Ação inválida.']);

@@ -227,6 +227,19 @@
     btnSubmitChangePwd: document.getElementById('btn-submit-change-pwd'),
     changePwdFeedback: document.getElementById('change-pwd-feedback'),
 
+    // Chave da API Google Gemini (Admin)
+    btnToggleGeminiKey: document.getElementById('btn-toggle-gemini-key'),
+    adminGeminiKeyFields: document.getElementById('admin-gemini-key-fields'),
+    geminiKeyCurrentStatus: document.getElementById('gemini-key-current-status'),
+    adminGeminiKeyInput: document.getElementById('admin-gemini-key-input'),
+    btnToggleShowGeminiKey: document.getElementById('btn-toggle-show-gemini-key'),
+    geminiKeyFeedback: document.getElementById('gemini-key-feedback'),
+    btnTestGeminiKey: document.getElementById('btn-test-gemini-key'),
+    btnSaveGeminiKey: document.getElementById('btn-save-gemini-key'),
+    ocrGeminiAlert: document.getElementById('ocr-gemini-alert'),
+    msfGeminiAlert: document.getElementById('msf-gemini-alert'),
+    msfGeminiAlertMsg: document.getElementById('msf-gemini-alert-msg'),
+
     // Conversor de arquivos .MSF (MobileSheets)
     btnOpenMsf: document.getElementById('btn-open-msf'),
     msfModal: document.getElementById('msf-modal'),
@@ -1409,6 +1422,7 @@
 
     dom.btnOpenOcr.addEventListener('click', () => {
       dom.ocrModal.classList.add('open');
+      if (dom.ocrGeminiAlert) dom.ocrGeminiAlert.style.display = 'none';
     });
 
     dom.btnCloseOcr.addEventListener('click', () => {
@@ -1604,6 +1618,15 @@
       dom.ocrStatusText.textContent = `Erro: ${err.message}`;
       dom.btnSubmitOcr.disabled = false;
       dom.btnCancelOcr.disabled = false;
+
+      if (dom.ocrGeminiAlert) {
+        const msgStr = (err.message || '').toLowerCase();
+        if (msgStr.includes('401') || msgStr.includes('unauthenticated') || msgStr.includes('gemini') || msgStr.includes('desativada') || msgStr.includes('chave') || msgStr.includes('403')) {
+          dom.ocrGeminiAlert.style.display = 'block';
+        } else {
+          dom.ocrGeminiAlert.style.display = 'none';
+        }
+      }
     }
   }
 
@@ -1876,6 +1899,28 @@
     updateUserUI();
   }
 
+  async function loadGeminiKeyStatus() {
+    if (!dom.geminiKeyCurrentStatus) return;
+    try {
+      const userEmail = state.currentUser ? state.currentUser.email : '';
+      const res = await fetch(`api/auth.php?action=get_gemini_config&v=${Date.now()}`, {
+        headers: { 'X-User-Email': userEmail }
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        if (data.has_key && data.masked_key) {
+          dom.geminiKeyCurrentStatus.textContent = `Chave: ${data.masked_key}`;
+          dom.geminiKeyCurrentStatus.style.color = '#06d6a0';
+        } else {
+          dom.geminiKeyCurrentStatus.textContent = 'Não configurada';
+          dom.geminiKeyCurrentStatus.style.color = '#ef4444';
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar status da chave Gemini:', e);
+    }
+  }
+
   function updateUserUI() {
     if (!state.currentUser) return;
     const u = state.currentUser;
@@ -1911,6 +1956,11 @@
       dom.adminLoggedBox.style.display = isAdmin ? 'block' : 'none';
       if (dom.adminChangePwdFields) dom.adminChangePwdFields.style.display = 'none';
       if (dom.changePwdFeedback) dom.changePwdFeedback.textContent = '';
+      if (dom.adminGeminiKeyFields) dom.adminGeminiKeyFields.style.display = 'none';
+      if (dom.geminiKeyFeedback) dom.geminiKeyFeedback.textContent = '';
+      if (isAdmin && typeof loadGeminiKeyStatus === 'function') {
+        loadGeminiKeyStatus();
+      }
     }
   }
 
@@ -2317,6 +2367,181 @@
         }
       });
     }
+
+    // Toggle dos campos da Chave Gemini
+    if (dom.btnToggleGeminiKey && dom.adminGeminiKeyFields) {
+      dom.btnToggleGeminiKey.addEventListener('click', () => {
+        const isVisible = dom.adminGeminiKeyFields.style.display !== 'none';
+        dom.adminGeminiKeyFields.style.display = isVisible ? 'none' : 'block';
+        if (!isVisible) {
+          loadGeminiKeyStatus();
+          if (dom.adminGeminiKeyInput) dom.adminGeminiKeyInput.focus();
+        }
+        if (dom.geminiKeyFeedback) dom.geminiKeyFeedback.textContent = '';
+      });
+    }
+
+    // Toggle Mostrar/Ocultar texto da chave
+    if (dom.btnToggleShowGeminiKey && dom.adminGeminiKeyInput) {
+      dom.btnToggleShowGeminiKey.addEventListener('click', () => {
+        const isPassword = dom.adminGeminiKeyInput.type === 'password';
+        dom.adminGeminiKeyInput.type = isPassword ? 'text' : 'password';
+        dom.btnToggleShowGeminiKey.textContent = isPassword ? '🙈' : '👁️';
+      });
+    }
+
+    // Testar Chave Gemini
+    if (dom.btnTestGeminiKey) {
+      dom.btnTestGeminiKey.addEventListener('click', async () => {
+        const testKey = (dom.adminGeminiKeyInput ? dom.adminGeminiKeyInput.value : '').trim();
+        const userEmail = state.currentUser ? state.currentUser.email : '';
+
+        try {
+          dom.btnTestGeminiKey.disabled = true;
+          dom.btnTestGeminiKey.textContent = 'Testando...';
+          if (dom.geminiKeyFeedback) {
+            dom.geminiKeyFeedback.style.color = 'var(--text-muted)';
+            dom.geminiKeyFeedback.textContent = 'Conectando à Google AI...';
+          }
+
+          const res = await fetch('api/auth.php', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-User-Email': userEmail
+            },
+            body: JSON.stringify({
+              action: 'test_gemini_key',
+              gemini_api_key: testKey
+            })
+          });
+
+          const data = await res.json();
+          if (data && data.valid) {
+            if (dom.geminiKeyFeedback) {
+              dom.geminiKeyFeedback.style.color = '#06d6a0';
+              dom.geminiKeyFeedback.textContent = data.message || '✓ Conexão bem-sucedida!';
+            }
+            alert(data.message || '✓ Chave válida e conectada com sucesso ao Google Gemini!');
+          } else {
+            const errMsg = data ? (data.error || 'Chave inválida') : 'Falha no teste';
+            if (dom.geminiKeyFeedback) {
+              dom.geminiKeyFeedback.style.color = '#ef4444';
+              dom.geminiKeyFeedback.textContent = errMsg;
+            }
+            alert(`Falha no teste da chave:\n${errMsg}`);
+          }
+        } catch (err) {
+          console.error('Erro ao testar chave:', err);
+          if (dom.geminiKeyFeedback) {
+            dom.geminiKeyFeedback.style.color = '#ef4444';
+            dom.geminiKeyFeedback.textContent = 'Erro de rede ao testar chave.';
+          }
+        } finally {
+          dom.btnTestGeminiKey.disabled = false;
+          dom.btnTestGeminiKey.textContent = '🔍 Testar Conexão';
+        }
+      });
+    }
+
+    // Salvar Chave Gemini
+    if (dom.btnSaveGeminiKey) {
+      dom.btnSaveGeminiKey.addEventListener('click', async () => {
+        const newKey = (dom.adminGeminiKeyInput ? dom.adminGeminiKeyInput.value : '').trim();
+        if (!newKey) {
+          if (dom.geminiKeyFeedback) {
+            dom.geminiKeyFeedback.style.color = '#ef4444';
+            dom.geminiKeyFeedback.textContent = 'Cole ou digite a chave de API.';
+          }
+          alert('Por favor, cole a sua chave de API do Google Gemini antes de salvar.');
+          return;
+        }
+
+        const userEmail = state.currentUser ? state.currentUser.email : '';
+        try {
+          dom.btnSaveGeminiKey.disabled = true;
+          dom.btnSaveGeminiKey.textContent = 'Salvando...';
+          if (dom.geminiKeyFeedback) {
+            dom.geminiKeyFeedback.style.color = 'var(--text-muted)';
+            dom.geminiKeyFeedback.textContent = 'Gravando no servidor...';
+          }
+
+          const res = await fetch('api/auth.php', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-User-Email': userEmail
+            },
+            body: JSON.stringify({
+              action: 'save_gemini_key',
+              gemini_api_key: newKey
+            })
+          });
+
+          const data = await res.json();
+          if (!data || !data.success) {
+            const err = data ? data.error : 'Erro ao salvar chave.';
+            if (dom.geminiKeyFeedback) {
+              dom.geminiKeyFeedback.style.color = '#ef4444';
+              dom.geminiKeyFeedback.textContent = err;
+            }
+            alert(`Erro: ${err}`);
+            return;
+          }
+
+          if (dom.geminiKeyFeedback) {
+            dom.geminiKeyFeedback.style.color = '#06d6a0';
+            dom.geminiKeyFeedback.textContent = '✓ ' + (data.message || 'Chave salva com sucesso!');
+          }
+
+          if (dom.geminiKeyCurrentStatus) {
+            dom.geminiKeyCurrentStatus.textContent = `Chave: ${data.masked_key || 'OK'}`;
+            dom.geminiKeyCurrentStatus.style.color = '#06d6a0';
+          }
+
+          if (dom.adminGeminiKeyInput) dom.adminGeminiKeyInput.value = '';
+
+          // Oculta alertas de erro nas outras modais
+          if (dom.msfGeminiAlert) dom.msfGeminiAlert.style.display = 'none';
+          if (dom.ocrGeminiAlert) dom.ocrGeminiAlert.style.display = 'none';
+
+          setHudMessage('Chave Google Gemini configurada com sucesso!', 'ready');
+          alert('Chave do Google Gemini salva com sucesso!\nAgora você já pode converter partituras (.msf, PDFs e fotos).');
+        } catch (err) {
+          console.error('Erro ao salvar chave Gemini:', err);
+          if (dom.geminiKeyFeedback) {
+            dom.geminiKeyFeedback.style.color = '#ef4444';
+            dom.geminiKeyFeedback.textContent = 'Erro de conexão ao salvar chave.';
+          }
+        } finally {
+          dom.btnSaveGeminiKey.disabled = false;
+          dom.btnSaveGeminiKey.textContent = '💾 Salvar Chave';
+        }
+      });
+    }
+
+    // Botões de atalho dos alertas de erro no OCR e MSF
+    document.querySelectorAll('.btn-open-gemini-admin').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (dom.ocrModal) dom.ocrModal.classList.remove('open');
+        if (dom.msfModal) dom.msfModal.classList.remove('open');
+        if (dom.userModal) dom.userModal.classList.add('open');
+
+        const isAdmin = state.currentUser && state.currentUser.isAdmin;
+        if (isAdmin && dom.adminGeminiKeyFields) {
+          dom.adminGeminiKeyFields.style.display = 'block';
+          loadGeminiKeyStatus();
+          setTimeout(() => {
+            if (dom.adminGeminiKeyInput) dom.adminGeminiKeyInput.focus();
+          }, 200);
+        } else if (dom.adminLoginFields) {
+          dom.adminLoginFields.style.display = 'block';
+          setTimeout(() => {
+            if (dom.adminPasswordInput) dom.adminPasswordInput.focus();
+          }, 200);
+        }
+      });
+    });
   }
 
   // ==========================================
@@ -2399,6 +2624,7 @@
 
     state.msfSelectedFile = file;
     if (dom.msfModal) dom.msfModal.classList.add('open');
+    if (dom.msfGeminiAlert) dom.msfGeminiAlert.style.display = 'none';
 
     if (dom.msfSelectedFileInfo && dom.msfSelectedFilename) {
       dom.msfSelectedFileInfo.style.display = 'block';
@@ -2425,6 +2651,7 @@
     const isPdf = file.name.toLowerCase().endsWith('.pdf');
     const title = (dom.msfTitleInput ? dom.msfTitleInput.value.trim() : '') || file.name.replace(/\.[^/.]+$/, '');
 
+    if (dom.msfGeminiAlert) dom.msfGeminiAlert.style.display = 'none';
     dom.msfStatus.style.display = 'flex';
     dom.msfStatusText.textContent = `Enviando "${file.name}" para o conversor de partituras...`;
     dom.btnSubmitMsf.disabled = true;
@@ -2530,6 +2757,18 @@
       dom.msfStatusText.textContent = `Erro: ${err.message}`;
       dom.btnSubmitMsf.disabled = false;
       if (dom.btnCancelMsf) dom.btnCancelMsf.disabled = false;
+
+      if (dom.msfGeminiAlert) {
+        const msgStr = (err.message || '').toLowerCase();
+        if (msgStr.includes('401') || msgStr.includes('unauthenticated') || msgStr.includes('gemini') || msgStr.includes('desativada') || msgStr.includes('chave') || msgStr.includes('403')) {
+          dom.msfGeminiAlert.style.display = 'block';
+          if (dom.msfGeminiAlertMsg) {
+            dom.msfGeminiAlertMsg.textContent = err.message;
+          }
+        } else {
+          dom.msfGeminiAlert.style.display = 'none';
+        }
+      }
     }
   }
 
