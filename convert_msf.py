@@ -522,6 +522,11 @@ def convert_pdf_multipage(pdf_path, output_xml_path, title, job_file=None, user_
             
             extracted = extract_measures(raw_xml)
             print(f"[✓] Página {p_num}: {len(extracted)} compassos extraídos.")
+            if p_num > 1 and extracted:
+                first_m_num, first_m_content = extracted[0]
+                if 'new-page' not in first_m_content:
+                    first_m_content = re.sub(r'(<measure\s+number=[\"\']\d+[\"\'][^>]*>)', r'\1\n      <print new-page="yes"/>', first_m_content, count=1)
+                    extracted[0] = (first_m_num, first_m_content)
             for m_num, m_content in extracted:
                 all_measures.append((m_num, m_content))
                 
