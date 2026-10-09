@@ -88,16 +88,21 @@ if (!is_array($body)) {
 
 $action = $_GET['action'] ?? ($body['action'] ?? 'get_current');
 
+function isCurrentSessionAdmin($adminEmail) {
+    $sessionEmail = strtolower(trim($_SESSION['sinos_user_email'] ?? ''));
+    return (!empty($_SESSION['sinos_is_admin']) && $sessionEmail === strtolower($adminEmail));
+}
+
 // Função auxiliar para sanitizar usuário para retorno público (sem hash de senha)
-function sanitizeUser($u, $adminEmail) {
+function sanitizeUser($u, $adminEmail, $isAdminAuthenticated = false) {
     $email = strtolower(trim($u['email'] ?? ''));
-    $isAdmin = ($email === strtolower($adminEmail));
+    $isDeclaredAdmin = ($email === strtolower($adminEmail));
     return [
         'id' => $u['id'] ?? ('u_' . md5($email)),
         'name' => $u['name'] ?? 'Sineiro',
         'email' => $email,
-        'role' => $isAdmin ? 'admin' : ($u['role'] ?? 'sineiro'),
-        'isAdmin' => $isAdmin,
+        'role' => $isDeclaredAdmin ? 'admin' : ($u['role'] ?? 'sineiro'),
+        'isAdmin' => ($isDeclaredAdmin && $isAdminAuthenticated),
         'avatar_color' => $u['avatar_color'] ?? '#00f5d4'
     ];
 }
@@ -105,39 +110,55 @@ function sanitizeUser($u, $adminEmail) {
 switch ($action) {
     // Retorna o usuário logado atualmente na sessão ou pelo header X-User-Email
     case 'get_current':
-        $currentEmail = $_SESSION['sinos_user_email'] ?? '';
-        $headerEmail = $_SERVER['HTTP_X_USER_EMAIL'] ?? '';
-        if (!$currentEmail && $headerEmail) {
-            $currentEmail = strtolower(trim($headerEmail));
-        }
+        $sessionEmail = strtolower(trim($_SESSION['sinos_user_email'] ?? ''));
+        $headerEmail = strtolower(trim($_SERVER['HTTP_X_USER_EMAIL'] ?? ''));
+        $isAdminAuth = isCurrentSessionAdmin($adminEmail);
 
-        if ($currentEmail && isset($users[$currentEmail])) {
+        // Se há sessão PHP ativa:
+        if ($sessionEmail && isset($users[$sessionEmail])) {
             echo json_encode([
                 'success' => true,
                 'logged_in' => true,
-                'user' => sanitizeUser($users[$currentEmail], $adminEmail)
+                'user' => sanitizeUser($users[$sessionEmail], $adminEmail, $isAdminAuth)
             ]);
-        } else {
-            // Se nenhum usuário logado, retorna o primeiro usuário ou admin como sugestão
-            $first = reset($users);
+            exit;
+        }
+
+        // Se o cliente enviou e-mail de um sineiro comum (restauração de perfil local):
+        // NUNCA aceita admin apenas por header sem autenticação de sessão!
+        if ($headerEmail && isset($users[$headerEmail]) && $headerEmail !== strtolower($adminEmail)) {
+            $_SESSION['sinos_user_email'] = $headerEmail;
+            $_SESSION['sinos_is_admin'] = false;
             echo json_encode([
                 'success' => true,
-                'logged_in' => false,
-                'suggested_user' => $first ? sanitizeUser($first, $adminEmail) : null
+                'logged_in' => true,
+                'user' => sanitizeUser($users[$headerEmail], $adminEmail, false)
             ]);
+            exit;
         }
+
+        // Caso padrão: Nenhum usuário autenticado (Visitante / Convidado)
+        echo json_encode([
+            'success' => true,
+            'logged_in' => false,
+            'user' => null
+        ]);
         break;
 
     // Lista todos os sineiros cadastrados (para troca rápida de perfil no ensaio)
     case 'list_ringers':
+        $isAdminAuth = isCurrentSessionAdmin($adminEmail);
         $list = [];
         foreach ($users as $u) {
-            $list[] = sanitizeUser($u, $adminEmail);
+            $isThisAdmin = (strtolower($u['email'] ?? '') === strtolower($adminEmail));
+            $list[] = sanitizeUser($u, $adminEmail, $isThisAdmin ? $isAdminAuth : false);
         }
         // Ordena: Admin primeiro, depois alfabético por nome
         usort($list, function($a, $b) {
-            if ($a['isAdmin'] && !$b['isAdmin']) return -1;
-            if (!$a['isAdmin'] && $b['isAdmin']) return 1;
+            $aIsAdmin = ($a['role'] === 'admin');
+            $bIsAdmin = ($b['role'] === 'admin');
+            if ($aIsAdmin && !$bIsAdmin) return -1;
+            if (!$aIsAdmin && $bIsAdmin) return 1;
             return strcasecmp($a['name'], $b['name']);
         });
 
@@ -165,10 +186,28 @@ switch ($action) {
         }
 
         $user = $users[$email];
-        // Se o usuário tem senha configurada, valida
+        $isAdmin = ($email === strtolower($adminEmail));
+
+        // Se for o admin, a validação de senha é estrita
+        if ($isAdmin) {
+            if (empty($password) || empty($user['password_hash']) || !password_verify($password, $user['password_hash'])) {
+                http_response_code(401);
+                echo json_encode(['success' => false, 'error' => 'Senha de Administrador incorreta.']);
+                exit;
+            }
+            $_SESSION['sinos_user_email'] = $email;
+            $_SESSION['sinos_is_admin'] = true;
+            echo json_encode([
+                'success' => true,
+                'message' => 'Login de Administrador realizado com sucesso!',
+                'user' => sanitizeUser($user, $adminEmail, true)
+            ]);
+            exit;
+        }
+
+        // Se o sineiro comum tem senha configurada, valida
         if (!empty($user['password_hash'])) {
             if (empty($password) || !password_verify($password, $user['password_hash'])) {
-                // Se for a primeira vez do admin e a senha enviada for aceita, ou se senha estiver errada
                 http_response_code(401);
                 echo json_encode(['success' => false, 'error' => 'Senha incorreta para este sineiro.']);
                 exit;
@@ -176,21 +215,19 @@ switch ($action) {
         }
 
         $_SESSION['sinos_user_email'] = $email;
+        $_SESSION['sinos_is_admin'] = false;
         echo json_encode([
             'success' => true,
             'message' => 'Login realizado com sucesso!',
-            'user' => sanitizeUser($user, $adminEmail)
+            'user' => sanitizeUser($user, $adminEmail, false)
         ]);
         break;
 
     // Alterar senha (exclusivo para o usuário autenticado / admin)
     case 'change_password':
-        $requesterEmail = $_SESSION['sinos_user_email'] ?? ($_SERVER['HTTP_X_USER_EMAIL'] ?? ($body['admin_email'] ?? ($body['email'] ?? '')));
-        $requesterEmail = strtolower(trim($requesterEmail));
-
-        if (empty($requesterEmail) || !isset($users[$requesterEmail])) {
+        if (!isCurrentSessionAdmin($adminEmail)) {
             http_response_code(401);
-            echo json_encode(['success' => false, 'error' => 'Sessão não autenticada. Faça login como administrador primeiro.']);
+            echo json_encode(['success' => false, 'error' => 'Sessão não autenticada como administrador. Faça login primeiro.']);
             exit;
         }
 
@@ -209,7 +246,7 @@ switch ($action) {
             exit;
         }
 
-        $user = $users[$requesterEmail];
+        $user = $users[$adminEmail];
         // Valida se a senha atual confere
         if (!empty($user['password_hash']) && !password_verify($currentPassword, $user['password_hash'])) {
             http_response_code(401);
@@ -218,7 +255,7 @@ switch ($action) {
         }
 
         // Grava o novo hash de senha
-        $users[$requesterEmail]['password_hash'] = password_hash($newPassword, PASSWORD_DEFAULT);
+        $users[$adminEmail]['password_hash'] = password_hash($newPassword, PASSWORD_DEFAULT);
         saveUsers($usersFile, $users);
 
         echo json_encode([
@@ -269,10 +306,11 @@ switch ($action) {
         saveUsers($usersFile, $users);
 
         $_SESSION['sinos_user_email'] = $email;
+        $_SESSION['sinos_is_admin'] = false;
         echo json_encode([
             'success' => true,
             'message' => 'Sineiro cadastrado com sucesso!',
-            'user' => sanitizeUser($newUser, $adminEmail)
+            'user' => sanitizeUser($newUser, $adminEmail, false)
         ]);
         break;
 
@@ -285,32 +323,56 @@ switch ($action) {
             exit;
         }
 
+        // Se o usuário clicou em Flávio (Admin), exige login com senha caso não autenticado
+        if ($email === strtolower($adminEmail)) {
+            if (isCurrentSessionAdmin($adminEmail)) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Perfil do Administrador ativo.',
+                    'user' => sanitizeUser($users[$email], $adminEmail, true)
+                ]);
+                exit;
+            } else {
+                http_response_code(401);
+                echo json_encode([
+                    'success' => false,
+                    'require_password' => true,
+                    'error' => 'O perfil de Administrador exige senha. Por favor, entre com a senha do Admin abaixo.'
+                ]);
+                exit;
+            }
+        }
+
+        // Para sineiros comuns, a troca é instantânea
         $_SESSION['sinos_user_email'] = $email;
+        $_SESSION['sinos_is_admin'] = false;
         echo json_encode([
             'success' => true,
             'message' => 'Perfil alterado para ' . $users[$email]['name'],
-            'user' => sanitizeUser($users[$email], $adminEmail)
+            'user' => sanitizeUser($users[$email], $adminEmail, false)
         ]);
         break;
 
     // Logout
     case 'logout':
+        $_SESSION['sinos_user_email'] = null;
+        $_SESSION['sinos_is_admin'] = false;
         unset($_SESSION['sinos_user_email']);
-        echo json_encode(['success' => true, 'message' => 'Sessão encerrada.']);
+        unset($_SESSION['sinos_is_admin']);
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_destroy();
+        }
+        echo json_encode(['success' => true, 'message' => 'Sessão encerrada com sucesso.']);
         break;
 
-    // Excluir perfil de sineiro (EXCLUSIVO PARA O ADMINISTRADOR flavioflavia@gmail.com)
+    // Excluir perfil de sineiro (EXCLUSIVO PARA O ADMINISTRADOR flavioflavia@gmail.com COM SENHA)
     case 'delete_ringer':
     case 'delete_user':
-        // Identifica e-mail de quem solicita a exclusão
-        $requesterEmail = $_SESSION['sinos_user_email'] ?? ($_SERVER['HTTP_X_USER_EMAIL'] ?? ($body['admin_email'] ?? ($body['requester_email'] ?? '')));
-        $requesterEmail = strtolower(trim($requesterEmail));
-
-        if ($requesterEmail !== strtolower($adminEmail)) {
+        if (!isCurrentSessionAdmin($adminEmail)) {
             http_response_code(403);
             echo json_encode([
                 'success' => false,
-                'error' => 'Acesso negado. Apenas o administrador (' . $adminEmail . ') tem permissão para remover sineiros.'
+                'error' => 'Acesso negado. Apenas o administrador autenticado com senha tem permissão para remover sineiros.'
             ]);
             exit;
         }
@@ -356,11 +418,6 @@ switch ($action) {
             }
         }
 
-        // Se o usuário excluído era o que estava na sessão, retorna a sessão para o admin
-        if (isset($_SESSION['sinos_user_email']) && strtolower($_SESSION['sinos_user_email']) === $targetEmail) {
-            $_SESSION['sinos_user_email'] = $adminEmail;
-        }
-
         echo json_encode([
             'success' => true,
             'message' => 'Perfil do sineiro "' . $removedName . '" foi removido com sucesso pelo administrador.',
@@ -370,8 +427,7 @@ switch ($action) {
 
     // Obter status da chave de API do Gemini (.env)
     case 'get_gemini_config':
-        $requesterEmail = $_SESSION['sinos_user_email'] ?? ($_SERVER['HTTP_X_USER_EMAIL'] ?? ($body['admin_email'] ?? ''));
-        $isAdmin = (strtolower(trim($requesterEmail)) === strtolower($adminEmail));
+        $isAdmin = isCurrentSessionAdmin($adminEmail);
 
         $envFile = '/var/www/html/sinos/.env';
         $currentKey = '';
@@ -406,10 +462,9 @@ switch ($action) {
 
     // Salvar nova chave de API do Gemini (.env)
     case 'save_gemini_key':
-        $requesterEmail = $_SESSION['sinos_user_email'] ?? ($_SERVER['HTTP_X_USER_EMAIL'] ?? ($body['admin_email'] ?? ''));
-        if (strtolower(trim($requesterEmail)) !== strtolower($adminEmail)) {
+        if (!isCurrentSessionAdmin($adminEmail)) {
             http_response_code(403);
-            echo json_encode(['success' => false, 'error' => 'Apenas o administrador (' . $adminEmail . ') pode configurar a chave da API.']);
+            echo json_encode(['success' => false, 'error' => 'Apenas o administrador autenticado pode configurar a chave da API.']);
             exit;
         }
 
@@ -445,10 +500,9 @@ switch ($action) {
 
     // Testar chave de API do Gemini fazendo chamada ao Google
     case 'test_gemini_key':
-        $requesterEmail = $_SESSION['sinos_user_email'] ?? ($_SERVER['HTTP_X_USER_EMAIL'] ?? ($body['admin_email'] ?? ''));
-        if (strtolower(trim($requesterEmail)) !== strtolower($adminEmail)) {
+        if (!isCurrentSessionAdmin($adminEmail)) {
             http_response_code(403);
-            echo json_encode(['success' => false, 'error' => 'Apenas o administrador pode testar a chave.']);
+            echo json_encode(['success' => false, 'error' => 'Apenas o administrador autenticado pode testar a chave.']);
             exit;
         }
 

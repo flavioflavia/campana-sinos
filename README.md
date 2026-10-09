@@ -89,10 +89,14 @@ O aplicativo carrega partituras em MusicXML, MobileSheets (`.msf`) e PDF, render
 - Motor de conversão com reparação estrutural automática de MusicXML (cura compassos sem pausas, acordes malformados e inconsistências de vozes polifônicas).
 
 ### 👤 12. Gestão Multi-usuário & Segurança do Administrador
-- Cada integrante possui seu perfil com avatar e preferências salvas por partitura.
-- **Painel do Administrador** (`flavioflavia@gmail.com`):
-  - Permissão exclusiva para exclusão de partituras e remoção de sineiros.
-  - Alteração de senha administrativa protegida.
+- Novos acessos iniciam em modo **Visitante** sem auto-login de administrador.
+- **Cadastro Simples de Sineiros**: Qualquer integrante pode registrar seu nome e e-mail para salvar notas personalizadas por partitura.
+- **Troca Rápida de Perfil & Deslogar**: Botão de alternância e botão **Deslogar / Sair** integrados ao perfil.
+- **Inclusão Livre de Músicas**: Qualquer integrante ou visitante pode enviar/converter novas partituras para o acervo.
+- **Privilégios Estritos do Administrador** (`flavioflavia@gmail.com`):
+  - Exige autenticação por senha para ativar o modo Admin.
+  - Permissão exclusiva para excluir partituras e remover perfis de sineiros.
+  - Alteração de senha administrativa protegida e configuração segura da chave IA Gemini.
   - Exclusão segura com confirmação e limpeza de escalas associadas.
 
 ### 📌 13. Barra de Controles Sticky (Sempre Visível)

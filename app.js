@@ -188,6 +188,7 @@
     btnHelp: document.getElementById('btn-help'),
     helpModal: document.getElementById('help-modal'),
     btnCloseHelp: document.getElementById('btn-close-help'),
+    btnCloseHelpIcon: document.getElementById('btn-close-help-icon'),
     btnOpenOcr: document.getElementById('btn-open-ocr'),
     btnDeleteScore: document.getElementById('btn-delete-score'),
     ocrModal: document.getElementById('ocr-modal'),
@@ -210,6 +211,13 @@
     userModal: document.getElementById('user-modal'),
     btnCloseUserModal: document.getElementById('btn-close-user-modal'),
     btnCloseUserModalAction: document.getElementById('btn-close-user-modal-action'),
+    currentUserBanner: document.getElementById('current-user-banner'),
+    userModalAvatar: document.getElementById('user-modal-avatar'),
+    userModalCurrentName: document.getElementById('user-modal-current-name'),
+    userModalCurrentBadge: document.getElementById('user-modal-current-badge'),
+    userModalCurrentEmail: document.getElementById('user-modal-current-email'),
+    btnLogoutBanner: document.getElementById('btn-logout-banner'),
+    btnLogoutUser: document.getElementById('btn-logout-user'),
     ringersChipsGrid: document.getElementById('ringers-chips-grid'),
     newUserName: document.getElementById('new-user-name'),
     newUserEmail: document.getElementById('new-user-email'),
@@ -1275,6 +1283,9 @@
     // Modal de Ajuda
     dom.btnHelp.addEventListener('click', () => dom.helpModal.classList.add('open'));
     dom.btnCloseHelp.addEventListener('click', () => dom.helpModal.classList.remove('open'));
+    if (dom.btnCloseHelpIcon) {
+      dom.btnCloseHelpIcon.addEventListener('click', () => dom.helpModal.classList.remove('open'));
+    }
     dom.helpModal.addEventListener('click', (e) => {
       if (e.target === dom.helpModal) dom.helpModal.classList.remove('open');
     });
@@ -1873,29 +1884,30 @@
         }
       });
       const data = await res.json();
-      if (data && data.success) {
-        if (data.user) {
-          state.currentUser = data.user;
-        } else if (data.suggested_user) {
-          state.currentUser = data.suggested_user;
-        }
+      if (data && data.success && data.logged_in && data.user) {
+        state.currentUser = data.user;
+      } else {
+        state.currentUser = null;
       }
     } catch (err) {
       console.warn('Erro ao obter usuário atual:', err);
+      state.currentUser = null;
     }
 
     if (!state.currentUser) {
       state.currentUser = {
-        id: 'u_admin',
-        name: 'Flávio (Admin)',
-        email: 'flavioflavia@gmail.com',
-        role: 'admin',
-        isAdmin: true,
-        avatar_color: '#ffd700'
+        id: 'u_guest',
+        name: 'Visitante',
+        email: '',
+        role: 'sineiro',
+        isAdmin: false,
+        avatar_color: '#64748b'
       };
+      localStorage.removeItem('sinos_current_user_email');
+    } else {
+      localStorage.setItem('sinos_current_user_email', state.currentUser.email);
     }
 
-    localStorage.setItem('sinos_current_user_email', state.currentUser.email);
     updateUserUI();
   }
 
@@ -1922,35 +1934,89 @@
   }
 
   function updateUserUI() {
-    if (!state.currentUser) return;
-    const u = state.currentUser;
+    const u = state.currentUser || {
+      id: 'u_guest',
+      name: 'Visitante',
+      email: '',
+      role: 'sineiro',
+      isAdmin: false,
+      avatar_color: '#64748b'
+    };
 
+    const isLogged = !!u.email;
+    const isAdmin = !!u.isAdmin;
+
+    // Cabeçalho da aplicação
     if (dom.userAvatarBadge) {
-      dom.userAvatarBadge.textContent = (u.name || 'S').charAt(0).toUpperCase();
-      if (u.avatar_color) {
-        dom.userAvatarBadge.style.backgroundColor = u.avatar_color;
-      }
+      dom.userAvatarBadge.textContent = isLogged ? (u.name || 'S').charAt(0).toUpperCase() : '👤';
+      dom.userAvatarBadge.style.backgroundColor = isLogged ? (u.avatar_color || '#ffd700') : '#64748b';
     }
 
     if (dom.userNameLabel) {
-      dom.userNameLabel.textContent = u.name;
+      dom.userNameLabel.textContent = isLogged ? u.name : 'Visitante';
     }
 
     if (dom.userRoleTag) {
-      dom.userRoleTag.textContent = u.isAdmin ? 'Admin' : 'Sineiro';
-      dom.userRoleTag.classList.toggle('badge-admin', !!u.isAdmin);
+      if (!isLogged) {
+        dom.userRoleTag.textContent = 'Convidado';
+        dom.userRoleTag.classList.remove('badge-admin');
+      } else if (isAdmin) {
+        dom.userRoleTag.textContent = 'Admin';
+        dom.userRoleTag.classList.add('badge-admin');
+      } else {
+        dom.userRoleTag.textContent = 'Sineiro';
+        dom.userRoleTag.classList.remove('badge-admin');
+      }
     }
 
-    // Regra estrita: O botão de exclusão só é visível para o Admin
+    // Banner da Modal de Usuário
+    if (dom.userModalAvatar) {
+      dom.userModalAvatar.textContent = isLogged ? (u.name || 'S').charAt(0).toUpperCase() : '👤';
+      dom.userModalAvatar.style.backgroundColor = isLogged ? (u.avatar_color || '#ffd700') : '#64748b';
+    }
+    if (dom.userModalCurrentName) {
+      dom.userModalCurrentName.textContent = isLogged ? u.name : 'Visitante';
+    }
+    if (dom.userModalCurrentBadge) {
+      if (!isLogged) {
+        dom.userModalCurrentBadge.textContent = 'Não conectado';
+        dom.userModalCurrentBadge.style.background = 'rgba(255,255,255,0.1)';
+        dom.userModalCurrentBadge.style.color = 'var(--text-muted)';
+      } else if (isAdmin) {
+        dom.userModalCurrentBadge.textContent = 'Administrador';
+        dom.userModalCurrentBadge.style.background = 'rgba(255,215,0,0.2)';
+        dom.userModalCurrentBadge.style.color = '#ffd700';
+      } else {
+        dom.userModalCurrentBadge.textContent = 'Sineiro';
+        dom.userModalCurrentBadge.style.background = 'rgba(0,245,212,0.15)';
+        dom.userModalCurrentBadge.style.color = 'var(--bell-cyan)';
+      }
+    }
+    if (dom.userModalCurrentEmail) {
+      dom.userModalCurrentEmail.textContent = isLogged
+        ? u.email
+        : 'Selecione seu nome abaixo ou crie seu perfil para salvar suas notas.';
+    }
+
+    // Botões de Logout (banner e rodapé)
+    if (dom.btnLogoutBanner) {
+      dom.btnLogoutBanner.style.display = isLogged ? 'inline-flex' : 'none';
+    }
+    if (dom.btnLogoutUser) {
+      dom.btnLogoutUser.style.display = isLogged ? 'inline-flex' : 'none';
+    }
+
+    // Regra estrita: O botão de exclusão de partituras só é visível para o Admin autenticado
     if (dom.btnDeleteScore) {
-      dom.btnDeleteScore.style.display = u.isAdmin ? 'inline-flex' : 'none';
+      dom.btnDeleteScore.style.display = isAdmin ? 'inline-flex' : 'none';
     }
 
     if (dom.assignedSectionHeading) {
-      dom.assignedSectionHeading.textContent = `Notas de ${u.name} nesta Música`;
+      dom.assignedSectionHeading.textContent = isLogged
+        ? `Notas de ${u.name} nesta Música`
+        : 'Suas Notas nesta Música';
     }
 
-    const isAdmin = !!u.isAdmin || (u.email && u.email.toLowerCase() === 'flavioflavia@gmail.com');
     if (dom.adminNotLoggedBox && dom.adminLoggedBox) {
       dom.adminNotLoggedBox.style.display = isAdmin ? 'none' : 'block';
       dom.adminLoggedBox.style.display = isAdmin ? 'block' : 'none';
@@ -1961,6 +2027,31 @@
       if (isAdmin && typeof loadGeminiKeyStatus === 'function') {
         loadGeminiKeyStatus();
       }
+    }
+  }
+
+  async function logoutUser() {
+    try {
+      await fetch('api/auth.php?action=logout&v=' + Date.now());
+    } catch (err) {
+      console.warn('Erro ao deslogar:', err);
+    }
+    localStorage.removeItem('sinos_current_user_email');
+    state.currentUser = {
+      id: 'u_guest',
+      name: 'Visitante',
+      email: '',
+      role: 'sineiro',
+      isAdmin: false,
+      avatar_color: '#64748b'
+    };
+    updateUserUI();
+    await refreshRingersList();
+    if (dom.userModal) dom.userModal.classList.remove('open');
+    setHudMessage('Você deslogou com sucesso. Modo Visitante ativo.', 'ready');
+    const scoreId = getCurrentScoreId();
+    if (scoreId) {
+      await loadSongAssignments(scoreId);
     }
   }
 
@@ -1977,9 +2068,9 @@
       dom.ringersChipsGrid.innerHTML = '';
 
       data.ringers.forEach(ringer => {
-        const isCurrent = state.currentUser && (ringer.email.toLowerCase() === state.currentUser.email.toLowerCase());
-        const isAdminLogged = state.currentUser && (state.currentUser.isAdmin || state.currentUser.email.toLowerCase() === 'flavioflavia@gmail.com');
-        const canDelete = isAdminLogged && !ringer.isAdmin;
+        const isCurrent = state.currentUser && state.currentUser.email && (ringer.email.toLowerCase() === state.currentUser.email.toLowerCase());
+        const isAdminLogged = state.currentUser && !!state.currentUser.isAdmin;
+        const canDelete = isAdminLogged && !ringer.isAdmin && ringer.role !== 'admin';
 
         const chip = document.createElement('div');
         chip.className = `ringer-profile-card ${isCurrent ? 'active' : ''}`;
@@ -2003,7 +2094,7 @@
           <span style="font-size: 0.85rem; font-weight: ${isCurrent ? '700' : '500'}; color: ${isCurrent ? '#ffd700' : '#fff'};">
             ${ringer.name}
           </span>
-          ${ringer.isAdmin ? '<span style="font-size: 0.65rem; background: rgba(255,215,0,0.2); color: #ffd700; padding: 1px 5px; border-radius: 4px;">Admin</span>' : ''}
+          ${ringer.role === 'admin' ? '<span style="font-size: 0.65rem; background: rgba(255,215,0,0.2); color: #ffd700; padding: 1px 5px; border-radius: 4px;">Admin</span>' : ''}
           ${isCurrent ? '<span style="font-size: 0.75rem; color: #ffd700; font-weight: bold;">✓</span>' : ''}
           ${canDelete ? `<button class="btn-delete-ringer" data-email="${ringer.email}" title="Remover sineiro ${ringer.name}" style="background: none; border: none; color: #ff6b6b; cursor: pointer; padding: 2px 6px; font-size: 0.85rem; border-radius: 12px; margin-left: 4px; line-height: 1; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,107,107,0.25)'" onmouseout="this.style.background='none'">🗑️</button>` : ''}
         `;
@@ -2031,8 +2122,8 @@
   }
 
   async function deleteRinger(ringer) {
-    if (!state.currentUser || (!state.currentUser.isAdmin && state.currentUser.email.toLowerCase() !== 'flavioflavia@gmail.com')) {
-      alert('Apenas o Administrador pode remover sineiros.');
+    if (!state.currentUser || !state.currentUser.isAdmin) {
+      alert('Apenas o Administrador autenticado com senha pode remover sineiros.');
       return;
     }
 
@@ -2070,15 +2161,9 @@
 
       setHudMessage(data.message || `Perfil "${ringer.name}" removido com sucesso.`, 'ready');
 
-      // Se o usuário excluído era o que estava ativo, volta para o admin
-      if (state.currentUser && state.currentUser.email.toLowerCase() === ringer.email.toLowerCase()) {
-        const adminUser = state.allRingers.find(r => r.isAdmin || r.email.toLowerCase() === 'flavioflavia@gmail.com') || {
-          email: 'flavioflavia@gmail.com',
-          name: 'Flávio (Admin)',
-          isAdmin: true,
-          role: 'admin'
-        };
-        await switchRinger(adminUser);
+      // Se o usuário excluído era o que estava ativo, desloga e volta para Visitante
+      if (state.currentUser && state.currentUser.email && state.currentUser.email.toLowerCase() === ringer.email.toLowerCase()) {
+        await logoutUser();
       } else {
         await refreshRingersList();
       }
@@ -2100,13 +2185,25 @@
         })
       });
       const data = await res.json();
+      if (data && data.require_password) {
+        if (dom.adminLoginFields) {
+          dom.adminLoginFields.style.display = 'block';
+          if (dom.adminPasswordInput) {
+            dom.adminPasswordInput.focus();
+          }
+        }
+        alert(data.error || 'O perfil de Administrador exige senha. Digite a senha abaixo para acessar.');
+        return;
+      }
       if (data && data.success && data.user) {
         state.currentUser = data.user;
       } else {
-        state.currentUser = ringer;
+        alert(data ? data.error : 'Erro ao alternar sineiro.');
+        return;
       }
     } catch (e) {
-      state.currentUser = ringer;
+      console.error('Erro ao alternar sineiro:', e);
+      return;
     }
 
     localStorage.setItem('sinos_current_user_email', state.currentUser.email);
@@ -2140,6 +2237,14 @@
       dom.btnCloseUserModalAction.addEventListener('click', () => {
         dom.userModal.classList.remove('open');
       });
+    }
+
+    if (dom.btnLogoutBanner) {
+      dom.btnLogoutBanner.addEventListener('click', logoutUser);
+    }
+
+    if (dom.btnLogoutUser) {
+      dom.btnLogoutUser.addEventListener('click', logoutUser);
     }
 
     dom.userModal.addEventListener('click', (e) => {

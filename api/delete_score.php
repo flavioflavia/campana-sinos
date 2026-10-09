@@ -48,12 +48,13 @@ if (is_array($data)) {
 
 $userEmail = strtolower(trim($userEmail));
 
-// VALIDAÇÃO ESTRITA DE PERMISSÃO DO ADMINISTRADOR
-if ($userEmail !== strtolower($adminEmail)) {
+// VALIDAÇÃO ESTRITA DE PERMISSÃO DO ADMINISTRADOR AUTENTICADO
+$isSessionAdmin = (!empty($_SESSION['sinos_is_admin']) && strtolower($_SESSION['sinos_user_email'] ?? '') === strtolower($adminEmail));
+if (!$isSessionAdmin) {
     http_response_code(403);
     echo json_encode([
         'success' => false,
-        'error' => 'Acesso negado. Apenas o administrador (' . $adminEmail . ') tem permissão para excluir partituras do acervo.'
+        'error' => 'Acesso negado. Apenas o administrador (' . $adminEmail . ') autenticado com senha tem permissão para excluir partituras do acervo.'
     ]);
     exit;
 }
