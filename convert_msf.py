@@ -521,14 +521,38 @@ def convert_pdf_multipage(pdf_path, output_xml_path, title, job_file=None, user_
             raw_xml = call_gemini([prompt, img_part])
             
             extracted = extract_measures(raw_xml)
-            print(f"[✓] Página {p_num}: {len(extracted)} compassos extraídos.")
-            if p_num > 1 and extracted:
-                first_m_num, first_m_content = extracted[0]
-                if 'new-page' not in first_m_content:
-                    first_m_content = re.sub(r'(<measure\s+number=[\"\']\d+[\"\'][^>]*>)', r'\1\n      <print new-page="yes"/>', first_m_content, count=1)
-                    extracted[0] = (first_m_num, first_m_content)
-            for m_num, m_content in extracted:
-                all_measures.append((m_num, m_content))
+            print(f"[✓] Página {p_num}: {len(extracted)} compassos extraídos no 1º passe.")
+            
+            # Verificação de continuação: se a página foi longa e pode conter compassos adicionais no rodapé
+            if extracted and len(extracted) >= 6:
+                last_m_num = max(m[0] for m in extracted)
+                cont_prompt = (
+                    f"Esta é a Página {p_num} da partitura '{title}'. Você já transcreveu até o compasso {last_m_num}.\n"
+                    f"Existem mais compassos após o compasso {last_m_num} até o final desta folha?\n"
+                    f"Se SIM, transcreva estritamente os compassos restantes da folha (a partir do compasso {last_m_num + 1} até o final da folha) em MusicXML 3.1.\n"
+                    f"Se a folha já terminou no compasso {last_m_num}, responda apenas: FIM_DA_PAGINA"
+                )
+                try:
+                    cont_resp = call_gemini([cont_prompt, img_part])
+                    if 'FIM_DA_PAGINA' not in cont_resp:
+                        cont_extracted = extract_measures(cont_resp)
+                        new_measures = [m for m in cont_extracted if m[0] > last_m_num]
+                        if new_measures:
+                            print(f"[✓] Página {p_num}: +{len(new_measures)} compassos adicionais recuperados na continuação: {[m[0] for m in new_measures]}.")
+                            extracted.extend(new_measures)
+                except Exception as e_cont:
+                    print(f"[!] Checagem de continuação da pág {p_num}: {e_cont}")
+
+            # Ordena os compassos desta página e insere quebra de página no primeiro compasso se p_num > 1
+            if extracted:
+                extracted.sort(key=lambda x: x[0])
+                if p_num > 1:
+                    first_m_num, first_m_content = extracted[0]
+                    if 'new-page' not in first_m_content:
+                        first_m_content = re.sub(r'(<measure\s+number=[\"\']\d+[\"\'][^>]*>)', r'\1\n      <print new-page="yes"/>', first_m_content, count=1)
+                        extracted[0] = (first_m_num, first_m_content)
+                for m_num, m_content in extracted:
+                    all_measures.append((m_num, m_content))
                 
         all_measures.sort(key=lambda x: x[0])
         print(f"[✓] Total de compassos coletados de todas as páginas: {len(all_measures)}")

@@ -447,8 +447,14 @@
         drawPartNames: true,
         pageFormat: 'A4_P',
         pageBackgroundColor: '#ffffff',
+        newPageFromXML: true,
+        newSystemFromNewPageInXML: true,
         cursorsOptions: [{ type: 0, color: '#3A86FF', alpha: 0.6, follow: true }]
       });
+      if (osmd.rules) {
+        osmd.rules.NewPageAtXMLNewPageAttribute = true;
+        osmd.rules.NewSystemAtXMLNewPageAttribute = true;
+      }
       scorePlayer.setOSMD(osmd);
     } catch (e) {
       console.error('Erro ao inicializar OSMD:', e);
