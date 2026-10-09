@@ -55,9 +55,10 @@ DIRETRIZES TÉCNICAS:
 """
 
 MODELS = [
-    "gemini-3.8-flash",
     "gemini-3.6-flash",
     "gemini-3.5-flash",
+    "gemini-3.8-flash",
+    "gemini-3.1-flash-lite",
     "gemini-flash-latest"
 ]
 
@@ -85,7 +86,7 @@ def call_gemini(contents, system_instruction=SYSTEM_PROMPT):
     c = get_gemini_client()
     last_err = None
     for m in MODELS:
-        for attempt in range(3):
+        for attempt in range(2):
             try:
                 print(f"[*] Chamando modelo {m} (tentativa {attempt + 1})...")
                 resp = c.models.generate_content(
@@ -107,7 +108,10 @@ def call_gemini(contents, system_instruction=SYSTEM_PROMPT):
                     raise RuntimeError("Chave do Google Gemini desativada ou inválida (Erro 401: Conta de serviço desativada no Google Cloud). Gere uma chave gratuita em aistudio.google.com/app/apikey e atualize no Painel Admin ou no arquivo .env.")
                 if "403" in err_str or "PERMISSION_DENIED" in err_str:
                     raise RuntimeError("Acesso negado à API do Google Gemini (Erro 403). Verifique se a Generative Language API está habilitada em aistudio.google.com.")
-                if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str or "503" in err_str or "UNAVAILABLE" in err_str:
+                if "503" in err_str or "UNAVAILABLE" in err_str:
+                    print(f"[*] Modelo {m} sobrecarregado (503). Alternando rapidamente para o próximo modelo...")
+                    break
+                if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
                     time.sleep(2 * (attempt + 1))
                     continue
                 break
@@ -481,11 +485,11 @@ def convert_pdf_multipage(pdf_path, output_xml_path, title, job_file=None, user_
     try:
         update_job_status(job_file, "processing", "Renderizando páginas do PDF em alta resolução...", 20)
         prefix = os.path.join(temp_dir, "page")
-        cmd = ["/usr/bin/pdftoppm", "-png", "-r", "150", pdf_path, prefix]
+        cmd = ["/usr/bin/pdftoppm", "-jpeg", "-r", "150", pdf_path, prefix]
         subprocess.run(cmd, check=True)
         
-        page_files = sorted(glob.glob(os.path.join(temp_dir, "page-*.png")))
-        valid_pages = [p for p in page_files if os.path.getsize(p) > 20480]
+        page_files = sorted(glob.glob(os.path.join(temp_dir, "page-*.jpg")))
+        valid_pages = [p for p in page_files if os.path.getsize(p) > 10240]
         if not valid_pages:
             valid_pages = page_files
 
@@ -496,7 +500,7 @@ def convert_pdf_multipage(pdf_path, output_xml_path, title, job_file=None, user_
         for idx, page_img in enumerate(valid_pages):
             p_num = idx + 1
             pct = 25 + int((idx / total_pages) * 65)
-            update_job_status(job_file, "transcribing", f"Transcrevendo página {p_num} de {total_pages} com IA...", pct)
+            update_job_status(job_file, "transcribing", f"Transcrevendo página {p_num} de {total_pages} com IA musical...", pct, {"current_page": p_num, "total_pages": total_pages})
             print(f"[*] Transcrevendo página {p_num}/{total_pages} ({os.path.basename(page_img)})...")
             
             with open(page_img, "rb") as f:
@@ -513,7 +517,7 @@ def convert_pdf_multipage(pdf_path, output_xml_path, title, job_file=None, user_
                 "5. Retorne os blocos <measure number=\"...\">...</measure> completos."
             )
             
-            img_part = types.Part.from_bytes(data=img_bytes, mime_type='image/png')
+            img_part = types.Part.from_bytes(data=img_bytes, mime_type='image/jpeg')
             raw_xml = call_gemini([prompt, img_part])
             
             extracted = extract_measures(raw_xml)

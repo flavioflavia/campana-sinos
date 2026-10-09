@@ -1567,11 +1567,19 @@
       // Loop de sondagem (polling) a cada 2.5s
       let completed = false;
       const startTime = Date.now();
-      const maxTimeoutMs = 10 * 60 * 1000; // 10 minutos limite
+      let lastActivityTime = Date.now();
+      let lastMsg = '';
+      let lastPct = -1;
+      const MAX_TOTAL_TIMEOUT_MS = 45 * 60 * 1000; // 45 minutos no total
+      const INACTIVITY_TIMEOUT_MS = 8 * 60 * 1000; // 8 minutos sem resposta do servidor
 
       while (!completed) {
-        if (Date.now() - startTime > maxTimeoutMs) {
-          throw new Error('Tempo limite excedido durante a transcrição.');
+        const now = Date.now();
+        if (now - startTime > MAX_TOTAL_TIMEOUT_MS) {
+          throw new Error('Tempo limite total excedido (45 minutos).');
+        }
+        if (now - lastActivityTime > INACTIVITY_TIMEOUT_MS) {
+          throw new Error('O servidor parou de responder durante a transcrição (inatividade de 8 minutos).');
         }
 
         await new Promise(res => setTimeout(res, 2500));
@@ -1594,9 +1602,21 @@
           continue;
         }
 
+        if (job && job.status) {
+          if (job.message !== lastMsg || job.percent !== lastPct || (job.status !== 'error' && job.status !== 'completed')) {
+            lastActivityTime = Date.now();
+            lastMsg = job.message || '';
+            lastPct = job.percent;
+          }
+        }
+
         if (job.status === 'processing' || job.status === 'queued') {
           const pct = job.percent !== undefined ? ` (${job.percent}%)` : '';
-          dom.ocrStatusText.textContent = (job.message || 'Processando com Gemini Vision...') + pct;
+          const elapsedSec = Math.floor((Date.now() - startTime) / 1000);
+          const elapsedMin = Math.floor(elapsedSec / 60);
+          const elapsedRemSec = elapsedSec % 60;
+          const timeStr = ` [${elapsedMin}m ${elapsedRemSec < 10 ? '0' : ''}${elapsedRemSec}s]`;
+          dom.ocrStatusText.textContent = (job.message || 'Processando com Gemini Vision...') + pct + timeStr;
         } else if (job.status === 'completed') {
           completed = true;
           dom.ocrStatusText.textContent = 'Partitura transcrita com sucesso! Carregando no estúdio de sinos...';
@@ -1626,7 +1646,12 @@
       }
     } catch (err) {
       console.error('Erro no OCR:', err);
-      dom.ocrStatusText.textContent = `Erro: ${err.message}`;
+      if (err.message && err.message.toLowerCase().includes('tempo limite')) {
+        dom.ocrStatusText.innerHTML = `⚠️ ${err.message}<br><small style="color:var(--text-muted); display:inline-block; margin-top:4px;">Se o processamento ainda estiver rodando no servidor, a partitura aparecerá no seletor de músicas assim que concluir.</small>`;
+        loadServerScoresList();
+      } else {
+        dom.ocrStatusText.textContent = `Erro: ${err.message}`;
+      }
       dom.btnSubmitOcr.disabled = false;
       dom.btnCancelOcr.disabled = false;
 
@@ -2795,14 +2820,22 @@
         ? 'Processando partitura em PDF e transcrevendo com Google Gemini...'
         : 'Descompactando .msf e transcrevendo partitura com Google Gemini...';
 
-      // Polling a cada 2.5s
+      // Polling resiliente a cada 2.5s
       let completed = false;
       const startTime = Date.now();
-      const maxTimeoutMs = 10 * 60 * 1000;
+      let lastActivityTime = Date.now();
+      let lastMsg = '';
+      let lastPct = -1;
+      const MAX_TOTAL_TIMEOUT_MS = 45 * 60 * 1000; // 45 minutos no total para partituras longas
+      const INACTIVITY_TIMEOUT_MS = 8 * 60 * 1000; // 8 minutos sem resposta do servidor
 
       while (!completed) {
-        if (Date.now() - startTime > maxTimeoutMs) {
-          throw new Error('Tempo limite excedido na conversão da partitura.');
+        const now = Date.now();
+        if (now - startTime > MAX_TOTAL_TIMEOUT_MS) {
+          throw new Error('Tempo limite total excedido (45 minutos).');
+        }
+        if (now - lastActivityTime > INACTIVITY_TIMEOUT_MS) {
+          throw new Error('O servidor parou de responder durante a conversão (inatividade de 8 minutos).');
         }
 
         await new Promise(r => setTimeout(r, 2500));
@@ -2824,9 +2857,21 @@
           continue;
         }
 
-        if (job.status === 'processing' || job.status === 'analyzing' || job.status === 'transcribing' || job.status === 'converting') {
+        if (job && job.status) {
+          if (job.message !== lastMsg || job.percent !== lastPct || (job.status !== 'error' && job.status !== 'completed')) {
+            lastActivityTime = Date.now();
+            lastMsg = job.message || '';
+            lastPct = job.percent;
+          }
+        }
+
+        if (job.status === 'processing' || job.status === 'analyzing' || job.status === 'transcribing' || job.status === 'converting' || job.status === 'pending') {
           const pct = job.percent !== undefined ? ` (${job.percent}%)` : '';
-          dom.msfStatusText.textContent = (job.message || 'Convertendo partitura...') + pct;
+          const elapsedSec = Math.floor((Date.now() - startTime) / 1000);
+          const elapsedMin = Math.floor(elapsedSec / 60);
+          const elapsedRemSec = elapsedSec % 60;
+          const timeStr = ` [${elapsedMin}m ${elapsedRemSec < 10 ? '0' : ''}${elapsedRemSec}s]`;
+          dom.msfStatusText.textContent = (job.message || 'Convertendo partitura...') + pct + timeStr;
         } else if (job.status === 'completed') {
           completed = true;
           dom.msfStatusText.textContent = 'Partitura MusicXML gerada com sucesso! Carregando no estúdio de sinos...';
@@ -2859,7 +2904,12 @@
       }
     } catch (err) {
       console.error('Erro na conversão:', err);
-      dom.msfStatusText.textContent = `Erro: ${err.message}`;
+      if (err.message && err.message.toLowerCase().includes('tempo limite')) {
+        dom.msfStatusText.innerHTML = `⚠️ ${err.message}<br><small style="color:var(--text-muted); display:inline-block; margin-top:4px;">Como o servidor processa em segundo plano, sua partitura pode concluir a qualquer momento. Verifique o seletor de músicas no topo.</small>`;
+        loadServerScoresList();
+      } else {
+        dom.msfStatusText.textContent = `Erro: ${err.message}`;
+      }
       dom.btnSubmitMsf.disabled = false;
       if (dom.btnCancelMsf) dom.btnCancelMsf.disabled = false;
 
