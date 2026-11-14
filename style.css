@@ -2976,3 +2976,31 @@ body.ui-hide-tools .live-cue-hud .hud-message {
   body.ui-hide-tools .playback-controls-group { flex: 1 1 100%; }
   body.ui-hide-tools .practice-toggles { padding-bottom: 0; }
 }
+
+/* -------------------------------------------------------------------------
+   Alinhamento do cursor de reprodução
+   O OSMD dimensiona o SVG pela largura total do container (padding incluso).
+   Com padding lateral, o CSS encolhia o SVG e o cursor (posicionado em pixels
+   do SVG original) ficava deslocado para a direita. O respiro lateral agora é
+   margem, que o OSMD não conta: o SVG é exibido no tamanho em que foi desenhado.
+   ------------------------------------------------------------------------- */
+#osmd-container {
+  width: auto;
+  align-self: stretch;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: 20px;
+  margin-right: 20px;
+}
+@media (min-width: 992px) and (max-width: 1200px) {
+  #osmd-container { margin-left: 16px; margin-right: 16px; }
+}
+@media (min-width: 768px) and (max-width: 991px) {
+  #osmd-container { margin-left: 14px; margin-right: 14px; }
+}
+@media (max-width: 767px) {
+  #osmd-container { margin-left: 4px; margin-right: 4px; }
+}
+@media print {
+  #osmd-container { margin-left: 0; margin-right: 0; }
+}
