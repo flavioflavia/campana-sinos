@@ -506,6 +506,14 @@
         osmd.rules.NewPageAtXMLNewPageAttribute = true;
         osmd.rules.NewSystemAtXMLNewPageAttribute = true;
       }
+      // Cada render (zoom, redimensionar, abrir/fechar mesa ou menu, girar o tablet) recria o
+      // SVG das notas: reconecta a timeline ao novo desenho e religa o clique nas notas.
+      const originalRender = osmd.render.bind(osmd);
+      osmd.render = function (...args) {
+        const result = originalRender(...args);
+        try { rebindTimelineToRender(); } catch (e) { console.warn('Falha ao reconectar notas:', e); }
+        return result;
+      };
       scorePlayer.setOSMD(osmd);
     } catch (e) {
       console.error('Erro ao inicializar OSMD:', e);
@@ -700,6 +708,49 @@
       hideLoading();
       alert('Não foi possível carregar a partitura: ' + (err.message || err));
     }
+  }
+
+  /**
+   * Após um novo render do OSMD, os GraphicalNote antigos ficam órfãos (SVG removido).
+   * Mapeia cada nota de origem para o seu GraphicalNote atual e atualiza a timeline.
+   */
+  function rebindTimelineToRender() {
+    if (!osmd || !scorePlayer || !scorePlayer.timeline || scorePlayer.timeline.length === 0) return;
+    const graphicSheet = osmd.GraphicSheet || osmd.graphic;
+    const measureList = graphicSheet && (graphicSheet.MeasureList || graphicSheet.measureList);
+    if (!measureList) return;
+
+    const bySource = new Map();
+    for (const row of measureList) {
+      for (const gMeasure of (row || [])) {
+        if (!gMeasure) continue;
+        for (const staffEntry of (gMeasure.staffEntries || gMeasure.StaffEntries || [])) {
+          for (const gve of (staffEntry.graphicalVoiceEntries || staffEntry.GraphicalVoiceEntries || [])) {
+            for (const gNote of (gve.notes || gve.Notes || [])) {
+              const src = gNote.sourceNote || gNote.SourceNote;
+              if (src) bySource.set(src, gNote);
+            }
+          }
+        }
+      }
+    }
+    if (bySource.size === 0) return;
+
+    let rebound = 0;
+    for (const step of scorePlayer.timeline) {
+      for (const item of step.notes) {
+        const fresh = bySource.get(item.noteObj);
+        if (fresh) {
+          item.gNote = fresh;
+          rebound++;
+        }
+      }
+    }
+    // Render de outra partitura ainda carregando (timeline antiga): nada a fazer
+    if (rebound === 0) return;
+
+    attachNoteClickListeners();
+    scorePlayer.refreshStaticHighlights();
   }
 
   function attachNoteClickListeners() {
@@ -3658,7 +3709,7 @@
   // =========================================================================
   function registerServiceWorker() {
     if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-      navigator.serviceWorker.register('sw.js?v=3.9')
+      navigator.serviceWorker.register('sw.js?v=3.10')
         .then(reg => {
           console.log('Campana ServiceWorker registrado com sucesso:', reg.scope);
         })

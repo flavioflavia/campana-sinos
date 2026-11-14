@@ -3,16 +3,16 @@
  * Suporte completo a Modo Offline para ensaios em igrejas e retiros sem internet.
  */
 
-const CACHE_NAME = 'campana-sinos-v3.9';
+const CACHE_NAME = 'campana-sinos-v3.10';
 
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './style.css?v=3.9',
-  './bell-audio.js?v=3.9',
-  './score-player.js?v=3.9',
-  './pitch-detector.js?v=3.9',
-  './app.js?v=3.9',
+  './style.css?v=3.10',
+  './bell-audio.js?v=3.10',
+  './score-player.js?v=3.10',
+  './pitch-detector.js?v=3.10',
+  './app.js?v=3.10',
   './manifest.json',
   './libs/jszip.min.js',
   './libs/opensheetmusicdisplay.min.js',
