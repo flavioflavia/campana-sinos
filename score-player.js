@@ -178,7 +178,10 @@ class ScorePlayer {
     const part = doc.getElementsByTagName('part')[0];
     if (!part) return map;
 
+    // Passo 1: percorre o XML coletando notas (com posição) e marcações de texto LV/SB/R por pauta
     let divisions = 1;
+    const notes = [];      // { measureIdx, onsetQ, midi, staff, tech }
+    const lvEvents = [];   // { measureIdx, onsetQ, staff (null = todas), on }
     const measures = Array.from(part.children).filter(el => el.tagName === 'measure');
     measures.forEach((measure, measureIdx) => {
       let pos = 0;       // posição atual em divisions
@@ -191,6 +194,18 @@ class ScorePlayer {
           pos -= parseFloat(childText(el, 'duration') || '0');
         } else if (el.tagName === 'forward') {
           pos += parseFloat(childText(el, 'duration') || '0');
+        } else if (el.tagName === 'direction') {
+          const words = Array.from(el.getElementsByTagName('words')).map(w => w.textContent).join(' ');
+          const state = ScorePlayer.parseLvWords(words);
+          if (state === null) continue;
+          const offset = parseFloat(childText(el, 'offset') || '0');
+          const staffTxt = childText(el, 'staff');
+          lvEvents.push({
+            measureIdx,
+            onsetQ: (pos + offset) / divisions,
+            staff: staffTxt ? parseInt(staffTxt, 10) : null,
+            on: state
+          });
         } else if (el.tagName === 'note') {
           const isChord = el.getElementsByTagName('chord').length > 0;
           const isGrace = el.getElementsByTagName('grace').length > 0;
@@ -201,21 +216,53 @@ class ScorePlayer {
             pos += dur;
           }
           const pitchEl = el.getElementsByTagName('pitch')[0];
-          const hb = el.getElementsByTagName('handbell')[0];
-          if (!pitchEl || !hb) continue;
-          const tech = ScorePlayer.mapHandbellValue(hb.textContent);
-          if (!tech) continue;
+          if (!pitchEl) continue;
           const step = childText(pitchEl, 'step');
           const alter = parseFloat(childText(pitchEl, 'alter') || '0');
           const octave = parseInt(childText(pitchEl, 'octave') || '4', 10);
           if (!(step in steps)) continue;
-          const midi = (octave + 1) * 12 + steps[step] + Math.round(alter);
-          const onsetQ = Math.round((onset / divisions) * 1000) / 1000;
-          map.set(`${measureIdx}|${onsetQ}|${midi}`, tech);
+          const hb = el.getElementsByTagName('handbell')[0];
+          const staffTxt = childText(el, 'staff');
+          notes.push({
+            measureIdx,
+            onsetQ: Math.round((onset / divisions) * 1000) / 1000,
+            midi: (octave + 1) * 12 + steps[step] + Math.round(alter),
+            staff: staffTxt ? parseInt(staffTxt, 10) : 1,
+            tech: hb ? ScorePlayer.mapHandbellValue(hb.textContent) : null
+          });
         }
       }
     });
+
+    // Passo 2: técnica explícita na nota tem prioridade; senão vale o estado LV/R vigente na pauta
+    const before = (a, mIdx, q) => a.measureIdx < mIdx || (a.measureIdx === mIdx && a.onsetQ <= q + 1e-6);
+    lvEvents.sort((a, b) => a.measureIdx - b.measureIdx || a.onsetQ - b.onsetQ);
+    for (const n of notes) {
+      let tech = n.tech;
+      if (!tech && lvEvents.length) {
+        let on = false;
+        for (const ev of lvEvents) {
+          if (!before(ev, n.measureIdx, n.onsetQ)) break;
+          if (ev.staff === null || ev.staff === n.staff) on = ev.on;
+        }
+        if (on) tech = 'lv';
+      }
+      if (tech) map.set(`${n.measureIdx}|${n.onsetQ}|${n.midi}`, tech);
+    }
     return map;
+  }
+
+  /**
+   * Interpreta textos de execução de sinos: LV / SB (singing bell) / "R to SB" ligam a
+   * ressonância livre; R (ring) volta ao toque normal. Retorna true/false ou null se não for marcação.
+   */
+  static parseLvWords(text) {
+    const t = String(text || '').trim().toUpperCase().replace(/\s+/g, ' ');
+    if (!t) return null;
+    if (/\bTO (SB|LV)\b/.test(t)) return true;
+    if (/^(LV|L\.V\.|SB|LET VIBRATE)\b/.test(t)) return true;
+    if (/^R\b\.?$/.test(t) || t === 'RING') return false;
+    return null;
   }
 
   /**

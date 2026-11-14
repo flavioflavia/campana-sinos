@@ -3603,7 +3603,7 @@
   // =========================================================================
   function registerServiceWorker() {
     if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-      navigator.serviceWorker.register('sw.js?v=3.4')
+      navigator.serviceWorker.register('sw.js?v=3.5')
         .then(reg => {
           console.log('Campana ServiceWorker registrado com sucesso:', reg.scope);
         })
