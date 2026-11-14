@@ -593,6 +593,7 @@
       await new Promise(r => setTimeout(r, 20));
 
       await osmd.load(xmlContent);
+      scorePlayer.setSourceXml(xmlContent);
       osmd.zoom = state.zoom;
       osmd.render();
 
@@ -3602,7 +3603,7 @@
   // =========================================================================
   function registerServiceWorker() {
     if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-      navigator.serviceWorker.register('sw.js?v=3.3')
+      navigator.serviceWorker.register('sw.js?v=3.4')
         .then(reg => {
           console.log('Campana ServiceWorker registrado com sucesso:', reg.scope);
         })

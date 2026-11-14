@@ -139,6 +139,105 @@ class ScorePlayer {
     this.practiceMode = mode;
   }
 
+  /**
+   * Recebe o MusicXML bruto e indexa as técnicas de sinos marcadas nota a nota
+   * (<technical><handbell>martellato|pluck|damp|gyro|swing...</handbell></technical>).
+   * O OSMD não expõe esse elemento, então a leitura é feita direto do XML.
+   * Chave: "índiceDoCompasso|inícioEmSemínimas|midi".
+   */
+  setSourceXml(xmlText) {
+    this.xmlTechniques = ScorePlayer.indexXmlTechniques(xmlText);
+  }
+
+  static mapHandbellValue(value) {
+    const v = String(value || '').toLowerCase().trim();
+    if (!v) return null;
+    if (v.includes('martellato') || v.includes('mallet')) return 'martellato';
+    if (v.includes('pluck')) return 'pluck';
+    if (v.includes('damp')) return 'damp';
+    if (v.includes('shake')) return 'shake';
+    if (v === 'gyro' || v === 'swing' || v === 'echo' || v === 'belltree' || v === 'lv') return 'lv';
+    return null;
+  }
+
+  static indexXmlTechniques(xmlText) {
+    const map = new Map();
+    if (!xmlText || typeof DOMParser === 'undefined') return map;
+    let doc;
+    try {
+      doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+      if (doc.getElementsByTagName('parsererror').length) return map;
+    } catch (e) {
+      return map;
+    }
+    const steps = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+    const childText = (el, tag) => {
+      const c = el.getElementsByTagName(tag)[0];
+      return c ? c.textContent.trim() : null;
+    };
+    const part = doc.getElementsByTagName('part')[0];
+    if (!part) return map;
+
+    let divisions = 1;
+    const measures = Array.from(part.children).filter(el => el.tagName === 'measure');
+    measures.forEach((measure, measureIdx) => {
+      let pos = 0;       // posição atual em divisions
+      let lastOnset = 0; // início da nota anterior (para acordes)
+      for (const el of Array.from(measure.children)) {
+        if (el.tagName === 'attributes') {
+          const d = childText(el, 'divisions');
+          if (d) divisions = parseFloat(d) || divisions;
+        } else if (el.tagName === 'backup') {
+          pos -= parseFloat(childText(el, 'duration') || '0');
+        } else if (el.tagName === 'forward') {
+          pos += parseFloat(childText(el, 'duration') || '0');
+        } else if (el.tagName === 'note') {
+          const isChord = el.getElementsByTagName('chord').length > 0;
+          const isGrace = el.getElementsByTagName('grace').length > 0;
+          const dur = parseFloat(childText(el, 'duration') || '0');
+          const onset = isChord ? lastOnset : pos;
+          if (!isChord && !isGrace) {
+            lastOnset = pos;
+            pos += dur;
+          }
+          const pitchEl = el.getElementsByTagName('pitch')[0];
+          const hb = el.getElementsByTagName('handbell')[0];
+          if (!pitchEl || !hb) continue;
+          const tech = ScorePlayer.mapHandbellValue(hb.textContent);
+          if (!tech) continue;
+          const step = childText(pitchEl, 'step');
+          const alter = parseFloat(childText(pitchEl, 'alter') || '0');
+          const octave = parseInt(childText(pitchEl, 'octave') || '4', 10);
+          if (!(step in steps)) continue;
+          const midi = (octave + 1) * 12 + steps[step] + Math.round(alter);
+          const onsetQ = Math.round((onset / divisions) * 1000) / 1000;
+          map.set(`${measureIdx}|${onsetQ}|${midi}`, tech);
+        }
+      }
+    });
+    return map;
+  }
+
+  /**
+   * Procura a técnica de uma nota no índice do MusicXML
+   */
+  lookupXmlTechnique(note, measureIndex, timeStamp) {
+    if (!this.xmlTechniques || this.xmlTechniques.size === 0) return null;
+    try {
+      const pitch = note?.Pitch ?? note?.pitch;
+      const freq = pitch?.frequency ?? pitch?.Frequency;
+      if (!freq || freq <= 20) return null;
+      const midi = Math.round(69 + 12 * Math.log2(freq / 440));
+      const sm = this.osmd?.Sheet?.SourceMeasures?.[measureIndex];
+      const abs = sm?.AbsoluteTimestamp ?? sm?.absoluteTimestamp;
+      const measureStart = abs ? (abs.RealValue ?? abs.realValue ?? 0) : 0;
+      const onsetQ = Math.round((timeStamp - measureStart) * 4 * 1000) / 1000;
+      return this.xmlTechniques.get(`${measureIndex}|${onsetQ}|${midi}`) || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   static getEndReached(iter) {
     if (!iter) return true;
     return iter.endReached ?? iter.EndReached ?? false;
@@ -303,7 +402,8 @@ class ScorePlayer {
         const gNote = gNotes && gNotes[i] ? gNotes[i] : null;
         const noteDurationQuarters = ScorePlayer.getNoteLengthQuarters(note);
         const exactFreq = pitch.frequency ?? pitch.Frequency ?? null;
-        const technique = this.detectNoteTechnique(note, cursor, measureIndex);
+        const technique = this.lookupXmlTechnique(note, measureIndex, timeStamp)
+          || this.detectNoteTechnique(note, cursor, measureIndex);
 
         stepNotes.push({
           pitchStr: pitchShort,
