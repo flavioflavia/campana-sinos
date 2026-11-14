@@ -388,13 +388,18 @@ class ScorePlayer {
     const cursor = this.osmd.cursor;
     cursor.reset();
 
-    // Lê BPM padrão da partitura
+    // Lê o andamento inicial da partitura (<sound tempo> / <metronome>)
+    this.baseBpm = 100;
     try {
-      if (this.osmd.Sheet.playbackManager && this.osmd.Sheet.playbackManager.bpm) {
-        this.baseBpm = this.osmd.Sheet.playbackManager.bpm;
-      } else if (this.osmd.Sheet.hasBPMInfo) {
-        this.baseBpm = this.osmd.Sheet.defaultBPM || 100;
-      }
+      const sheet = this.osmd.Sheet;
+      const firstMeasure = sheet.SourceMeasures && sheet.SourceMeasures[0];
+      const candidates = [
+        sheet.playbackManager && sheet.playbackManager.bpm,
+        sheet.hasBPMInfo ? (sheet.DefaultStartTempoInBpm ?? sheet.defaultStartTempoInBpm) : null,
+        firstMeasure ? (firstMeasure.TempoInBPM ?? firstMeasure.tempoInBPM) : null
+      ];
+      const bpm = candidates.find(v => typeof v === 'number' && v > 0);
+      if (bpm) this.baseBpm = bpm;
     } catch (e) {}
     this.updateEffectiveBpm();
 
@@ -514,7 +519,13 @@ class ScorePlayer {
         });
         deltaQuarters = maxD;
       }
-      current.deltaQuarters = deltaQuarters;
+      // Mudança de andamento no meio da música: o player agenda tudo no andamento
+      // inicial (baseBpm), então converte o intervalo para "semínimas no andamento inicial".
+      // Ex.: compasso a 92 numa música que começa a 66 → cada semínima dura 66/92.
+      const sm = sourceMeasures[current.measureNumber - 1];
+      const measureBpm = sm ? (sm.TempoInBPM ?? sm.tempoInBPM) : null;
+      current.bpm = (typeof measureBpm === 'number' && measureBpm > 0) ? measureBpm : this.baseBpm;
+      current.deltaQuarters = deltaQuarters * (this.baseBpm / current.bpm);
     }
 
     // Tempo de execução de cada passo (em semínimas) na ordem realmente tocada,
