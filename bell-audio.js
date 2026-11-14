@@ -24,14 +24,34 @@ class BellAudioEngine {
 
       // Limiter transparente de pico para proteger sem bombear dinâmica nas notas simultâneas
       this.compressor = this.ctx.createDynamicsCompressor();
-      this.compressor.threshold.setValueAtTime(-2.0, this.ctx.currentTime);
-      this.compressor.knee.setValueAtTime(10, this.ctx.currentTime);
-      this.compressor.ratio.setValueAtTime(8.0, this.ctx.currentTime);
+      this.compressor.threshold.setValueAtTime(-10.0, this.ctx.currentTime);
+      this.compressor.knee.setValueAtTime(6, this.ctx.currentTime);
+      this.compressor.ratio.setValueAtTime(12.0, this.ctx.currentTime);
       this.compressor.attack.setValueAtTime(0.001, this.ctx.currentTime);
-      this.compressor.release.setValueAtTime(0.12, this.ctx.currentTime);
+      this.compressor.release.setValueAtTime(0.25, this.ctx.currentTime);
+      // O compressor do navegador aplica ganho de compensação automático: este trim
+      // final mantém o pico abaixo de 0 dBFS em acordes cheios (sem distorção).
+      this.outputTrim = this.ctx.createGain();
+      this.outputTrim.gain.setValueAtTime(0.85, this.ctx.currentTime);
 
       this.masterGain.connect(this.compressor);
-      this.compressor.connect(this.ctx.destination);
+      this.compressor.connect(this.outputTrim);
+      this.outputTrim.connect(this.ctx.destination);
+
+      // Reverberação leve de sala/igreja (resposta ao impulso gerada, sem arquivos externos)
+      try {
+        this.reverbInput = this.ctx.createGain();
+        this.reverbInput.gain.setValueAtTime(this.volume, this.ctx.currentTime);
+        const convolver = this.ctx.createConvolver();
+        convolver.buffer = this.buildRoomImpulse(2.4, 2.8);
+        const wet = this.ctx.createGain();
+        wet.gain.setValueAtTime(0.28, this.ctx.currentTime);
+        this.reverbInput.connect(convolver);
+        convolver.connect(wet);
+        wet.connect(this.compressor);
+      } catch (e) {
+        this.reverbInput = null;
+      }
     }
 
     if (this.ctx.state === 'suspended') {
@@ -43,7 +63,31 @@ class BellAudioEngine {
     this.volume = Math.max(0, Math.min(1, val));
     if (this.masterGain && this.ctx) {
       this.masterGain.gain.setTargetAtTime(this.volume, this.ctx.currentTime, 0.05);
+      if (this.reverbInput) this.reverbInput.gain.setTargetAtTime(this.volume, this.ctx.currentTime, 0.05);
     }
+  }
+
+  /**
+   * Resposta ao impulso estéreo de uma sala: ruído com decaimento exponencial,
+   * escurecendo com o tempo (agudos somem antes), como numa igreja pequena.
+   */
+  buildRoomImpulse(seconds, decayPower) {
+    const rate = this.ctx.sampleRate;
+    const length = Math.floor(rate * seconds);
+    const impulse = this.ctx.createBuffer(2, length, rate);
+    for (let ch = 0; ch < 2; ch++) {
+      const data = impulse.getChannelData(ch);
+      let lp = 0;
+      for (let i = 0; i < length; i++) {
+        const t = i / length;
+        const env = Math.pow(1 - t, decayPower);
+        // filtro passa-baixas de 1 polo cada vez mais fechado ao longo da cauda
+        const k = 0.55 - 0.45 * t;
+        lp += k * ((Math.random() * 2 - 1) - lp);
+        data[i] = lp * env * (i < rate * 0.012 ? i / (rate * 0.012) : 1);
+      }
+    }
+    return impulse;
   }
 
   setSoundType(type) {
@@ -111,9 +155,12 @@ class BellAudioEngine {
       case 'glockenspiel':
         voice = this.synthGlockenspiel(freq, startTime, duration, velocity, isSoloHighlight, technique);
         break;
+      case 'handbell-classic':
+        voice = this.synthHandbell(freq, startTime, duration, velocity, isSoloHighlight, technique);
+        break;
       case 'handbell':
       default:
-        voice = this.synthHandbell(freq, startTime, duration, velocity, isSoloHighlight, technique);
+        voice = this.synthHandbellReal(freq, startTime, duration, velocity, isSoloHighlight, technique);
         break;
     }
 
@@ -272,6 +319,121 @@ class BellAudioEngine {
     };
 
     return voice;
+  }
+
+  /**
+   * Handbell inglês realista (modelo aditivo com parciais medidos de sinos afinados).
+   *
+   * Um handbell inglês (Malmark, Schulmerich, Whitechapel) é afinado para ter a
+   * fundamental e a 12ª (3×f0) fortes; a oitava (2×f0) é quase ausente. O bronze
+   * acrescenta parciais inarmônicos que somem em frações de segundo (o "brilho" do
+   * ataque), o badalo produz um estalo curto, e pequenas assimetrias do sino fazem
+   * a fundamental "respirar" (batimento lento). Sinos graves soam bem mais tempo.
+   */
+  synthHandbellReal(f0, t0, duration, vel, isHighlight, technique = 'norm') {
+    const ctx = this.ctx;
+    const tech = (technique || 'norm').toLowerCase();
+    const v = Math.min(1.0, vel * (isHighlight ? 1.15 : 1.0));
+    const nyquist = ctx.sampleRate / 2 - 500;
+
+    // Ressonância natural: ~4s em C6, ~9s em C4, ~14s em C3
+    const natural = Math.max(2.2, Math.min(14, 9 * Math.pow(261.63 / f0, 0.6)));
+    const muted = tech === 'martellato' || tech === 'pluck';
+    let T;
+    if (tech === 'lv') T = Math.max(natural, duration * 2.5);
+    else if (tech === 'martellato') T = Math.min(0.5, Math.max(0.28, duration * 0.4));
+    else if (tech === 'pluck') T = Math.min(0.6, Math.max(0.32, duration * 0.5));
+    else if (tech === 'damp') T = Math.min(duration + 0.15, natural);
+    else T = Math.max(duration * 1.4, Math.min(natural, Math.max(3.0, duration * 3)));
+
+    const out = ctx.createGain();
+    out.gain.setValueAtTime(1.0, t0);
+    out.connect(this.masterGain);
+    if (this.reverbInput) out.connect(this.reverbInput);
+
+    // Shake: tremolo rápido como o sino sacudido
+    if (tech === 'shake') {
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      lfo.frequency.setValueAtTime(6.5, t0);
+      lfoGain.gain.setValueAtTime(0.45, t0);
+      out.gain.setValueAtTime(0.6, t0);
+      lfo.connect(lfoGain);
+      lfoGain.connect(out.gain);
+      lfo.start(t0);
+      lfo.stop(t0 + T + 0.1);
+    }
+
+    // Graves: 12ª relativamente mais fraca; agudos: 12ª mais brilhante
+    const twelfth = f0 < 200 ? 0.30 : (f0 < 500 ? 0.42 : 0.5);
+    // [razão, amplitude relativa, decaimento (fração de T ou segundos se abs), desvio em Hz]
+    const partials = [
+      { r: 1.0,  a: 1.0,            d: 1.0,  det: 0 },
+      { r: 1.0,  a: 0.16,           d: 0.85, det: 0.45 },   // dupleto: batimento lento do bronze
+      { r: 3.0,  a: twelfth,        d: 0.5,  det: f0 * 0.0012 },
+      { r: 2.0,  a: 0.035,          d: 0.25, det: 0 },
+      { r: 4.18, a: muted ? 0.02 : 0.07, d: 0.55, abs: true, det: 0 },
+      { r: 5.43, a: muted ? 0.015 : 0.055, d: 0.32, abs: true, det: 0 },
+      { r: 6.79, a: muted ? 0.01 : 0.04,  d: 0.2,  abs: true, det: 0 },
+      { r: 8.9,  a: muted ? 0.0 : 0.025,  d: 0.12, abs: true, det: 0 }
+    ];
+
+    const level = 0.5 * v;
+    const attack = muted ? 0.004 : 0.0025;
+    const gains = [];
+    const stopAt = t0 + T + 0.05;
+
+    for (const p of partials) {
+      const freq = f0 * p.r + p.det;
+      if (p.a <= 0 || freq >= nyquist) continue;
+      const decay = p.abs ? Math.min(p.d, T) : Math.max(0.05, T * p.d);
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t0);
+      g.gain.setValueAtTime(0.00001, t0);
+      g.gain.linearRampToValueAtTime(level * p.a, t0 + attack);
+      g.gain.exponentialRampToValueAtTime(0.00001, t0 + decay);
+      osc.connect(g);
+      g.connect(out);
+      osc.start(t0);
+      osc.stop(Math.min(stopAt, t0 + decay + 0.05));
+      gains.push(g);
+    }
+
+    // Estalo do badalo: ruído curtíssimo filtrado na região brilhante do sino
+    try {
+      const len = Math.floor(ctx.sampleRate * 0.03);
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      const bp = ctx.createBiquadFilter();
+      bp.type = muted ? 'lowpass' : 'bandpass';
+      bp.frequency.setValueAtTime(muted ? Math.min(f0 * 2, 2500) : Math.min(f0 * 6, 9000), t0);
+      bp.Q.setValueAtTime(muted ? 0.7 : 1.2, t0);
+      const ng = ctx.createGain();
+      ng.gain.setValueAtTime((muted ? 0.22 : 0.09) * v, t0);
+      noise.connect(bp);
+      bp.connect(ng);
+      ng.connect(out);
+      noise.start(t0);
+    } catch (e) {}
+
+    return {
+      stop: (dampTime = ctx.currentTime) => {
+        try {
+          if (tech === 'lv' && !this.forceAllDamp) return; // LV sustenta livremente
+          const dt = Math.max(dampTime, ctx.currentTime);
+          for (const g of gains) {
+            g.gain.cancelScheduledValues(dt);
+            g.gain.setValueAtTime(Math.max(0.00001, g.gain.value), dt);
+            g.gain.exponentialRampToValueAtTime(0.00001, dt + 0.08);
+          }
+        } catch (e) {}
+      }
+    };
   }
 
   /**

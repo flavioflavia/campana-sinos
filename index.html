@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Campana - Orquestra de Sinos | Estudo Interativo de Partituras</title>
   <meta name="description" content="Aplicativo interativo para estudo em orquestra de sinos (handbells). Marque seus sinos, acompanhe a partitura e veja as notas mudarem de cor quando tocadas.">
-  <link rel="stylesheet" href="style.css?v=3.10">
+  <link rel="stylesheet" href="style.css?v=3.11">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1a1a2e">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -168,6 +168,7 @@
         <div class="score-select-wrapper" title="Timbre acústico">
           <select id="sound-type-select">
             <option value="handbell">🔔 Handbell (Sino de Bronze)</option>
+            <option value="handbell-classic">🔔 Handbell Clássico (som anterior)</option>
             <option value="tonechime">🎵 Tonechime (Sino Tubular)</option>
             <option value="glockenspiel">🌟 Glockenspiel</option>
           </select>
@@ -1018,10 +1019,10 @@
   <!-- Scripts: Dependências Locais e Aplicação -->
   <script src="libs/jszip.min.js"></script>
   <script src="libs/opensheetmusicdisplay.min.js"></script>
-  <script src="bell-audio.js?v=3.10"></script>
-  <script src="pitch-detector.js?v=3.10"></script>
-  <script src="score-player.js?v=3.10"></script>
-  <script src="app.js?v=3.10"></script>
+  <script src="bell-audio.js?v=3.11"></script>
+  <script src="pitch-detector.js?v=3.11"></script>
+  <script src="score-player.js?v=3.11"></script>
+  <script src="app.js?v=3.11"></script>
 
 </body>
 </html>
