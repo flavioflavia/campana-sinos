@@ -3193,7 +3193,7 @@
           const bellConf = scorePlayer.getUserBellConfig(item.pitchStr);
           userNotesInTimeline.push({
             measureNumber: step.measureNumber,
-            timeStamp: step.timeStamp,
+            playQuarters: step.playQuarters ?? step.timeStamp * 4,
             pitchStr: item.pitchStr,
             hand: bellConf?.hand || 'right'
           });
@@ -3206,7 +3206,7 @@
       const curr = userNotesInTimeline[i];
 
       if (prev.pitchStr !== curr.pitchStr) {
-        const deltaQuarters = (curr.timeStamp - prev.timeStamp) * 4;
+        const deltaQuarters = curr.playQuarters - prev.playQuarters;
         const deltaSec = deltaQuarters * quarterDurationSec;
 
         if ((curr.hand === prev.hand && deltaSec < 1.4) || deltaSec < 0.8) {
@@ -3658,7 +3658,7 @@
   // =========================================================================
   function registerServiceWorker() {
     if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-      navigator.serviceWorker.register('sw.js?v=3.7')
+      navigator.serviceWorker.register('sw.js?v=3.8')
         .then(reg => {
           console.log('Campana ServiceWorker registrado com sucesso:', reg.scope);
         })

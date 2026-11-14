@@ -56,7 +56,7 @@ class ScorePlayer {
     this.lastActiveUserNotes = [];
     this.stepCursorNeedsAdvance = false;
     this.playbackStartAudioTime = 0;
-    this.playbackStartTimeStamp = 0;
+    this.playbackStartQuarters = 0;
   }
 
   setOSMD(osmdInstance) {
@@ -517,6 +517,15 @@ class ScorePlayer {
       current.deltaQuarters = deltaQuarters;
     }
 
+    // Tempo de execução de cada passo (em semínimas) na ordem realmente tocada,
+    // já com repetições e casas desenroladas. O agendamento usa este valor, e não o
+    // timeStamp da partitura escrita, para não haver silêncio nem atropelo nos saltos.
+    let playQuarters = 0;
+    for (const step of this.timeline) {
+      step.playQuarters = playQuarters;
+      playQuarters += step.deltaQuarters;
+    }
+
     cursor.reset();
     cursor.update();
     this.currentStepIndex = 0;
@@ -712,7 +721,7 @@ class ScorePlayer {
     // 50ms de margem acústica para que o hardware de áudio prepare os buffers
     const audioLeadTimeSec = 0.05;
     this.playbackStartAudioTime = this.audio.ctx.currentTime + audioLeadTimeSec;
-    this.playbackStartTimeStamp = startStep.timeStamp;
+    this.playbackStartQuarters = startStep.playQuarters;
     this.stepCursorNeedsAdvance = false;
 
     this.playbackTimer = setTimeout(() => {
@@ -788,7 +797,7 @@ class ScorePlayer {
     const stepDurationSec = step.deltaQuarters * quarterDurationSec;
 
     // Tempo de áudio exato no relógio de hardware (Web Audio API)
-    const quartersFromStart = (step.timeStamp - this.playbackStartTimeStamp) * 4;
+    const quartersFromStart = step.playQuarters - this.playbackStartQuarters;
     const targetAudioTime = this.playbackStartAudioTime + (quartersFromStart * quarterDurationSec);
 
     // 1. Metrônomo com precisão de hardware
@@ -901,7 +910,7 @@ class ScorePlayer {
       this.stepCursorNeedsAdvance = false;
 
       const loopStartStep = this.timeline[nextIndex];
-      this.playbackStartTimeStamp = loopStartStep.timeStamp;
+      this.playbackStartQuarters = loopStartStep.playQuarters;
       this.playbackStartAudioTime = this.audio.ctx.currentTime + stepDurationSec;
 
       this.playbackTimer = setTimeout(() => {
@@ -919,7 +928,7 @@ class ScorePlayer {
     }
 
     const nextStep = this.timeline[nextIndex];
-    const nextQuartersFromStart = (nextStep.timeStamp - this.playbackStartTimeStamp) * 4;
+    const nextQuartersFromStart = nextStep.playQuarters - this.playbackStartQuarters;
     const nextTargetAudioTime = this.playbackStartAudioTime + (nextQuartersFromStart * quarterDurationSec);
 
     let timeUntilNextStepSec = nextTargetAudioTime - this.audio.ctx.currentTime;
