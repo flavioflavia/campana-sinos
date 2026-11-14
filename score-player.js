@@ -475,6 +475,18 @@ class ScorePlayer {
       cursor.next();
     }
 
+    // Fim de cada compasso (em notas inteiras), para tratar saltos de repetição/casas
+    const sourceMeasures = this.osmd.Sheet.SourceMeasures || [];
+    const measureEnd = (measureIdx) => {
+      const sm = sourceMeasures[measureIdx];
+      if (!sm) return null;
+      const abs = sm.AbsoluteTimestamp ?? sm.absoluteTimestamp;
+      const dur = sm.Duration ?? sm.duration;
+      const a = abs ? (abs.RealValue ?? abs.realValue) : null;
+      const d = dur ? (dur.RealValue ?? dur.realValue) : null;
+      return (typeof a === 'number' && typeof d === 'number') ? a + d : null;
+    };
+
     // Calcula a duração em semínimas (quarters) até o próximo passo
     for (let i = 0; i < this.timeline.length; i++) {
       const current = this.timeline[i];
@@ -482,7 +494,18 @@ class ScorePlayer {
       let deltaQuarters = 1.0;
 
       if (next) {
-        deltaQuarters = (next.timeStamp - current.timeStamp) * 4;
+        // O OSMD informa o tempo absoluto da partitura escrita. Num salto (volta do ritornello
+        // ou pulo para a casa 2) o próximo passo não é contíguo: nesse caso o intervalo é o
+        // tempo que falta até o fim do compasso atual.
+        const curIdx = current.measureNumber - 1;
+        const nextIdx = next.measureNumber - 1;
+        const contiguous = nextIdx === curIdx || nextIdx === curIdx + 1;
+        if (contiguous && next.timeStamp > current.timeStamp) {
+          deltaQuarters = (next.timeStamp - current.timeStamp) * 4;
+        } else {
+          const end = measureEnd(curIdx);
+          deltaQuarters = end !== null ? (end - current.timeStamp) * 4 : 0;
+        }
         if (deltaQuarters <= 0) deltaQuarters = 0.5;
       } else {
         let maxD = 1.0;
