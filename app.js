@@ -341,8 +341,59 @@
     printBellLegend: document.getElementById('print-bell-legend')
   };
 
+  // =========================================================================
+  // Modo compacto: esconde cabeçalho e ferramentas, deixando só o player
+  // =========================================================================
+  const UI_PREFS_KEY = 'campana_ui_v1';
+
+  function readUiPrefs() {
+    const defaults = { hideHeader: true, hideTools: true };
+    try {
+      const raw = localStorage.getItem(UI_PREFS_KEY);
+      return raw ? { ...defaults, ...JSON.parse(raw) } : defaults;
+    } catch (e) {
+      return defaults;
+    }
+  }
+
+  function applyUiPrefs(prefs) {
+    document.body.classList.toggle('ui-hide-header', !!prefs.hideHeader);
+    document.body.classList.toggle('ui-hide-tools', !!prefs.hideTools);
+    const btnMenu = document.getElementById('btn-ui-menu');
+    const btnTools = document.getElementById('btn-ui-tools');
+    if (btnMenu) btnMenu.classList.toggle('active', !prefs.hideHeader);
+    if (btnTools) btnTools.classList.toggle('active', !prefs.hideTools);
+    try { localStorage.setItem(UI_PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
+  }
+
+  function setupCompactUI() {
+    const prefs = readUiPrefs();
+    applyUiPrefs(prefs);
+    const toggle = (key) => {
+      prefs[key] = !prefs[key];
+      applyUiPrefs(prefs);
+      // O topo muda de altura: avisa o OSMD/layout para se reajustar
+      window.dispatchEvent(new Event('resize'));
+    };
+    document.getElementById('btn-ui-menu')?.addEventListener('click', () => toggle('hideHeader'));
+    document.getElementById('btn-ui-tools')?.addEventListener('click', () => toggle('hideTools'));
+    document.getElementById('compact-score-title')?.addEventListener('click', () => {
+      if (prefs.hideHeader) toggle('hideHeader');
+      dom.scoreSelect?.focus();
+    });
+  }
+
+  function updateCompactScoreTitle() {
+    const el = document.getElementById('compact-score-title');
+    if (!el || !dom.scoreSelect) return;
+    const opt = dom.scoreSelect.options[dom.scoreSelect.selectedIndex];
+    const text = opt ? opt.text.replace(/^[^\p{L}\p{N}]+/u, '').trim() : '';
+    el.textContent = text ? `🎵 ${text}` : '🎵 Escolher música';
+  }
+
   // Inicialização
   window.addEventListener('DOMContentLoaded', async () => {
+    setupCompactUI();
     initAudioAndPlayer();
     buildBellRackUI();
     buildRingerPresetsUI();
@@ -594,6 +645,7 @@
 
       await osmd.load(xmlContent);
       scorePlayer.setSourceXml(xmlContent);
+      updateCompactScoreTitle();
       osmd.zoom = state.zoom;
       osmd.render();
 
@@ -1246,6 +1298,9 @@
     dom.btnFullscreen.addEventListener('click', () => {
       toggleFullscreen();
     });
+
+    // Atualiza o título compacto ao trocar de música
+    dom.scoreSelect.addEventListener('change', updateCompactScoreTitle);
 
     // Toggle da Mesa de Sinos
     dom.btnToggleRack.addEventListener('click', () => {
@@ -3603,7 +3658,7 @@
   // =========================================================================
   function registerServiceWorker() {
     if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-      navigator.serviceWorker.register('sw.js?v=3.6')
+      navigator.serviceWorker.register('sw.js?v=3.7')
         .then(reg => {
           console.log('Campana ServiceWorker registrado com sucesso:', reg.scope);
         })

@@ -2891,3 +2891,88 @@ body {
     print-color-adjust: exact !important;
   }
 }
+
+/* =========================================================================
+   Modo compacto: esconde o cabeçalho e as ferramentas, deixando só o player
+   ========================================================================= */
+.compact-score-title {
+  display: none;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--bell-gold-light);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.compact-score-title:hover { background: var(--bg-hover); }
+
+.btn-ui-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.btn-ui-toggle:hover { background: var(--bg-hover); color: var(--text-main); }
+.btn-ui-toggle.active {
+  color: var(--bell-gold);
+  border-color: var(--bell-gold);
+  background: rgba(212, 175, 55, 0.12);
+}
+
+body.ui-hide-header .app-header { display: none; }
+body.ui-hide-header .compact-score-title { display: inline-block; }
+
+body.ui-hide-tools .playback-bar .loop-group,
+body.ui-hide-tools .playback-bar .speed-presets,
+body.ui-hide-tools .playback-bar .practice-toggles > *:not(#btn-toggle-rack):not(#btn-fullscreen) {
+  display: none;
+}
+body.ui-hide-tools .playback-bar { padding-top: 6px; padding-bottom: 6px; gap: 10px; }
+body.ui-hide-tools .live-cue-hud { min-height: 36px; padding-top: 4px; padding-bottom: 4px; }
+
+@media (max-width: 767px) {
+  .btn-ui-toggle .ui-toggle-label { display: none; }
+  .compact-score-title { max-width: 140px; }
+}
+
+/* Ajustes finos do modo compacto: tudo numa única linha */
+body.ui-hide-tools .playback-bar { flex-wrap: nowrap; }
+body.ui-hide-tools .playback-controls-group { flex-wrap: nowrap; min-width: 0; }
+body.ui-hide-tools .speed-group { flex: 0 1 auto; min-width: 0; }
+body.ui-hide-tools .speed-label { display: none; }
+body.ui-hide-tools .practice-toggles { flex: 0 0 auto; margin-left: auto; overflow: visible; }
+body.ui-hide-tools .live-cue-hud .hud-message {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 767px) {
+  body.ui-hide-tools .playback-bar { flex-wrap: wrap; row-gap: 6px; }
+  body.ui-hide-tools .speed-group { flex: 1 1 auto; }
+  body.ui-hide-tools #btn-toggle-rack { font-size: 0; padding: 6px 10px; }
+  body.ui-hide-tools #btn-toggle-rack span { font-size: 1rem; }
+  body.ui-hide-header .compact-score-title { display: none; }
+  body.ui-hide-tools .live-cue-hud .hud-message { font-size: 0.8rem; }
+}
+@media (max-width: 767px) {
+  body.ui-hide-tools .speed-group { width: auto !important; flex: 1 1 0 !important; }
+  body.ui-hide-tools .practice-toggles { width: auto !important; margin-left: 0; }
+}
+@media (max-width: 767px) {
+  body.ui-hide-tools .playback-bar { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  body.ui-hide-tools .playback-controls-group { flex: 1 1 100%; }
+  body.ui-hide-tools .practice-toggles { padding-bottom: 0; }
+}
