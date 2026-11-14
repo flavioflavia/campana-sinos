@@ -686,7 +686,13 @@ def main():
         out_file = os.path.join("/var/www/html/sinos/scores", f"{base}.musicxml")
 
     try:
-        convert_msf(args.msf_file, out_file, args.title, args.job_file, args.user_name, args.user_email)
+        success = convert_msf(args.msf_file, out_file, args.title, args.job_file, args.user_name, args.user_email)
+        if success and "/uploads/" in os.path.abspath(args.msf_file) and os.path.exists(args.msf_file):
+            try:
+                os.remove(args.msf_file)
+                print(f"[✓] Arquivo temporário removido: {args.msf_file}")
+            except Exception:
+                pass
     except Exception as e:
         print(f"[!] Erro fatal na conversão: {e}")
         err_msg = str(e)
